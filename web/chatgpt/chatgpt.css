@@ -1,0 +1,7 @@
+/* only include tailwind classes from web/chatgpt */
+@import "tailwindcss" source(none);
+@source "./**/*";
+
+/* use @openai/apps-sdk-ui for themeing and base styles */
+@import "@openai/apps-sdk-ui/css";
+@source "../../node_modules/@openai/apps-sdk-ui";

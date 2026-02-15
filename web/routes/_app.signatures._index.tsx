@@ -1,0 +1,373 @@
+import { useState } from "react";
+import { useFindMany, useAction, useActionForm } from "@gadgetinc/react";
+import { api } from "../api";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+/**
+ * These enums must match the Signature model schema exactly
+ */
+const IMPORTANCE_OPTIONS = ["High", "Normal", "Low"] as const;
+
+const SIGNOFF_OPTIONS = [
+  "Yours faithfully",
+  "Yours sincerely",
+  "Many thanks",
+  "Best regards",
+  "Regards",
+] as const;
+
+export default function SignaturesPage() {
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingSignature, setEditingSignature] = useState<any>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  /**
+   * Load signatures
+   */
+  const [{ data: signatures, fetching }, refetch] = useFindMany(api.signature, {
+    select: {
+      id: true,
+      name: true,
+      body: true,
+      importance: true,
+      signOff: true,
+      bcc: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  /**
+   * Delete action
+   */
+  const [{ fetching: deleting }, deleteSignature] = useAction(
+    api.signature.delete
+  );
+
+  /**
+   * CREATE form
+   */
+  const {
+    register: registerCreate,
+    submit: submitCreate,
+    formState: { isSubmitting: isCreating },
+    reset: resetCreate,
+    setValue: setCreateValue,
+    watch: watchCreate,
+  } = useActionForm(api.signature.create, {
+    onSuccess: () => {
+      toast.success("Signature created successfully");
+      setIsCreateOpen(false);
+      resetCreate();
+      void refetch();
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Validation failed";
+      toast.error(`Failed to create signature: ${msg}`);
+    },
+  });
+
+  /**
+   * UPDATE form
+   */
+  const {
+    register: registerUpdate,
+    submit: submitUpdate,
+    formState: { isSubmitting: isUpdating },
+    reset: resetUpdate,
+    setValue: setUpdateValue,
+    watch: watchUpdate,
+  } = useActionForm(api.signature.update, {
+    onSuccess: () => {
+      toast.success("Signature updated successfully");
+      setEditingSignature(null);
+      resetUpdate();
+      void refetch();
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Validation failed";
+      toast.error(`Failed to update signature: ${msg}`);
+    },
+  });
+
+  /**
+   * Open Edit Modal + preload values
+   */
+  const openEdit = (sig: any) => {
+    setEditingSignature(sig);
+
+    setUpdateValue("id", sig.id);
+    setUpdateValue("signature.name", sig.name);
+    setUpdateValue("signature.body", sig.body);
+    setUpdateValue("signature.bcc", sig.bcc ?? "");
+    setUpdateValue("signature.importance", sig.importance ?? "Normal");
+    setUpdateValue("signature.signOff", sig.signOff ?? "Best regards");
+  };
+
+  /**
+   * Confirm delete
+   */
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
+
+    try {
+      await deleteSignature({ id: deleteConfirmId });
+      toast.success("Signature deleted");
+      setDeleteConfirmId(null);
+      void refetch();
+    } catch {
+      toast.error("Failed to delete signature");
+    }
+  };
+
+  return (
+    <div className="flex-1 overflow-auto bg-slate-950 p-8">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-white mb-2">Email Signatures</h1>
+          <p className="text-lg text-slate-400">Manage signature templates for your emails</p>
+        </div>
+
+        <div className="flex justify-end mb-6">
+          <Button
+            className="bg-amber-500 text-black hover:bg-amber-600"
+            onClick={() => setIsCreateOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Signature
+          </Button>
+        </div>
+
+        {/* Empty State */}
+        {!fetching && (signatures?.length ?? 0) === 0 && (
+          <Card className="p-8 text-center bg-zinc-950 border-zinc-800">
+            <p className="text-zinc-400">
+              No signatures yet — click “New Signature” to create one.
+            </p>
+          </Card>
+        )}
+
+        {/* List */}
+        <div className="space-y-3">
+          {signatures?.map((sig: any) => (
+            <Card
+              key={sig.id}
+              className="p-4 bg-zinc-950 border-zinc-800 flex items-start justify-between"
+            >
+              <div>
+                <div className="font-medium">{sig.name}</div>
+                <div className="text-sm text-zinc-400 line-clamp-2">
+                  {sig.body}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-zinc-700"
+                  onClick={() => openEdit(sig)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-zinc-700 text-red-400"
+                  onClick={() => setDeleteConfirmId(sig.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* CREATE MODAL */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="bg-zinc-950 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle>Create Signature</DialogTitle>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void submitCreate();
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label>Name</Label>
+              <Input {...registerCreate("signature.name")} />
+            </div>
+
+            <div>
+              <Label>Body</Label>
+              <Textarea
+                rows={6}
+                {...registerCreate("signature.body")}
+              />
+            </div>
+
+            <div>
+              <Label>Importance</Label>
+              <Select
+                value={watchCreate("signature.importance") ?? "Normal"}
+                onValueChange={(v: string) =>
+                  setCreateValue("signature.importance", v as any)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {IMPORTANCE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Sign Off</Label>
+              <Select
+                value={watchCreate("signature.signOff") ?? "Best regards"}
+                onValueChange={(v: string) =>
+                  setCreateValue("signature.signOff", v as any)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SIGNOFF_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={isCreating}
+                className="bg-amber-500 text-black hover:bg-amber-600"
+              >
+                Save
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* EDIT MODAL */}
+      <Dialog
+        open={!!editingSignature}
+        onOpenChange={() => setEditingSignature(null)}
+      >
+        <DialogContent className="bg-zinc-950 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle>Edit Signature</DialogTitle>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void submitUpdate();
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label>Name</Label>
+              <Input {...registerUpdate("signature.name")} />
+            </div>
+
+            <div>
+              <Label>Body</Label>
+              <Textarea rows={6} {...registerUpdate("signature.body")} />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={isUpdating}
+                className="bg-amber-500 text-black hover:bg-amber-600"
+              >
+                Update
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* DELETE CONFIRM */}
+      <AlertDialog
+        open={!!deleteConfirmId}
+        onOpenChange={() => setDeleteConfirmId(null)}
+      >
+        <AlertDialogContent className="bg-zinc-950 border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Signature?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

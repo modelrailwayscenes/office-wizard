@@ -1,0 +1,297 @@
+import type { GadgetModel } from "gadget-server";
+
+// This file describes the schema for the "conversation" model, go to https://office-wizard.gadget.app/edit to view/edit your model in Gadget
+// For more information on how to update this file http://docs.gadget.dev
+
+export const schema: GadgetModel = {
+  type: "gadget/model-schema/v2",
+  storageKey: "0i6BkNTaiOju",
+  comment:
+    "Represents an email conversation/thread from Microsoft Graph, with automatic AI-driven classification, priority assignment, and support workflow management. Tracks conversation metadata, participant info, priority scoring, and automation recommendations for intelligent email support routing.",
+  fields: {
+    actionLogs: {
+      type: "hasMany",
+      children: {
+        model: "actionLog",
+        belongsToField: "conversation",
+      },
+      storageKey: "2pHFV0OCnjEV",
+    },
+    aiDraftContent: {
+      type: "string",
+      storageKey: "t2aXBgpwbya9",
+      filterIndex: false,
+    },
+    aiDraftGeneratedAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "ZDC2ovwoT2Ws",
+      searchIndex: false,
+    },
+    aiDraftModel: { type: "string", storageKey: "43t_evo2K5Xt" },
+    alertSeverity: {
+      type: "string",
+      validations: { regex: ["^(low|medium|high)$"] },
+      storageKey: "EHwLsOO9PgBG",
+    },
+    assignedTo: { type: "email", storageKey: "UAtvUD0VlqBj" },
+    autoResolved: {
+      type: "boolean",
+      default: false,
+      storageKey: "tZxFBf2W49k7",
+    },
+    automationTag: { type: "string", storageKey: "8pAkZwqkC5Zz" },
+    batchOperation: {
+      type: "belongsTo",
+      parent: { model: "batchOperation" },
+      storageKey: "OwdU86rc1RsZ",
+      searchIndex: false,
+    },
+    category: {
+      type: "string",
+      validations: { stringLength: { min: null, max: 200 } },
+      storageKey: "UV3gOSPl7cGr",
+    },
+    classifications: {
+      type: "hasMany",
+      children: {
+        model: "classification",
+        belongsToField: "conversation",
+      },
+      storageKey: "NaA2rJK5QqKc",
+    },
+    confidence: {
+      type: "number",
+      decimals: 2,
+      validations: { numberRange: { min: 0, max: 1 } },
+      storageKey: "CK0wkkxu28gP",
+      searchIndex: false,
+    },
+    conversationId: {
+      type: "string",
+      validations: { required: true, unique: true },
+      storageKey: "5XRWIVDOMPGO",
+    },
+    currentCategory: { type: "string", storageKey: "QoLyjWUrnMKc" },
+    currentPriorityBand: {
+      type: "enum",
+      default: "unclassified",
+      acceptMultipleSelections: false,
+      acceptUnlistedOptions: false,
+      options: ["unclassified", "low", "medium", "high", "urgent"],
+      storageKey: "2Sz4p6bjKOE-",
+    },
+    currentPriorityScore: {
+      type: "number",
+      decimals: 2,
+      storageKey: "oeE-M1sBthd8",
+      searchIndex: false,
+    },
+    customerConfidenceScore: {
+      type: "number",
+      default: 50,
+      decimals: 2,
+      validations: { numberRange: { min: 0, max: 100 } },
+      storageKey: "sTKwlXv7hkbN",
+      searchIndex: false,
+    },
+    deadlineDate: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "lLQNUtY2qiVT",
+      searchIndex: false,
+    },
+    entities: {
+      type: "json",
+      storageKey: "NEADu8_puoCT",
+      filterIndex: false,
+      searchIndex: false,
+    },
+    externalConversationId: {
+      type: "string",
+      validations: { unique: true },
+      storageKey: "zd9Tj-M8rJow",
+    },
+    firstMessageAt: {
+      type: "dateTime",
+      includeTime: true,
+      validations: { required: true },
+      storageKey: "v2JX2AwdR4Q7",
+    },
+    folderPath: { type: "string", storageKey: "qX3v5pHizOLW" },
+    hasDeadline: {
+      type: "boolean",
+      default: false,
+      storageKey: "eBf9y79BMms4",
+      searchIndex: false,
+    },
+    hasDraft: {
+      type: "boolean",
+      default: false,
+      storageKey: "Msuw3PwybLnI",
+    },
+    internalNotes: { type: "string", storageKey: "eoBYheinMzfk" },
+    isVerifiedCustomer: {
+      type: "boolean",
+      default: false,
+      storageKey: "xkmpcgWz0MfG",
+      searchIndex: false,
+    },
+    lastTriagedAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "oGb_CnqoXWK1",
+      searchIndex: false,
+    },
+    latestMessageAt: {
+      type: "dateTime",
+      includeTime: true,
+      validations: { required: true },
+      storageKey: "Tq7jV8WZgAk2",
+      searchIndex: false,
+    },
+    messageCount: {
+      type: "number",
+      default: 0,
+      decimals: 0,
+      validations: { numberRange: { min: 0, max: null } },
+      storageKey: "k0O63ndtVUSU",
+    },
+    messages: {
+      type: "hasMany",
+      children: {
+        model: "emailMessage",
+        belongsToField: "conversation",
+      },
+      storageKey: "KsSzIQK-Ov-0",
+    },
+    orderValue: {
+      type: "string",
+      storageKey: "sn3Q1PY5HL5p",
+      searchIndex: false,
+    },
+    outlookCategories: {
+      type: "json",
+      storageKey: "opVZeojcd3dy",
+      filterIndex: false,
+      searchIndex: false,
+    },
+    participants: { type: "json", storageKey: "QjogqLjGfymK" },
+    primaryCustomerEmail: {
+      type: "email",
+      storageKey: "GlFemLqDC2iL",
+    },
+    primaryCustomerName: {
+      type: "string",
+      storageKey: "5CkSzWq7hZsp",
+    },
+    priority: {
+      type: "string",
+      validations: { regex: ["^P[0-3]$"] },
+      storageKey: "-lKkZS8mUDXn",
+    },
+    proactiveAlert: {
+      type: "string",
+      storageKey: "6hjDDyqJpcO4",
+      filterIndex: false,
+    },
+    requiresHumanReview: {
+      type: "boolean",
+      default: false,
+      storageKey: "snOp9PzljwNQ",
+    },
+    resolved: {
+      type: "boolean",
+      default: false,
+      storageKey: "newpMVDAr5pL",
+      searchIndex: false,
+    },
+    resolvedAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "z0YK_5-fwx-q",
+    },
+    score: {
+      type: "number",
+      decimals: 2,
+      validations: { numberRange: { min: 0, max: 100 } },
+      storageKey: "lhqCBnHoSs_R",
+      searchIndex: false,
+    },
+    sentiment: {
+      type: "enum",
+      acceptMultipleSelections: false,
+      acceptUnlistedOptions: false,
+      options: [
+        "very_negative",
+        "negative",
+        "neutral",
+        "positive",
+        "very_positive",
+      ],
+      storageKey: "G3TSZ20L4t9Q",
+    },
+    shopifyCustomerId: {
+      type: "string",
+      storageKey: "uhvKomNPy91_",
+      searchIndex: false,
+    },
+    shopifyOrderContext: {
+      type: "json",
+      storageKey: "fJhdfqV2u9pV",
+      filterIndex: false,
+      searchIndex: false,
+    },
+    shopifyOrderNumbers: {
+      type: "json",
+      storageKey: "cSYJpsgpytf2",
+      filterIndex: false,
+      searchIndex: false,
+    },
+    slaTarget: {
+      type: "string",
+      storageKey: "XJPWCfEiPDuw",
+      searchIndex: false,
+    },
+    status: {
+      type: "enum",
+      default: "new",
+      acceptMultipleSelections: false,
+      acceptUnlistedOptions: false,
+      options: [
+        "new",
+        "in_progress",
+        "waiting_customer",
+        "waiting_internal",
+        "resolved",
+        "archived",
+      ],
+      validations: { required: true },
+      storageKey: "e_qoBBuKbW_d",
+    },
+    subject: {
+      type: "string",
+      validations: { required: true },
+      storageKey: "MK2ZRbanpn_2",
+    },
+    suggestedAction: {
+      type: "string",
+      validations: { stringLength: { min: null, max: 200 } },
+      storageKey: "u-swXiA5T9_D",
+      filterIndex: false,
+    },
+    timeRemaining: {
+      type: "string",
+      storageKey: "LXOZwLFnZgpq",
+      searchIndex: false,
+    },
+    unreadCount: {
+      type: "number",
+      default: 0,
+      decimals: 0,
+      validations: { numberRange: { min: 0, max: null } },
+      storageKey: "cRU9OCqq3tA4",
+      searchIndex: false,
+    },
+  },
+};
