@@ -193,7 +193,7 @@ INSTRUCTIONS:
 4. Keep the tone ${sentiment === "negative" ? "especially empathetic and apologetic" : "friendly and professional"}
 ${priority === "urgent" || priority === "high" ? "5. Acknowledge the urgency and prioritize resolution" : ""}
 ${
-  automationTag.includes("risk_keyword")
+  String(automationTag).includes("risk_keyword")
     ? "6. IMPORTANT: This customer used concerning language. Be extra careful, diplomatic, and consider escalating to a supervisor."
     : ""
 }

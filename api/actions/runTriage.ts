@@ -132,7 +132,19 @@ const NEGATIVE_WORDS = [
   "disgraceful",
 ];
 
-const POSITIVE_WORDS = ["thank", "great", "excellent", "happy", "pleased", "wonderful", "amazing", "love", "brilliant", "fantastic", "perfect"];
+const POSITIVE_WORDS = [
+  "thank",
+  "great",
+  "excellent",
+  "happy",
+  "pleased",
+  "wonderful",
+  "amazing",
+  "love",
+  "brilliant",
+  "fantastic",
+  "perfect",
+];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -282,7 +294,7 @@ Respond with exactly:
 {
   "category": "delivery_issue" | "damaged_item" | "refund_request" | "returns" | "general_enquiry",
   "priorityScore": 0-100,
-  "sentiment": "positive" | "neutral" | "negative",
+  "sentiment": "very_positive" | "positive" | "neutral" | "negative" | "very_negative",
   "requiresHumanReview": true | false,
   "confidence": 0.0-1.0
 }`;
