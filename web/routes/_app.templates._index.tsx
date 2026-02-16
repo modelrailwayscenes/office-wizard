@@ -55,13 +55,14 @@ export default function TemplatesIndex() {
   const isEmpty = !templates || templates.length === 0;
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-950 p-8">
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold text-white mb-2">Email Templates</h1>
-        <p className="text-lg text-slate-400">Create and manage email response templates</p>
+    <div className="min-h-screen bg-slate-950">
+      <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <h1 className="text-2xl font-semibold text-white">Email Templates</h1>
+        <p className="text-sm text-slate-400 mt-1">Create and manage email response templates</p>
       </div>
-
-      <div className="flex justify-end mb-6">
+      
+      <div className="px-8 pb-8">
+        <div className="flex justify-end mb-6">
         <Button 
           onClick={() => navigate("/templates/new")}
           className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
@@ -132,6 +133,7 @@ export default function TemplatesIndex() {
           />
         </div>
       )}
+      </div>
     </div>
   );
 }

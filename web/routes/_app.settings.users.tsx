@@ -198,7 +198,7 @@ const adminTabs = [
             <div>
               <h1 className="text-2xl font-semibold text-white">Users</h1>
               <p className="text-sm text-slate-400 mt-1">
-                Manage team members and their roles
+                Manage users and their roles
               </p>
             </div>
             <Button

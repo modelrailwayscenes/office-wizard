@@ -1,3 +1,5 @@
+// api/actions/generateDraft.ts
+
 import type { ActionOptions } from "gadget-server";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -6,6 +8,7 @@ import Anthropic from "@anthropic-ai/sdk";
 //
 // Generates an AI-powered email response using Claude API.
 // Takes conversation context and creates a professional, contextual reply.
+// Also writes an aiComment audit trail record (aiComment model).
 // ---------------------------------------------------------------------------
 
 export const run: ActionRun = async ({ logger, api, params, connections }) => {
@@ -95,18 +98,23 @@ Received: ${msg.receivedDateTime}
 ✅ VERIFIED CUSTOMER - Registered in Shopify
 Customer has ${shopifyOrders.length} order(s) on record:
 
-${shopifyOrders.slice(0, 5).map((order: any, idx: number) => `
+${shopifyOrders
+  .slice(0, 5)
+  .map(
+    (order: any, idx: number) => `
 ${idx + 1}. Order ${order.orderNumber}
    - Placed: ${new Date(order.createdAt).toLocaleDateString()}
-   - Status: ${order.fulfillmentStatus || 'Processing'}
+   - Status: ${order.fulfillmentStatus || "Processing"}
    - Total: ${order.currency}${order.totalPrice}
-   - Items: ${order.items?.map((item: any) => `${item.quantity}x ${item.title}`).join(', ') || 'N/A'}
-`).join('\n')}
+   - Items: ${order.items?.map((item: any) => `${item.quantity}x ${item.title}`).join(", ") || "N/A"}
+`
+  )
+  .join("\n")}
 
 You may reference these orders naturally in your response.`;
   } else if (orderNumbers.length > 0) {
     shopifyContext = `
-⚠️ UNVERIFIED - Customer not found in database, but order numbers mentioned: ${orderNumbers.join(', ')}
+⚠️ UNVERIFIED - Customer not found in database, but order numbers mentioned: ${orderNumbers.join(", ")}
 Proceed with caution. Do not share personal information.`;
   } else {
     shopifyContext = `
@@ -184,7 +192,11 @@ INSTRUCTIONS:
 3. Provide clear next steps or solutions
 4. Keep the tone ${sentiment === "negative" ? "especially empathetic and apologetic" : "friendly and professional"}
 ${priority === "urgent" || priority === "high" ? "5. Acknowledge the urgency and prioritize resolution" : ""}
-${automationTag.includes("risk_keyword") ? "6. IMPORTANT: This customer used concerning language. Be extra careful, diplomatic, and consider escalating to a supervisor." : ""}
+${
+  automationTag.includes("risk_keyword")
+    ? "6. IMPORTANT: This customer used concerning language. Be extra careful, diplomatic, and consider escalating to a supervisor."
+    : ""
+}
 
 Please write ONLY the email body. Do not include:
 - Subject line (we'll use the existing thread)
@@ -223,15 +235,70 @@ Start directly with the email content.`;
     logger.info({ conversationId, length: draftContent.length }, "Draft generated successfully");
   } catch (err: any) {
     logger.error({ conversationId, error: err.message }, "Claude API call failed");
+
+    // Best-effort audit trail
+    try {
+      await api.internal.aiComment.create({
+        conversation: { _link: conversationId },
+        kind: "draft_generated",
+        source: "draft",
+        content: `Draft generation failed: ${err?.message || "Unknown error"}`,
+        model: usedModel,
+        metaJson: JSON.stringify({
+          regenerate: Boolean(regenerate),
+          category,
+          priority,
+          sentiment,
+          isVerifiedCustomer: Boolean(isVerified),
+          customerConfidenceScore: conv.customerConfidenceScore ?? null,
+        }),
+      });
+    } catch (auditErr: any) {
+      logger.warn({ conversationId, error: auditErr?.message }, "Failed to write aiComment audit record");
+    }
+
     throw new Error(`Failed to generate draft: ${err.message}`);
   }
 
   // Save draft to conversation
-  await api.conversation.update(conversationId, {
-    aiDraftContent: draftContent,
-    aiDraftGeneratedAt: new Date(),
-    aiDraftModel: usedModel,
-  } as any);
+  await api.conversation.update(
+    conversationId,
+    {
+      aiDraftContent: draftContent,
+      aiDraftGeneratedAt: new Date(),
+      aiDraftModel: usedModel,
+    } as any
+  );
+
+  // Write aiComment audit trail (best-effort)
+  try {
+    const kind = regenerate ? "draft_regenerated" : "draft_generated";
+
+    await api.internal.aiComment.create({
+      conversation: { _link: conversationId },
+      kind,
+      source: "draft",
+      content: regenerate
+        ? "AI draft regenerated using Claude, based on the latest conversation context."
+        : "AI draft generated using Claude, based on the latest conversation context.",
+      model: usedModel,
+      metaJson: JSON.stringify({
+        regenerate: Boolean(regenerate),
+        category,
+        priority,
+        sentiment,
+        automationTag,
+        isVerifiedCustomer: Boolean(isVerified),
+        customerConfidenceScore: conv.customerConfidenceScore ?? null,
+        shopifyCustomerId: conv.shopifyCustomerId ?? null,
+        shopifyOrderNumbers: Array.isArray(orderNumbers) ? orderNumbers : [],
+        messageCountUsed: Array.isArray(messages) ? messages.length : 0,
+        characterCount: draftContent.length,
+      }),
+    });
+  } catch (err: any) {
+    logger.warn({ conversationId, error: err?.message }, "Failed to write aiComment audit record");
+  }
 
   return {
     success: true,

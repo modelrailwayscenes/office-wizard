@@ -98,6 +98,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   let updated = 0;
   let conversationsCreated = 0;
   let errors = 0;
+  let skipped = 0;
 
   for (const msg of messages) {
     try {
@@ -152,21 +153,48 @@ export const run: ActionRun = async ({ logger, api, params }) => {
       }
 
       if (!existingMsg) {
+        // Validate required fields
+        const fromAddress = msg.from?.emailAddress?.address ?? null;
+        const receivedDateTime = msg.receivedDateTime ?? msg.sentDateTime ?? null;
+        const messageId = msg.id ?? null;
+        const graphConversationId = msg.conversationId ?? null;
+        
+        if (!fromAddress || !receivedDateTime || !messageId || !graphConversationId) {
+          logger.warn({
+            subject: msg.subject,
+            id: msg.id,
+            missing: {
+              fromAddress: !fromAddress,
+              receivedDateTime: !receivedDateTime,
+              messageId: !messageId,
+              graphConversationId: !graphConversationId,
+            }
+          }, "Skipping invalid Graph message - missing required fields");
+          errors++;
+          skipped++;
+          continue;
+        }
+
         // Create email message
         await api.emailMessage.create({
+          messageId,
+          graphConversationId,
+          fromAddress,
+          receivedDateTime,
           externalMessageId: msg.id,
           internetMessageId: msg.internetMessageId,
           conversation: { _link: conversation.id },
           subject: msg.subject || "(No subject)",
           fromEmail: msg.from?.emailAddress?.address,
           fromName: msg.from?.emailAddress?.name,
-          receivedAt: msg.receivedDateTime,
-          sentAt: msg.sentDateTime,
+          sentDateTime: msg.sentDateTime,
           bodyPreview: msg.bodyPreview,
           bodyHtml: msg.body?.contentType === 'html' ? msg.body.content : null,
           bodyText: msg.body?.contentType === 'text' ? msg.body.content : msg.bodyPreview,
           isRead: msg.isRead,
           hasAttachments: msg.hasAttachments,
+          shopifyCustomerFound: false,
+          shopifyLookupCompleted: false,
         });
         created++;
       } else {
@@ -195,12 +223,19 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     updated,
     conversationsCreated,
     errors,
+    skipped,
     hasMore: !!data["@odata.nextLink"],
   };
 
-  logger.info(result, "Sync complete");
+  logger.info(result, `Sync complete. Created: ${created}, Updated: ${updated}, Skipped: ${skipped} invalid messages`);
 
   return result;
+};
+
+export const params = {
+  top: { type: "number" },
+  unreadOnly: { type: "boolean" },
+  folderPath: { type: "string" },
 };
 
 export const options: ActionOptions = {

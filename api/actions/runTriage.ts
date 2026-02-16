@@ -1,14 +1,11 @@
+// api/actions/runTriage.ts
+
 import type { ActionOptions } from "gadget-server";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-type Category =
-  | "delivery_issue"
-  | "damaged_item"
-  | "refund_request"
-  | "returns"
-  | "general_enquiry";
+type Category = "delivery_issue" | "damaged_item" | "refund_request" | "returns" | "general_enquiry";
 
 type PriorityBand = "low" | "medium" | "high" | "urgent";
 type Sentiment = "very_negative" | "negative" | "neutral" | "positive" | "very_positive";
@@ -19,54 +16,123 @@ type Sentiment = "very_negative" | "negative" | "neutral" | "positive" | "very_p
 const ORDER_NUMBER_PATTERN = /\b(MRS|NRS)[-\s]?\d{5}\b/i;
 
 const RISK_KEYWORDS = [
-  "chargeback", "legal", "solicitor", "lawyer", "trading standards",
-  "consumer rights", "court", "fraud", "scam", "threatening",
-  "ombudsman", "watchdog",
+  "chargeback",
+  "legal",
+  "solicitor",
+  "lawyer",
+  "trading standards",
+  "consumer rights",
+  "court",
+  "fraud",
+  "scam",
+  "threatening",
+  "ombudsman",
+  "watchdog",
 ];
 
 const HIGH_PRIORITY_PHRASES = [
-  "urgent", "asap", "immediately", "angry", "furious", "disgusted",
-  "unacceptable", "never again", "appalling", "disgraceful",
+  "urgent",
+  "asap",
+  "immediately",
+  "angry",
+  "furious",
+  "disgusted",
+  "unacceptable",
+  "never again",
+  "appalling",
+  "disgraceful",
 ];
 
 // ALL REFUND REQUESTS require human review
 const REFUND_KEYWORDS = [
-  "refund", "money back", "chargeback", "reimbursement",
-  "compensation", "want my money", "full refund", "partial refund",
+  "refund",
+  "money back",
+  "chargeback",
+  "reimbursement",
+  "compensation",
+  "want my money",
+  "full refund",
+  "partial refund",
 ];
 
 const CATEGORY_SIGNALS: Record<Category, string[]> = {
   delivery_issue: [
-    "where is my order", "not arrived", "hasn't arrived", "not delivered",
-    "hasn't been delivered", "missing order", "lost parcel", "lost in post",
-    "never arrived", "still waiting", "tracking", "delayed", "delay",
-    "overdue", "where's my order", "haven't received", "not received",
+    "where is my order",
+    "not arrived",
+    "hasn't arrived",
+    "not delivered",
+    "hasn't been delivered",
+    "missing order",
+    "lost parcel",
+    "lost in post",
+    "never arrived",
+    "still waiting",
+    "tracking",
+    "delayed",
+    "delay",
+    "overdue",
+    "where's my order",
+    "haven't received",
+    "not received",
   ],
   damaged_item: [
-    "damaged", "broken", "cracked", "smashed", "faulty", "defective",
-    "not working", "doesn't work", "stopped working", "arrived broken",
-    "arrived damaged", "poor quality",
+    "damaged",
+    "broken",
+    "cracked",
+    "smashed",
+    "faulty",
+    "defective",
+    "not working",
+    "doesn't work",
+    "stopped working",
+    "arrived broken",
+    "arrived damaged",
+    "poor quality",
   ],
   refund_request: REFUND_KEYWORDS,
   returns: [
-    "return", "send back", "returning", "exchange", "swap", "replacement",
-    "wrong item", "wrong product", "incorrect item", "not what i ordered",
+    "return",
+    "send back",
+    "returning",
+    "exchange",
+    "swap",
+    "replacement",
+    "wrong item",
+    "wrong product",
+    "incorrect item",
+    "not what i ordered",
   ],
   general_enquiry: [
-    "question", "query", "enquiry", "inquiry", "information", "details",
-    "asking about", "can you tell me", "wondering", "interested in",
+    "question",
+    "query",
+    "enquiry",
+    "inquiry",
+    "information",
+    "details",
+    "asking about",
+    "can you tell me",
+    "wondering",
+    "interested in",
   ],
 };
 
 const NEGATIVE_WORDS = [
-  "angry","furious","disgusted","broken","damaged","unacceptable","terrible",
-  "awful","horrible","disappointed","useless","appalling","disgraceful",
+  "angry",
+  "furious",
+  "disgusted",
+  "broken",
+  "damaged",
+  "unacceptable",
+  "terrible",
+  "awful",
+  "horrible",
+  "disappointed",
+  "useless",
+  "appalling",
+  "disgraceful",
 ];
 
-const POSITIVE_WORDS = [
-  "thank","great","excellent","happy","pleased","wonderful","amazing",
-  "love","brilliant","fantastic","perfect",
-];
+const POSITIVE_WORDS = ["thank", "great", "excellent", "happy", "pleased", "wonderful", "amazing", "love", "brilliant", "fantastic", "perfect"];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -80,11 +146,11 @@ function scoreToBand(score: number): PriorityBand {
 
 function calculateSentiment(text: string): Sentiment {
   const lower = text.toLowerCase();
-  const negCount = NEGATIVE_WORDS.filter(s => lower.includes(s)).length;
-  const posCount = POSITIVE_WORDS.filter(s => lower.includes(s)).length;
-  
+  const negCount = NEGATIVE_WORDS.filter((s) => lower.includes(s)).length;
+  const posCount = POSITIVE_WORDS.filter((s) => lower.includes(s)).length;
+
   const score = posCount - negCount;
-  
+
   if (score >= 3) return "very_positive";
   if (score >= 1) return "positive";
   if (score <= -3) return "very_negative";
@@ -136,7 +202,7 @@ function ruleBasedScore(text: string, unread: number, msgCount: number) {
   }
 
   // Negative sentiment words
-  const negCount = NEGATIVE_WORDS.filter(s => lower.includes(s)).length;
+  const negCount = NEGATIVE_WORDS.filter((s) => lower.includes(s)).length;
   if (negCount > 0) {
     score += Math.min(negCount * 5, 15);
     tags.push(`negative_words:${negCount}`);
@@ -158,7 +224,7 @@ function ruleBasedScore(text: string, unread: number, msgCount: number) {
   let bestCategory: Category = "general_enquiry";
   let maxMatches = 0;
   for (const [cat, signals] of Object.entries(CATEGORY_SIGNALS)) {
-    const matches = signals.filter(s => lower.includes(s)).length;
+    const matches = signals.filter((s) => lower.includes(s)).length;
     if (matches > maxMatches) {
       maxMatches = matches;
       bestCategory = cat as Category;
@@ -189,8 +255,17 @@ async function claudeClassify(
   ruleScore: number,
   ruleCategory: Category,
   connections: any,
-  logger: any,
-) {
+  logger: any
+): Promise<{
+  category: Category;
+  priorityScore: number;
+  sentiment: Sentiment;
+  requiresHumanReview: boolean;
+  confidence: number;
+  model: string;
+} | null> {
+  const model = "claude-haiku-4-5-20251001";
+
   try {
     const prompt = `You are a customer service triage assistant for an e-commerce model railway business (Model Railway Scenes).
 
@@ -213,7 +288,7 @@ Respond with exactly:
 }`;
 
     const response = await connections.anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model,
       max_tokens: 256,
       messages: [{ role: "user", content: prompt }],
     });
@@ -227,6 +302,7 @@ Respond with exactly:
       sentiment: (parsed.sentiment || "neutral") as Sentiment,
       requiresHumanReview: Boolean(parsed.requiresHumanReview),
       confidence: Number(parsed.confidence) || 0.5,
+      model,
     };
   } catch (err: any) {
     logger.warn({ err: err.message }, "Claude classification failed, using rule-based result");
@@ -304,8 +380,8 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
     first: 5,
   });
 
-  const allText = [conv.subject || "", ...messages.map(m => `${m.subject || ""} ${m.bodyPreview || ""}`)].join(" ");
-  const messagePreviews = messages.map(m => `From: ${m.fromAddress || "unknown"} — ${m.bodyPreview || "(no preview)"}`);
+  const allText = [conv.subject || "", ...messages.map((m) => `${m.subject || ""} ${m.bodyPreview || ""}`)].join(" ");
+  const messagePreviews = messages.map((m) => `From: ${m.fromAddress || "unknown"} — ${m.bodyPreview || "(no preview)"}`);
 
   // ==========================================================================
   // PHASE 1: RULE-BASED SCORING
@@ -328,6 +404,8 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
   let finalSentiment = ruleResult.sentiment;
   let finalRequiresHumanReview = ruleResult.requiresHumanReview;
   let usedAI = false;
+  let aiConfidence: number | null = null;
+  let aiModelUsed: string | null = null;
 
   if (finalScore >= 50 && finalScore <= 75) {
     logger.info({ conversationId }, "Ambiguous score — calling Claude");
@@ -338,6 +416,9 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
       finalSentiment = aiResult.sentiment;
       finalRequiresHumanReview = aiResult.requiresHumanReview || ruleResult.requiresHumanReview;
       usedAI = true;
+      aiConfidence = aiResult.confidence;
+      aiModelUsed = aiResult.model;
+
       logger.info({ conversationId, aiScore: aiResult.priorityScore, confidence: aiResult.confidence }, "Claude classification done");
     }
   }
@@ -345,21 +426,21 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
   // ==========================================================================
   // PHASE 3: QUARANTINE LOGIC
   // ==========================================================================
-  
+  let quarantinedForUnverified = false;
+
   // Quarantine if: not verified + no order number detected
   if (!isVerifiedCustomer && shopifyOrderNumbers.length === 0) {
     const hasOrderInText = ORDER_NUMBER_PATTERN.test(allText);
     if (!hasOrderInText && finalScore < 60) {
       finalRequiresHumanReview = true;
+      quarantinedForUnverified = true;
       ruleResult.tags.push("uncertain:not_verified");
       logger.info({ conversationId }, "Flagged for quarantine: unverified customer, no order number");
     }
   }
 
   const finalBand = scoreToBand(Math.min(finalScore, 100));
-  const automationTag = ruleResult.matchedRiskKeyword
-    ? `risk_keyword:${ruleResult.matchedRiskKeyword}`
-    : ruleResult.tags[0] || null;
+  const automationTag = ruleResult.matchedRiskKeyword ? `risk_keyword:${ruleResult.matchedRiskKeyword}` : ruleResult.tags[0] || null;
 
   // ==========================================================================
   // PHASE 4: WRITE RESULTS TO DATABASE
@@ -373,7 +454,7 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
     automationTag,
     lastTriagedAt: new Date(),
     status: (conv as any).status === "new" ? "in_progress" : (conv as any).status,
-    
+
     // Shopify data
     isVerifiedCustomer,
     customerConfidenceScore,
@@ -387,6 +468,55 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
   }
 
   await api.conversation.update(conversationId, updateData);
+
+  // Write aiComment audit trail (best-effort)
+  try {
+    const keySignals: string[] = [];
+    if (ruleResult.matchedRiskKeyword) keySignals.push(`risk_keyword:${ruleResult.matchedRiskKeyword}`);
+    if (ruleResult.tags?.length) keySignals.push(...ruleResult.tags.slice(0, 8));
+
+    const contentLines: string[] = [];
+    contentLines.push(`Triage completed${usedAI ? " with AI assistance" : " via rules"}:`);
+    contentLines.push(`- Category: ${finalCategory}`);
+    contentLines.push(`- Priority: ${Math.min(finalScore, 100)} (${finalBand})`);
+    contentLines.push(`- Sentiment: ${finalSentiment}`);
+    contentLines.push(`- Requires human review: ${finalRequiresHumanReview ? "yes" : "no"}`);
+    contentLines.push(`- Verified customer: ${isVerifiedCustomer ? "yes" : "no"} (confidence ${customerConfidenceScore})`);
+    if (quarantinedForUnverified) contentLines.push(`- Quarantine flag: unverified + no order number`);
+    if (keySignals.length) contentLines.push(`- Signals: ${keySignals.join(", ")}`);
+    if (usedAI && aiConfidence != null) contentLines.push(`- AI confidence: ${aiConfidence}`);
+
+    await api.internal.aiComment.create({
+      conversation: { _link: conversationId },
+      kind: "triage_rationale",
+      source: usedAI ? "triage_ai" : "triage_rules",
+      content: contentLines.join("\n"),
+      model: usedAI ? aiModelUsed : null,
+      metaJson: JSON.stringify({
+        usedAI,
+        aiConfidence,
+        aiModelUsed,
+        ruleScore: ruleResult.score,
+        finalScore: Math.min(finalScore, 100),
+        categoryRule: ruleResult.category,
+        categoryFinal: finalCategory,
+        sentimentRule: ruleResult.sentiment,
+        sentimentFinal: finalSentiment,
+        requiresHumanReviewRule: ruleResult.requiresHumanReview,
+        requiresHumanReviewFinal: finalRequiresHumanReview,
+        priorityBandFinal: finalBand,
+        automationTag,
+        tags: ruleResult.tags || [],
+        matchedRiskKeyword: ruleResult.matchedRiskKeyword,
+        isVerifiedCustomer,
+        customerConfidenceScore,
+        shopifyOrderNumbers,
+        quarantinedForUnverified,
+      }),
+    });
+  } catch (err: any) {
+    logger.warn({ conversationId, error: err?.message }, "Failed to write aiComment audit record");
+  }
 
   const result = {
     success: true,

@@ -156,68 +156,69 @@ export default function SignaturesPage() {
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-950 p-8">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-white mb-2">Email Signatures</h1>
-          <p className="text-lg text-slate-400">Manage signature templates for your emails</p>
-        </div>
+    <div className="min-h-screen bg-slate-950">
+      <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <h1 className="text-2xl font-semibold text-white">Email Signatures</h1>
+        <p className="text-sm text-slate-400 mt-1">Manage signature templates for your emails</p>
+      </div>
 
-        <div className="flex justify-end mb-6">
-          <Button
-            className="bg-amber-500 text-black hover:bg-amber-600"
-            onClick={() => setIsCreateOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Signature
-          </Button>
-        </div>
-
-        {/* Empty State */}
-        {!fetching && (signatures?.length ?? 0) === 0 && (
-          <Card className="p-8 text-center bg-zinc-950 border-zinc-800">
-            <p className="text-zinc-400">
-              No signatures yet — click “New Signature” to create one.
-            </p>
-          </Card>
-        )}
-
-        {/* List */}
-        <div className="space-y-3">
-          {signatures?.map((sig: any) => (
-            <Card
-              key={sig.id}
-              className="p-4 bg-zinc-950 border-zinc-800 flex items-start justify-between"
+      <div className="px-8 pb-8">
+        <div className="space-y-6">
+          <div className="flex justify-end mb-6">
+            <Button
+              className="bg-amber-500 text-black hover:bg-amber-600"
+              onClick={() => setIsCreateOpen(true)}
             >
-              <div>
-                <div className="font-medium">{sig.name}</div>
-                <div className="text-sm text-zinc-400 line-clamp-2">
-                  {sig.body}
-                </div>
-              </div>
+              <Plus className="h-4 w-4 mr-2" />
+              New Signature
+            </Button>
+          </div>
 
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-zinc-700"
-                  onClick={() => openEdit(sig)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-zinc-700 text-red-400"
-                  onClick={() => setDeleteConfirmId(sig.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+          {/* Empty State */}
+          {!fetching && (signatures?.length ?? 0) === 0 && (
+            <Card className="p-8 text-center bg-zinc-950 border-zinc-800">
+              <p className="text-zinc-400">
+                No signatures yet — click "New Signature" to create one.
+              </p>
             </Card>
-          ))}
+          )}
+
+          {/* List */}
+          <div className="space-y-3">
+            {signatures?.map((sig: any) => (
+              <Card
+                key={sig.id}
+                className="p-4 bg-zinc-950 border-zinc-800 flex items-start justify-between"
+              >
+                <div>
+                  <div className="font-medium">{sig.name}</div>
+                  <div className="text-sm text-zinc-400 line-clamp-2">
+                    {sig.body}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-zinc-700"
+                    onClick={() => openEdit(sig)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-zinc-700 text-red-400"
+                    onClick={() => setDeleteConfirmId(sig.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
 

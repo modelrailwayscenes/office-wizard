@@ -9,6 +9,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -19,8 +22,6 @@ import {
   ChevronDown,
   Sparkles,
   Layers,
-  Workflow,
-  CheckCircle2,
   MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
@@ -41,8 +42,8 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
   const location = useLocation();
   const user = session.user;
 
-  const [triageOpen, setTriageOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [customerServiceOpen, setCustomerServiceOpen] = useState(false);
 
   const getUserInitials = () => {
     if (user?.firstName && user?.lastName) {
@@ -89,48 +90,18 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
 
           {/* Center: Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            {/* Dashboard */}
-            <Link
-              to="/"
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/") &&
-                !isActive("/triage") &&
-                !isActive("/conversations") &&
-                !isActive("/templates") &&
-                !isActive("/signatures") &&
-                !isActive("/settings") &&
-                !isActive("/threads")
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-              }`}
-            >
-              Dashboard
-            </Link>
-
-            {/* Conversations */}
-            <Link
-              to="/conversations"
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/conversations")
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-              }`}
-            >
-              Conversations
-            </Link>
-
-            {/* Triage dropdown */}
-            <DropdownMenu open={triageOpen} onOpenChange={setTriageOpen}>
+            {/* Customer Service dropdown */}
+            <DropdownMenu open={customerServiceOpen} onOpenChange={setCustomerServiceOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive("/triage")
+                    isActive("/") || isActive("/conversations") || isActive("/threads") || isActive("/triage") || isActive("/templates") || isActive("/settings")
                       ? "bg-slate-800 text-white"
                       : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                   }`}
                 >
-                  Triage
+                  Customer Service
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -140,21 +111,15 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
               >
                 <DropdownMenuItem asChild>
                   <Link
-                    to="/triage"
+                    to="/"
                     className="cursor-pointer flex items-start gap-3 p-3"
-                    onClick={() => setTriageOpen(false)}
+                    onClick={() => setCustomerServiceOpen(false)}
                   >
                     <Layers className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-slate-50">Queue View</span>
-                        {location.pathname === "/triage" &&
-                          !location.search.includes("mode=workflow") && (
-                            <CheckCircle2 className="h-4 w-4 text-teal-400" />
-                          )}
-                      </div>
+                      <span className="font-medium text-slate-50">Dashboard</span>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Browse & search all emails
+                        Overview and quick stats
                       </p>
                     </div>
                   </Link>
@@ -162,21 +127,87 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
 
                 <DropdownMenuItem asChild>
                   <Link
-                    to="/triage?mode=workflow"
+                    to="/conversations"
                     className="cursor-pointer flex items-start gap-3 p-3"
-                    onClick={() => setTriageOpen(false)}
+                    onClick={() => setCustomerServiceOpen(false)}
                   >
-                    <Workflow className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
+                    <MessageSquare className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-slate-50">Workflow Mode</span>
-                        {location.pathname === "/triage" &&
-                          location.search.includes("mode=workflow") && (
-                            <CheckCircle2 className="h-4 w-4 text-teal-400" />
-                          )}
-                      </div>
+                      <span className="font-medium text-slate-50">Conversations</span>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Guided one-at-a-time session
+                        All email threads
+                      </p>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/threads"
+                    className="cursor-pointer flex items-start gap-3 p-3"
+                    onClick={() => setCustomerServiceOpen(false)}
+                  >
+                    <MessageSquare className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <span className="font-medium text-slate-50">Threads</span>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Debug view
+                      </p>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/triage"
+                    className="cursor-pointer flex items-start gap-3 p-3"
+                    onClick={() => setCustomerServiceOpen(false)}
+                  >
+                    <Layers className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <span className="font-medium text-slate-50">Triage</span>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Process emails
+                      </p>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="flex items-start gap-3">
+    <Layers className="mt-1 h-5 w-5 text-teal-400" />
+    <div className="flex flex-col">
+      <span className="text-base font-semibold text-white">Templates</span>
+      <span className="text-sm text-slate-400">Response templates</span>
+    </div>
+  </DropdownMenuSubTrigger>
+
+  <DropdownMenuSubContent className="w-64">
+    <DropdownMenuItem asChild>
+      <Link to="/templates" className="flex items-center gap-2">
+        <span className="text-sm font-medium">Templates</span>
+      </Link>
+    </DropdownMenuItem>
+
+    <DropdownMenuItem asChild>
+      <Link to="/signatures" className="flex items-center gap-2">
+        <span className="text-sm font-medium">Signatures</span>
+      </Link>
+    </DropdownMenuItem>
+  </DropdownMenuSubContent>
+</DropdownMenuSub>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/settings"
+                    className="cursor-pointer flex items-start gap-3 p-3"
+                    onClick={() => setCustomerServiceOpen(false)}
+                  >
+                    <Settings className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <span className="font-medium text-slate-50">Settings</span>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Configure service
                       </p>
                     </div>
                   </Link>
@@ -223,29 +254,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Settings */}
-            <Link
-              to="/settings"
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/settings")
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-              }`}
-            >
-              Settings
-            </Link>
 
-            {/* Threads (Debug) */}
-            <Link
-              to="/threads"
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/threads")
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-              }`}
-            >
-              Threads
-            </Link>
           </nav>
 
           {/* Right: Actions and User */}
@@ -333,6 +342,13 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
                   </div>
 
                   <nav className="flex flex-col gap-2">
+                    <Link to="/"
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        isActive("/") && !isActive("/triage") && !isActive("/conversations") &&
+                        !isActive("/templates") && !isActive("/signatures") && !isActive("/settings")
+                          ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                      }`}
+                    >Customer Service</Link>
                     <Link to="/"
                       className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                         isActive("/") && !isActive("/triage") && !isActive("/conversations") &&

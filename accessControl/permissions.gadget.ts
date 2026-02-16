@@ -19,6 +19,16 @@ export const permissions: GadgetPermissions = {
         actionLog: {
           read: true,
         },
+        aiComment: {
+          read: {
+            filter: "accessControl/filters/aiComment/tenant.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
         appConfiguration: {
           read: true,
           actions: {
@@ -29,6 +39,17 @@ export const permissions: GadgetPermissions = {
           read: {
             filter:
               "accessControl/filters/batchOperation/signed-in-read.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        batchOpportunity: {
+          read: {
+            filter:
+              "accessControl/filters/batchOpportunity/signed-in-read.gelly",
           },
           actions: {
             create: true,
@@ -96,7 +117,9 @@ export const permissions: GadgetPermissions = {
         },
       },
       actions: {
+        applyDraftEdits: true,
         approveQuarantinedEmail: true,
+        detectBatchOpportunities: true,
         fetchEmails: true,
         generateDraft: true,
         makeUserAdmin: true,

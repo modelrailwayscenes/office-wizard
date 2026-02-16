@@ -139,9 +139,9 @@ export default function ConversationsIndex() {
       </div>
 
       {/* Content */}
-      <div className="p-8">
+      <div className="px-8 pb-8">
         {/* Search + Filters */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-wrap gap-3 mb-6 mt-6">
 
           {/* Search bar */}
           <div className="relative flex-1 min-w-[280px]">

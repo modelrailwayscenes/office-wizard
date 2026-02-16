@@ -1,640 +1,499 @@
-import { useState, useMemo } from "react";
-import { useFindMany, useGlobalAction } from "@gadgetinc/react";
-import { api } from "../api";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { UnifiedBadge } from "@/components/UnifiedBadge";
-import { SentimentBadge } from "@/components/SentimentBadge";
-import BatchModal, { type BatchModalSubmitPayload } from "@/components/BatchModal";
-import {
-  Mail,
-  Clock,
-  User,
-  Tag,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  RefreshCw,
-  Send,
-  Archive,
-  Star,
-  CheckSquare,
-} from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router";
+import BatchReviewModal from "../components/BatchReviewModal";
 
-export default function TriageQueuePage() {
-  const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "urgent" | "pending" | "due" | "starred">("all");
-  const [generatingDraft, setGeneratingDraft] = useState(false);
-  
-  // Batch operations state
-  const [selectedConvIds, setSelectedConvIds] = useState<string[]>([]);
-  const [batchModalOpen, setBatchModalOpen] = useState(false);
+/**
+ * Triage Landing Page
+ * 
+ * Layout matches conversations page pattern:
+ * - min-h-screen bg-slate-950
+ * - Header: border-b border-slate-800 bg-slate-900/50 px-8 py-6
+ * - Content: p-8
+ * - Full width, no max-w constraint
+ * 
+ * Deploy to: /web/routes/_app.triage._index.tsx
+ */
 
-  // ── Helper: Extract order numbers from text ────────────────────────────────
-  const extractOrderNumber = (text: string): string | null => {
-    const match = text?.match(/\b(MRS|NRS)[-\s]?\d{5}\b/i);
-    return match ? match[0].replace(/\s/g, "-").toUpperCase() : null;
-  };
+// ─── Types ───────────────────────────────────────────────────────────
+interface BatchOpportunity {
+  id: string;
+  type: string;
+  label: string;
+  emailCount: number;
+  aiSuggestion: string;
+  estimatedTimeSaved: number;
+  emails: any[];
+}
 
-  // ── Helper: Get all order numbers from conversation ───────────────────────
-  const getOrderNumbers = (conv: any): string[] => {
-    const orders = new Set<string>();
-    
-    // Check subject
-    const subjectOrder = extractOrderNumber(conv.subject || "");
-    if (subjectOrder) orders.add(subjectOrder);
-    
-    // Check all messages
-    conv.messages?.edges?.forEach((edge: any) => {
-      const msg = edge?.node;
-      const bodyOrder = extractOrderNumber(msg?.bodyPreview || "");
-      if (bodyOrder) orders.add(bodyOrder);
-    });
-    
-    return Array.from(orders);
-  };
+interface RecentBatch {
+  id: string;
+  type: string;
+  label: string;
+  status: "completed" | "partial" | "failed";
+  emailCount: number;
+  sentCount: number;
+  savedCount: number;
+  errorCount: number;
+  completedAt: string;
+  timeSaved: number;
+  createdBy: string;
+}
 
-
-  const [{ data: conversationsData, fetching, error }, refresh] = useFindMany(api.conversation, {
-    filter: { status: { notEquals: "resolved" } },
-    select: {
-      id: true,
-      subject: true,
-      primaryCustomerEmail: true,
-      primaryCustomerName: true,
-      currentPriorityBand: true,
-      currentPriorityScore: true,
-      currentCategory: true,
-      status: true,
-      sentiment: true,
-      requiresHumanReview: true,
-      messageCount: true,
-      unreadCount: true,
-      firstMessageAt: true,
-      latestMessageAt: true,
-      automationTag: true,
-      aiDraftContent: true,
-      aiDraftGeneratedAt: true,
-      aiDraftModel: true,
-      messages: {
-        edges: {
-          node: {
-            id: true,
-            subject: true,
-            bodyPreview: true,
-            fromAddress: true,
-            fromName: true,
-            receivedDateTime: true,
-          },
-        },
-      },
-    },
-    sort: [{ currentPriorityScore: "Descending" }, { latestMessageAt: "Descending" }],
-  });
-
-  const conversations = conversationsData as any;
-
-  const [{ fetching: triaging }, runTriage] = useGlobalAction(api.triageAllPending);
-  const [, generateDraft] = useGlobalAction(api.generateDraft);
-
-  const handleRunTriage = async () => {
-    try {
-      const result = await runTriage({}) as any;
-      toast.success(`Triage complete! Processed: ${result.processed}`);
-      refresh();
-    } catch (err) {
-      toast.error(`Triage failed: ${err}`);
-    }
-  };
-
-  const handleGenerateDraft = async (conversationId: string, regenerate = false) => {
-    setGeneratingDraft(true);
-    try {
-      const result = await generateDraft({ conversationId, regenerate }) as any;
-      toast.success(regenerate ? "Draft regenerated!" : "Draft generated!");
-      refresh(); // Refresh to get updated draft content
-    } catch (err: any) {
-      toast.error(err.message || "Failed to generate draft");
-    } finally {
-      setGeneratingDraft(false);
-    }
-  };
-
-  // Batch operations
-  const batchItems = useMemo(() => 
-    conversations
-      ?.filter((c: any) => selectedConvIds.includes(c.id))
-      .map((c: any) => ({
-        id: c.id,
-        subject: c.subject,
-        primaryCustomerName: c.primaryCustomerName,
-        primaryCustomerEmail: c.primaryCustomerEmail,
-        currentPriorityBand: c.currentPriorityBand,
-        currentCategory: c.currentCategory,
-        automationTag: c.automationTag,
-        unreadCount: c.unreadCount,
-        hasDraft: !!c.draftMessage,
-      })) || [],
-    [conversations, selectedConvIds]
+// ─── Icon Components ─────────────────────────────────────────────────
+function QueueIcon() {
+  return (
+    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-teal-500/20">
+      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L12 12.75 6.43 9.75m11.14 0l4.179 2.25L12 17.25 2.25 12l4.179-2.25m11.142 0l4.179 2.25-4.179 2.25M6.43 14.25L2.25 16.5 12 21.75l9.75-5.25-4.179-2.25" />
+      </svg>
+    </div>
   );
+}
 
-  const handleBatchSubmit = async (payload: BatchModalSubmitPayload) => {
-    console.log("Batch action:", payload);
-    
-    try {
-      // TODO: Implement your batch operation API
-      // await api.runBatchOperation({
-      //   action: payload.action,
-      //   conversationIds: payload.conversationIds,
-      //   note: payload.note,
-      // });
-      
-      toast.success(`Batch ${payload.action} queued for ${payload.conversationIds.length} conversations`);
-      setBatchModalOpen(false);
-      setSelectedConvIds([]);
-      
-    } catch (error: any) {
-      toast.error("Batch action failed: " + error.message);
-    }
-  };
+function WorkflowIcon() {
+  return (
+    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+      </svg>
+    </div>
+  );
+}
 
-  const handleToggleSelection = (convId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedConvIds([...selectedConvIds, convId]);
-    } else {
-      setSelectedConvIds(selectedConvIds.filter(id => id !== convId));
-    }
-  };
+function CheckBullet({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 text-sm text-slate-400">
+      <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      {children}
+    </div>
+  );
+}
 
-  const handleSelectAll = () => {
-    if (selectedConvIds.length === conversations?.length) {
-      setSelectedConvIds([]);
-    } else {
-      setSelectedConvIds(conversations?.map((c: any) => c.id) || []);
-    }
-  };
-
-  const selectedConv = conversations?.find((c: any) => c.id === selectedConvId) as any;
-  const firstMessage = selectedConv?.messages?.edges?.[0]?.node as any;
-
-  // Priority counts
-  const criticalCount = conversations?.filter((c: any) => c.currentPriorityBand === "urgent").length || 0;
-  const highCount = conversations?.filter((c: any) => c.currentPriorityBand === "high").length || 0;
-  const mediumCount = conversations?.filter((c: any) => c.currentPriorityBand === "medium").length || 0;
-  const lowCount = conversations?.filter((c: any) => c.currentPriorityBand === "low").length || 0;
-  const totalQueue = conversations?.length || 0;
-
-  const getPriorityColor = (band: string | null | undefined) => {
-    switch (band) {
-      case "urgent":
-        return "text-red-400 border-red-500/30 bg-red-500/10";
-      case "high":
-        return "text-orange-400 border-orange-500/30 bg-orange-500/10";
-      case "medium":
-        return "text-teal-400 border-teal-500/30 bg-teal-500/10";
-      case "low":
-        return "text-green-400 border-green-500/30 bg-green-500/10";
-      case "unclassified":
-        return "text-slate-400 border-slate-500/30 bg-slate-500/10";
-      default:
-        return "text-slate-400 border-slate-500/30 bg-slate-500/10";
-    }
-  };
-
-  const getPriorityLabel = (band: string | null | undefined) => {
-    switch (band) {
-      case "urgent": return "URGENT";
-      case "high": return "HIGH";
-      case "medium": return "MEDIUM";
-      case "low": return "LOW";
-      case "unclassified": return "UNCLASSIFIED";
-      default: return "UNCLASSIFIED";
-    }
-  };
-
-  const getSentimentBadge = (sentiment: string | null | undefined) => {
-    if (!sentiment) return { 
-      label: "NEUTRAL", 
-      style: { backgroundColor: "#4a3600", color: "#ffffff", border: "1px solid #5a4600" } 
-    };
-    
-    const lower = sentiment.toLowerCase();
-    
-    // 5-level sentiment system with custom colors
-    if (lower.includes("very_negative") || lower.includes("very negative")) {
-      return { label: "VERY NEGATIVE", style: { backgroundColor: "#6e1111", color: "#ffffff", border: "1px solid #8e1111" } };
-    }
-    if (lower.includes("negative")) {
-      return { label: "NEGATIVE", style: { backgroundColor: "#5e2800", color: "#ffffff", border: "1px solid #7e3800" } };
-    }
-    if (lower.includes("very_positive") || lower.includes("very positive")) {
-      return { label: "VERY POSITIVE", style: { backgroundColor: "#17440c", color: "#ffffff", border: "1px solid #27540c" } };
-    }
-    if (lower.includes("positive")) {
-      return { label: "POSITIVE", style: { backgroundColor: "#333f00", color: "#ffffff", border: "1px solid #434f00" } };
-    }
-    
-    return { label: "NEUTRAL", style: { backgroundColor: "#4a3600", color: "#ffffff", border: "1px solid #5a4600" } };
-  };
-
-  const formatTime = (date: string | null | undefined) => {
-    if (!date) return "—";
-    const d = new Date(date);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return d.toLocaleDateString();
+// ─── Batch Opportunity Card ──────────────────────────────────────────
+function BatchOpportunityCard({
+  opportunity,
+  onClick,
+}: {
+  opportunity: BatchOpportunity;
+  onClick: () => void;
+}) {
+  const typeIcons: Record<string, React.ReactNode> = {
+    tracking: (
+      <svg className="w-5 h-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+      </svg>
+    ),
+    refund: (
+      <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+      </svg>
+    ),
+    product_question: (
+      <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+      </svg>
+    ),
+    general: (
+      <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+      </svg>
+    ),
   };
 
   return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-4 bg-slate-800/50 border border-slate-700 rounded-xl p-4 hover:bg-slate-800/70 hover:border-teal-500/30 transition-all group text-left"
+    >
+      <div className="w-10 h-10 bg-slate-800 border border-slate-700/50 rounded-lg flex items-center justify-center shrink-0 group-hover:border-teal-500/30">
+        {typeIcons[opportunity.type] || typeIcons.general}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-slate-100 text-sm">{opportunity.label}</p>
+        <p className="text-xs text-slate-500 mt-0.5">
+          {opportunity.emailCount} similar emails detected – review each before sending
+        </p>
+      </div>
+      <div className="text-right shrink-0 flex items-center gap-3">
+        <div>
+          <p className="text-[10px] text-slate-500 uppercase tracking-wide">Time Saved</p>
+          <p className="text-lg font-bold text-emerald-400">{opportunity.estimatedTimeSaved} minutes</p>
+        </div>
+        <svg className="w-5 h-5 text-slate-600 group-hover:text-teal-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </div>
+    </button>
+  );
+}
+
+// ─── Recent Batch Row ────────────────────────────────────────────────
+function RecentBatchRow({ batch }: { batch: RecentBatch }) {
+  const statusColors: Record<string, string> = {
+    completed: "bg-emerald-500/20 text-emerald-400",
+    partial: "bg-amber-500/20 text-amber-400",
+    failed: "bg-red-500/20 text-red-400",
+  };
+  const statusLabels: Record<string, string> = {
+    completed: "Completed",
+    partial: "Partial",
+    failed: "Failed",
+  };
+
+  function formatDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffHours = Math.floor(diffMs / 3600000);
+    if (diffHours < 1) return "Just now";
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }
+
+  return (
+    <div className="flex items-center gap-4 px-4 py-3 border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-200">{batch.label}</span>
+          <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${statusColors[batch.status]}`}>
+            {statusLabels[batch.status]}
+          </span>
+        </div>
+        <p className="text-xs text-slate-500 mt-0.5">
+          {batch.sentCount} sent · {batch.savedCount} saved as draft
+          {batch.errorCount > 0 && ` · ${batch.errorCount} errors`}
+          {" · "}{formatDate(batch.completedAt)}
+        </p>
+      </div>
+      <div className="text-right shrink-0">
+        <span className="text-sm font-semibold text-emerald-400">{batch.timeSaved}m saved</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page Component ─────────────────────────────────────────────
+export default function TriageLandingPage() {
+  const navigate = useNavigate();
+
+  const [batchOpportunities, setBatchOpportunities] = useState<BatchOpportunity[]>([]);
+  const [recentBatches, setRecentBatches] = useState<RecentBatch[]>([]);
+  const [selectedBatch, setSelectedBatch] = useState<BatchOpportunity | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // TODO: Replace with actual Gadget API calls
+        setBatchOpportunities([
+          {
+            id: "batch-1",
+            type: "tracking",
+            label: "Tracking Requests",
+            emailCount: 7,
+            aiSuggestion: "Send tracking template to all",
+            estimatedTimeSaved: 12,
+            emails: [
+              {
+                id: "e1",
+                conversationId: "conv-1",
+                customerName: "John Smith",
+                customerEmail: "john@example.com",
+                orderId: "#MRS-5001",
+                priority: "P2",
+                receivedAt: new Date(Date.now() - 3 * 3600000).toISOString(),
+                originalSubject: "Tracking number for order #MRS-5001",
+                originalBody: "Hi there,\n\nI placed order #MRS-5001 about a week ago and haven't received any tracking information yet. Could you send me the tracking number?\n\nThanks,\nJohn Smith",
+                aiResponse: "Dear John,\n\nThank you for contacting Model Railway Scenes.\n\nYour order #MRS-5001 was dispatched on 28th January via Royal Mail Tracked 48 (tracking: RM111222333GB).\n\nYou can track your delivery at:\nhttps://track.royalmail.com/RM111222333GB\n\nExpected delivery: Tomorrow (2nd February)\n\nIf you have any questions, please don't hesitate to contact us.",
+                aiAnalysis: { request: "Tracking number", orderId: "#MRS-5001", tone: "Polite", urgency: "Low" },
+                hasDraft: true,
+                status: "pending",
+              },
+              {
+                id: "e2",
+                conversationId: "conv-2",
+                customerName: "Mary Wilson",
+                customerEmail: "mary@example.com",
+                orderId: "#MRS-5008",
+                priority: "P2",
+                receivedAt: new Date(Date.now() - 5 * 3600000).toISOString(),
+                originalSubject: "Where is my order?",
+                originalBody: "Hello,\n\nCould you please let me know the status of order #MRS-5008? I ordered last week.\n\nBest regards,\nMary Wilson",
+                aiResponse: "Dear Mary,\n\nThank you for getting in touch about your order.\n\nYour order #MRS-5008 was dispatched on 29th January via Royal Mail Tracked 48 (tracking: RM444555666GB).\n\nYou can track it here:\nhttps://track.royalmail.com/RM444555666GB\n\nExpected delivery: Monday (3rd February)\n\nPlease let us know if you need anything else.",
+                aiAnalysis: { request: "Tracking number", orderId: "#MRS-5008", tone: "Polite", urgency: "Low" },
+                hasDraft: true,
+                status: "pending",
+              },
+              {
+                id: "e3",
+                conversationId: "conv-3",
+                customerName: "Tom Brown",
+                customerEmail: "tom@example.com",
+                orderId: "#MRS-5012",
+                priority: "P2",
+                receivedAt: new Date(Date.now() - 7 * 3600000).toISOString(),
+                originalSubject: "Tracking info please",
+                originalBody: "Hi,\n\nI haven't received any dispatch notification for order #MRS-5012. Can you confirm it's been sent?\n\nThanks,\nTom Brown",
+                aiResponse: "Dear Tom,\n\nThanks for reaching out.\n\nYour order #MRS-5012 was dispatched yesterday via Royal Mail Tracked 48 (tracking: RM777888999GB).\n\nTrack your delivery:\nhttps://track.royalmail.com/RM777888999GB\n\nExpected delivery: Tuesday (4th February)\n\nDon't hesitate to get in touch if you have any questions.",
+                aiAnalysis: { request: "Tracking number", orderId: "#MRS-5012", tone: "Neutral", urgency: "Low" },
+                hasDraft: true,
+                status: "pending",
+              },
+              {
+                id: "e4",
+                conversationId: "conv-4",
+                customerName: "Lisa Anderson",
+                customerEmail: "lisa@example.com",
+                orderId: "#MRS-5015",
+                priority: "P3",
+                receivedAt: new Date(Date.now() - 24 * 3600000).toISOString(),
+                originalSubject: "Order dispatch?",
+                originalBody: "Good morning,\n\nJust wondering if my order #MRS-5015 has been dispatched yet?\n\nKind regards,\nLisa Anderson",
+                aiResponse: "Dear Lisa,\n\nThank you for your patience.\n\nYour order #MRS-5015 was dispatched on 27th January via Royal Mail Tracked 48 (tracking: RM123456789GB).\n\nYou can track your delivery at:\nhttps://track.royalmail.com/RM123456789GB\n\nPlease allow 2-3 working days for delivery.\n\nBest wishes.",
+                aiAnalysis: { request: "Tracking number", orderId: "#MRS-5015", tone: "Polite", urgency: "Low" },
+                hasDraft: true,
+                status: "pending",
+              },
+            ],
+          },
+          {
+            id: "batch-2",
+            type: "refund",
+            label: "Refund Requests",
+            emailCount: 3,
+            aiSuggestion: "Process refunds and send confirmation",
+            estimatedTimeSaved: 8,
+            emails: [],
+          },
+          {
+            id: "batch-3",
+            type: "product_question",
+            label: "Product Availability",
+            emailCount: 4,
+            aiSuggestion: "Send stock update template",
+            estimatedTimeSaved: 6,
+            emails: [],
+          },
+        ]);
+
+        setRecentBatches([
+          {
+            id: "rb-1",
+            type: "tracking",
+            label: "Tracking Requests",
+            status: "completed",
+            emailCount: 5,
+            sentCount: 5,
+            savedCount: 0,
+            errorCount: 0,
+            completedAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+            timeSaved: 9,
+            createdBy: "Peter A",
+          },
+          {
+            id: "rb-2",
+            type: "refund",
+            label: "Refund Confirmations",
+            status: "partial",
+            emailCount: 4,
+            sentCount: 3,
+            savedCount: 1,
+            errorCount: 0,
+            completedAt: new Date(Date.now() - 26 * 3600000).toISOString(),
+            timeSaved: 7,
+            createdBy: "Peter A",
+          },
+          {
+            id: "rb-3",
+            type: "tracking",
+            label: "Tracking Requests",
+            status: "completed",
+            emailCount: 8,
+            sentCount: 8,
+            savedCount: 0,
+            errorCount: 0,
+            completedAt: new Date(Date.now() - 50 * 3600000).toISOString(),
+            timeSaved: 14,
+            createdBy: "Peter A",
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleOpenBatch = useCallback((batch: BatchOpportunity) => {
+    setSelectedBatch(batch);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleSendAll = useCallback(async (emailIds: string[], batchId: string) => {
+    console.log("Sending batch:", { batchId, emailIds });
+    setIsModalOpen(false);
+    setSelectedBatch(null);
+  }, []);
+
+  const handleSaveDrafts = useCallback(async (emailIds: string[], batchId: string) => {
+    console.log("Saving drafts:", { batchId, emailIds });
+    setIsModalOpen(false);
+    setSelectedBatch(null);
+  }, []);
+
+  const handleRegenerateResponse = useCallback(async (emailId: string) => {
+    console.log("Regenerating response for:", emailId);
+    return "Regenerated response...";
+  }, []);
+
+  const totalOpportunities = batchOpportunities.reduce((sum, b) => sum + b.emailCount, 0);
+  const totalTimeSaved = batchOpportunities.reduce((sum, b) => sum + b.estimatedTimeSaved, 0);
+  const historicalTimeSaved = recentBatches.reduce((sum, b) => sum + b.timeSaved, 0);
+
+  return (
     <div className="min-h-screen bg-slate-950">
-      {/* UPDATED HEADER - Consistent padding and structure */}
+      {/* Header - matches Dashboard and Settings Summary styling */}
       <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-white">Triage Queue</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Browse and search all emails with a flexible approach to triage
+        <h1 className="text-2xl font-semibold text-white">Triage</h1>
+        <p className="text-sm text-slate-400 mt-1">
+          Choose your workflow and get started
+        </p>
+      </div>
+
+      {/* Content - full width, horizontal padding only */}
+      <div className="px-8 pb-8 pt-6">
+        {/* Workflow Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Queue View */}
+          <button
+            onClick={() => navigate("/triage/queue")}
+            className="text-left p-6 bg-slate-800/50 border border-slate-700 rounded-xl hover:bg-slate-800/70 hover:border-teal-500/30 transition-all group"
+          >
+            <QueueIcon />
+            <h3 className="text-lg font-bold text-slate-100 mt-4 mb-1">Queue View</h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Browse, search, and manage all emails with full flexibility
             </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-teal-400 border-teal-500/30 bg-teal-500/10">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              {conversations?.filter((c: any) => c.requiresHumanReview).length || 0} DRAFTS PENDING
-            </Badge>
-            {selectedConvIds.length > 0 && (
-              <Button
-                onClick={() => setBatchModalOpen(true)}
-                variant="outline"
-                className="border-slate-700 hover:bg-slate-800"
+            <div className="space-y-2">
+              <CheckBullet>Search &amp; filter all emails</CheckBullet>
+              <CheckBullet>Multi-select &amp; bulk actions</CheckBullet>
+              <CheckBullet>Jump to any email</CheckBullet>
+            </div>
+          </button>
+
+          {/* Workflow Mode */}
+          <button
+            onClick={() => navigate("/triage/workflow")}
+            className="text-left p-6 bg-slate-800/50 border border-slate-700 rounded-xl hover:bg-slate-800/70 hover:border-purple-500/30 transition-all group"
+          >
+            <WorkflowIcon />
+            <h3 className="text-lg font-bold text-slate-100 mt-4 mb-1">Workflow Mode</h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Guided session to power through your queue efficiently
+            </p>
+            <div className="space-y-2">
+              <CheckBullet>One-at-a-time focus</CheckBullet>
+              <CheckBullet>Auto-prioritized by urgency</CheckBullet>
+              <CheckBullet>Session tracking &amp; stats</CheckBullet>
+            </div>
+          </button>
+        </div>
+
+        {/* Batch Opportunities */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-white">Batch Opportunities</h2>
+              {totalOpportunities > 0 && (
+                <p className="text-sm text-slate-400 mt-1">
+                  {totalOpportunities} emails across {batchOpportunities.length} groups · Est. {totalTimeSaved} minutes saved
+                </p>
+              )}
+            </div>
+            {recentBatches.length > 0 && (
+              <button
+                onClick={() => navigate("/triage/history")}
+                className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
               >
-                <CheckSquare className="h-4 w-4 mr-2" />
-                Batch Actions ({selectedConvIds.length})
-              </Button>
+                View history →
+              </button>
             )}
-            <Button
-              onClick={handleRunTriage}
-              disabled={triaging}
-              className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
-            >
-              {triaging ? "Running..." : "Run Triage"}
-            </Button>
-            <Button onClick={refresh} variant="outline" className="border-slate-700 hover:bg-slate-800">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="px-8 py-4 border-b border-slate-800">
-        <Input
-          placeholder="Search by customer, order ID, subject, or keywords..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
-        />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex flex-1 h-[calc(100vh-180px)]">
-        {/* Left List */}
-        <div className="w-1/2 border-r border-slate-800 overflow-y-auto">
-          {/* Quick Filters */}
-          <div className="flex gap-2 p-4 border-b border-slate-800 bg-slate-900/30">
-            <Button
-              variant={activeTab === "all" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("all")}
-              className={activeTab === "all" ? "bg-teal-500 hover:bg-teal-600 text-black" : ""}
-            >
-              ALL ({totalQueue})
-            </Button>
-            <Button
-              variant={activeTab === "urgent" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("urgent")}
-              className={activeTab === "urgent" ? "bg-red-500 hover:bg-red-600 text-black" : ""}
-            >
-              URGENT ({criticalCount})
-            </Button>
-            <Button
-              variant={activeTab === "pending" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("pending")}
-              className={activeTab === "pending" ? "bg-amber-500 hover:bg-amber-600 text-black" : ""}
-            >
-              PENDING
-            </Button>
           </div>
 
-          {/* Conversation List */}
-          <div className="divide-y divide-slate-800">
-            {conversations?.length === 0 && (
-              <div className="p-8 text-center text-slate-500">
-                No conversations to triage
-              </div>
-            )}
-            {conversations
-              ?.filter((c: any) => {
-                if (!searchQuery) return true;
-                const q = searchQuery.toLowerCase();
-                return (
-                  c.subject?.toLowerCase().includes(q) ||
-                  c.primaryCustomerEmail?.toLowerCase().includes(q) ||
-                  c.primaryCustomerName?.toLowerCase().includes(q) ||
-                  getOrderNumbers(c).some(o => o.toLowerCase().includes(q))
-                );
-              })
-              ?.map((conv: any) => (
-                <div
-                  key={conv.id}
-                  className={`p-4 hover:bg-slate-900/50 transition-colors ${
-                    selectedConvId === conv.id ? "bg-slate-900/80 border-l-2 border-teal-500" : ""
-                  }`}
-                >
-                  {/* Row 1: Checkbox + Priority + Subject */}
-                  <div className="flex items-start gap-2 mb-2">
-                    <Checkbox
-                      checked={selectedConvIds.includes(conv.id)}
-                      onCheckedChange={(checked) => handleToggleSelection(conv.id, checked as boolean)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-0.5"
-                    />
-                    <UnifiedBadge 
-                      type={conv.currentPriorityBand} 
-                      label={getPriorityLabel(conv.currentPriorityBand)} 
-                    />
-                    <div 
-                      className="flex-1 min-w-0 cursor-pointer"
-                      onClick={() => setSelectedConvId(conv.id)}
-                    >
-                      <div className="text-white font-medium truncate">{conv.subject || "(No subject)"}</div>
-                    </div>
-                    {conv.requiresHumanReview && (
-                      <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />
-                    )}
-                  </div>
-
-                  {/* Row 2: Customer Email */}
-                  <div className="text-sm text-slate-400 truncate mb-2 flex items-center gap-2">
-                    <User className="h-3 w-3" />
-                    {conv.primaryCustomerEmail || conv.primaryCustomerName || "Unknown"}
-                  </div>
-
-                  {/* Row 3: Metadata */}
-                  <div className="flex items-center gap-2 text-xs">
-                    <SentimentBadge sentiment={conv.sentiment} />
-                    <Separator orientation="vertical" className="h-4" />
-                    <Clock className="h-3 w-3 text-slate-500" />
-                    <span className="text-slate-500">{formatTime(conv.latestMessageAt)}</span>
-                    {getOrderNumbers(conv).length > 0 && (
-                      <>
-                        <Separator orientation="vertical" className="h-4" />
-                        <Tag className="h-3 w-3 text-teal-400" />
-                        <span className="text-teal-400">{getOrderNumbers(conv)[0]}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12 text-slate-500">
+              <svg className="w-5 h-5 animate-spin mr-2" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Scanning for batch opportunities...
+            </div>
+          ) : batchOpportunities.length > 0 ? (
+            <div className="space-y-3">
+              {batchOpportunities.map((opp) => (
+                <BatchOpportunityCard
+                  key={opp.id}
+                  opportunity={opp}
+                  onClick={() => handleOpenBatch(opp)}
+                />
               ))}
-          </div>
-        </div>
-
-        {/* Right Panel - Details */}
-        <div className="w-1/2 overflow-y-auto">
-          {!selectedConv ? (
-            <div className="flex items-center justify-center h-full text-slate-500">
-              Select a conversation to view details
             </div>
           ) : (
-            <div className="p-6 space-y-6">
-              {/* Conversation Header */}
-              <div>
-                <h2 className="text-xl font-semibold text-white mb-2">{selectedConv.subject || "(No subject)"}</h2>
-                <div className="text-sm text-slate-400 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <span>{selectedConv.primaryCustomerName || selectedConv.primaryCustomerEmail || "Unknown"}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    <span>{selectedConv.primaryCustomerEmail || "—"}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Stats Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <div className="text-xs text-slate-500 mb-1">PRIORITY</div>
-                  <div>
-                    <UnifiedBadge 
-                      type={selectedConv.currentPriorityBand} 
-                      label={getPriorityLabel(selectedConv.currentPriorityBand)} 
-                    />
-                  </div>
-                </Card>
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <div className="text-xs text-slate-500 mb-1">CATEGORY</div>
-                  <div className="text-sm text-white">{(selectedConv.currentCategory || "UNCLASSIFIED").toUpperCase()}</div>
-                </Card>
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <div className="text-xs text-slate-500 mb-1">FIRST MESSAGE</div>
-                  <div className="text-sm text-white">{formatTime(selectedConv.firstMessageAt)}</div>
-                </Card>
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <div className="text-xs text-slate-500 mb-1">LAST ACTIVITY</div>
-                  <div className="text-sm text-white">{formatTime(selectedConv.latestMessageAt)}</div>
-                </Card>
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <div className="text-xs text-slate-500 mb-1">MESSAGES</div>
-                  <div className="text-sm text-white">{selectedConv.messageCount || 1}</div>
-                </Card>
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <div className="text-xs text-slate-500 mb-1">UNREAD</div>
-                  <div className="text-sm text-white">{selectedConv.unreadCount || 0}</div>
-                </Card>
-              </div>
-
-              {/* Sentiment & Confidence */}
-              <div className="grid grid-cols-3 gap-4">
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <div className="text-xs text-slate-500 mb-2">SENTIMENT</div>
-                  <div>
-                    <SentimentBadge sentiment={selectedConv.sentiment} />
-                  </div>
-                </Card>
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <div className="text-xs text-slate-500 mb-2">CONFIDENCE</div>
-                  <div className="text-2xl font-bold text-teal-400">92%</div>
-                </Card>
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <div className="text-xs text-slate-500 mb-2">ACTION</div>
-                  <div>
-                    <UnifiedBadge 
-                      type={selectedConv.automationTag || selectedConv.currentCategory || "review"} 
-                      label={(selectedConv.automationTag || selectedConv.currentCategory || "REVIEW").toUpperCase()} 
-                    />
-                  </div>
-                </Card>
-              </div>
-
-              {/* Order Tags */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {getOrderNumbers(selectedConv).map((orderNum, idx) => (
-                  <Badge key={idx} variant="outline" className="text-teal-400 border-teal-500/30 bg-teal-500/10">
-                    <Tag className="h-3 w-3 mr-1" />
-                    {orderNum}
-                  </Badge>
-                ))}
-                {getOrderNumbers(selectedConv).length === 0 && (
-                  <Badge variant="outline" className="text-slate-400 border-slate-500/30 bg-slate-500/10">
-                    <Tag className="h-3 w-3 mr-1" />
-                    NO ORDER NUMBER FOUND
-                  </Badge>
-                )}
-              </div>
-
-              {/* Customer History */}
-              <Card className="bg-slate-900/50 border-slate-800 p-4">
-                <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  MESSAGE TIMELINE ({selectedConv.messageCount || 0})
-                </h3>
-                <div className="space-y-3 text-sm max-h-60 overflow-y-auto">
-                  {selectedConv.messages?.edges?.length > 0 ? (
-                    selectedConv.messages.edges.map((edge: any, idx: number) => {
-                      const msg = edge?.node;
-                      if (!msg) return null;
-                      return (
-                        <div key={msg.id || idx} className="flex items-start gap-3 pb-3 border-b border-slate-800/50 last:border-0">
-                          <Mail className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-white font-medium truncate">{msg.subject || "(No subject)"}</div>
-                            <div className="text-slate-400 text-xs truncate">{msg.fromAddress || msg.fromName}</div>
-                            <div className="text-slate-500 text-xs mt-1">{formatTime(msg.receivedDateTime)}</div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-slate-500 text-center py-4">No message history available</div>
-                  )}
-                </div>
-              </Card>
-
-              {/* Original Message */}
-              <Card className="bg-slate-900/50 border-slate-800 p-4">
-                <h3 className="text-sm font-medium text-slate-300 mb-3">ORIGINAL MESSAGE</h3>
-                <div className="text-sm text-slate-400 leading-relaxed">
-                  {firstMessage?.bodyPreview || "No message content available"}
-                </div>
-              </Card>
-
-              {/* AI-Generated Response */}
-              <Card className="bg-slate-900/50 border-slate-800 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                    <Send className="h-4 w-4" />
-                    AI-GENERATED RESPONSE
-                  </h3>
-                  {selectedConv.aiDraftGeneratedAt ? (
-                    <Badge variant="outline" className="text-teal-400 border-teal-500/30 bg-teal-500/10">
-                      READY TO REVIEW
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-slate-400 border-slate-500/30 bg-slate-500/10">
-                      NOT GENERATED
-                    </Badge>
-                  )}
-                </div>
-                
-                {selectedConv.aiDraftContent ? (
-                  <>
-                    <div className="text-sm text-white leading-relaxed bg-slate-950/50 p-4 rounded-lg border border-slate-700 mb-4 whitespace-pre-wrap">
-                      Dear {selectedConv.primaryCustomerName || "Customer"},
-                      {"\n\n"}
-                      {selectedConv.aiDraftContent}
-                      {"\n\n"}
-                      Best regards,
-                      {"\n"}
-                      Model Railway Scenes Team
-                    </div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-xs text-slate-500">
-                        Generated {formatTime(selectedConv.aiDraftGeneratedAt)} using {selectedConv.aiDraftModel || "Claude"}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 border-slate-700 hover:bg-slate-800"
-                        onClick={() => handleGenerateDraft(selectedConv.id, true)}
-                        disabled={generatingDraft}
-                      >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${generatingDraft ? "animate-spin" : ""}`} />
-                        {generatingDraft ? "Regenerating..." : "Regenerate"}
-                      </Button>
-                      <Button className="flex-1 bg-teal-500 hover:bg-teal-600 text-black font-medium">
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Draft
-                      </Button>
-                      <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
-                        <Archive className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-sm text-slate-400 leading-relaxed bg-slate-950/50 p-4 rounded-lg border border-slate-700 mb-4 text-center py-8">
-                      No draft generated yet. Click the button below to generate an AI-powered response.
-                    </div>
-                    <Button 
-                      className="w-full bg-teal-500 hover:bg-teal-600 text-black font-medium"
-                      onClick={() => handleGenerateDraft(selectedConv.id, false)}
-                      disabled={generatingDraft}
-                    >
-                      {generatingDraft ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Generating Draft...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4 mr-2" />
-                          Generate AI Draft
-                        </>
-                      )}
-                    </Button>
-                  </>
-                )}
-              </Card>
+            <div className="text-center py-8 text-slate-500 bg-slate-800/50 border border-slate-700 rounded-xl">
+              <svg className="w-8 h-8 mx-auto mb-2 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm">No batch opportunities right now</p>
+              <p className="text-xs text-slate-600 mt-1">AI will detect groups as new emails arrive</p>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Batch Modal */}
-      <BatchModal
-        open={batchModalOpen}
-        onOpenChange={setBatchModalOpen}
-        items={batchItems}
-        onSubmit={handleBatchSubmit}
-        loading={false}
-      />
+          <p className="text-center text-xs text-slate-600 mt-3">
+            Click a batch to review individual emails before sending
+          </p>
+        </div>
+
+        {/* Recent Batch History */}
+        {recentBatches.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-2xl font-semibold text-white">Recent Batches</h2>
+              <span className="text-xs text-emerald-400 font-medium">
+                {historicalTimeSaved}m total saved
+              </span>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+              {recentBatches.map((batch) => (
+                <RecentBatchRow key={batch.id} batch={batch} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Batch Review Modal */}
+        {selectedBatch && (
+          <BatchReviewModal
+            batch={selectedBatch}
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setSelectedBatch(null);
+            }}
+            onSendAll={handleSendAll}
+            onSaveDrafts={handleSaveDrafts}
+            onRegenerateResponse={handleRegenerateResponse}
+          />
+        )}
+      </div>
     </div>
   );
 }

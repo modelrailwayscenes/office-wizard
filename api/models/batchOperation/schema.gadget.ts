@@ -9,6 +9,17 @@ export const schema: GadgetModel = {
   comment:
     "This model tracks batch operations on multiple emails, such as sending tracking requests or resolving delivery issues, and provides insights into the operation's characteristics and relationships with other models.",
   fields: {
+    action: {
+      type: "string",
+      validations: { required: true },
+      storageKey: "4eyDxoClDKmq",
+      searchIndex: false,
+    },
+    batchId: {
+      type: "string",
+      validations: { required: true, unique: true },
+      storageKey: "io5l7JWjk7Ck",
+    },
     batchType: {
       type: "string",
       validations: { required: true },
@@ -32,6 +43,11 @@ export const schema: GadgetModel = {
       },
       storageKey: "e6YledhWAs8a",
     },
+    createdBy: {
+      type: "string",
+      storageKey: "WsUQgOK_u_lr",
+      searchIndex: false,
+    },
     emailCount: {
       type: "number",
       decimals: 0,
@@ -41,15 +57,45 @@ export const schema: GadgetModel = {
       },
       storageKey: "E70lysNSHGdw",
     },
+    errorCount: {
+      type: "number",
+      default: 0,
+      decimals: 0,
+      validations: { numberRange: { min: 0, max: null } },
+      storageKey: "yHECaf66jprO",
+      searchIndex: false,
+    },
+    label: {
+      type: "string",
+      validations: { required: true },
+      storageKey: "gDZbxQqkvrL6",
+    },
+    notes: {
+      type: "string",
+      storageKey: "1Zjj-eVwLHC_",
+      filterIndex: false,
+    },
+    status: {
+      type: "string",
+      default: "in_progress",
+      validations: { required: true },
+      storageKey: "VyMkPac-xq-O",
+      searchIndex: false,
+    },
     templateUsed: { type: "string", storageKey: "V-D-aeHqbkWc" },
     timeSaved: {
       type: "string",
       storageKey: "PNbCOuqoZEHz",
       searchIndex: false,
     },
+    type: {
+      type: "string",
+      validations: { required: true },
+      storageKey: "bcieMVOHltdA",
+      searchIndex: false,
+    },
     user: {
       type: "belongsTo",
-      validations: { required: true },
       parent: { model: "user" },
       storageKey: "2hQTyGAkqWWk",
     },

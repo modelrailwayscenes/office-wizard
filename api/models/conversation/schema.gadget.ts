@@ -17,6 +17,7 @@ export const schema: GadgetModel = {
       },
       storageKey: "2pHFV0OCnjEV",
     },
+    aiClassification: { type: "string", storageKey: "fHa1qtBvsp6t" },
     aiDraftContent: {
       type: "string",
       storageKey: "t2aXBgpwbya9",
@@ -29,10 +30,21 @@ export const schema: GadgetModel = {
       searchIndex: false,
     },
     aiDraftModel: { type: "string", storageKey: "43t_evo2K5Xt" },
+    aiGeneratedResponse: {
+      type: "string",
+      storageKey: "SYD2xMTvqHKj",
+      searchIndex: false,
+    },
     alertSeverity: {
       type: "string",
       validations: { regex: ["^(low|medium|high)$"] },
       storageKey: "EHwLsOO9PgBG",
+    },
+    archivedAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "dWPEmPddcBs3",
+      searchIndex: false,
     },
     assignedTo: { type: "email", storageKey: "UAtvUD0VlqBj" },
     autoResolved: {
@@ -45,6 +57,17 @@ export const schema: GadgetModel = {
       type: "belongsTo",
       parent: { model: "batchOperation" },
       storageKey: "OwdU86rc1RsZ",
+      searchIndex: false,
+    },
+    batchOpportunity: {
+      type: "belongsTo",
+      parent: { model: "batchOpportunity" },
+      storageKey: "2Et8bTkrl46F",
+      searchIndex: false,
+    },
+    batchResultStatus: {
+      type: "string",
+      storageKey: "WcOZAOxEbHTI",
       searchIndex: false,
     },
     category: {
