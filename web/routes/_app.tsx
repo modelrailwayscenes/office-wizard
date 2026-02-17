@@ -9,9 +9,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -19,12 +16,7 @@ import {
   LogOut,
   Settings,
   Keyboard,
-  ChevronDown,
-  Sparkles,
-  Layers,
-  MessageSquare,
 } from "lucide-react";
-import { useState } from "react";
 
 export type AuthOutletContext = {
   user: any;
@@ -37,13 +29,25 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
   return { session: { user } };
 };
 
+// ── Module definitions ──────────────────────────────────────────────
+const modules = [
+  {
+    id: "customer",
+    label: "Customer",
+    path: "/",
+    // Any path starting with these counts as "in this module"
+    activePaths: ["/", "/conversations", "/threads", "/triage", "/templates", "/signatures", "/settings"],
+  },
+  { id: "finance",   label: "Finance",   path: "/finance",   activePaths: ["/finance"] },
+  { id: "it",        label: "IT",        path: "/it",        activePaths: ["/it"] },
+  { id: "sales",     label: "Sales",     path: "/sales",     activePaths: ["/sales"] },
+  { id: "marketing", label: "Marketing", path: "/marketing", activePaths: ["/marketing"] },
+];
+
 export default function AppLayout({ loaderData }: Route.ComponentProps) {
   const { session } = loaderData;
   const location = useLocation();
   const user = session.user;
-
-  const [templatesOpen, setTemplatesOpen] = useState(false);
-  const [customerServiceOpen, setCustomerServiceOpen] = useState(false);
 
   const getUserInitials = () => {
     if (user?.firstName && user?.lastName) {
@@ -58,9 +62,16 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
     return "U";
   };
 
-  const isActive = (path: string) => {
-    if (path === "/") return location.pathname === "/";
-    return location.pathname.startsWith(path);
+  const isModuleActive = (mod: typeof modules[0]) => {
+    const path = location.pathname;
+    // Special case: "/" should only match exactly "/" for the customer module
+    // but customer module also matches all its sub-paths
+    if (mod.id === "customer") {
+      return mod.activePaths.some((ap) =>
+        ap === "/" ? path === "/" : path.startsWith(ap)
+      );
+    }
+    return mod.activePaths.some((ap) => path.startsWith(ap));
   };
 
   return (
@@ -88,173 +99,25 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
             </div>
           </Link>
 
-          {/* Center: Navigation */}
+          {/* Center: Module Buttons */}
           <nav className="hidden md:flex items-center gap-1">
-            {/* Customer Service dropdown */}
-            <DropdownMenu open={customerServiceOpen} onOpenChange={setCustomerServiceOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive("/") || isActive("/conversations") || isActive("/threads") || isActive("/triage") || isActive("/templates") || isActive("/settings")
-                      ? "bg-slate-800 text-white"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                  }`}
-                >
-                  Customer
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="bg-slate-900 border-slate-800 w-64"
-                align="start"
-              >
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/"
-                    className="cursor-pointer flex items-start gap-3 p-3"
-                    onClick={() => setCustomerServiceOpen(false)}
+            {modules.map((mod) => {
+              const active = isModuleActive(mod);
+              return (
+                <Link key={mod.id} to={mod.path}>
+                  <Button
+                    variant="ghost"
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      active
+                        ? "bg-teal-500/15 text-teal-400 border border-teal-500/30"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    }`}
                   >
-                    <Layers className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="font-medium text-slate-50">Dashboard</span>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Overview and quick stats
-                      </p>
-                    </div>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/conversations"
-                    className="cursor-pointer flex items-start gap-3 p-3"
-                    onClick={() => setCustomerServiceOpen(false)}
-                  >
-                    <MessageSquare className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="font-medium text-slate-50">Conversations</span>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        All email threads
-                      </p>
-                    </div>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/threads"
-                    className="cursor-pointer flex items-start gap-3 p-3"
-                    onClick={() => setCustomerServiceOpen(false)}
-                  >
-                    <MessageSquare className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="font-medium text-slate-50">Threads</span>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Debug view
-                      </p>
-                    </div>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/triage"
-                    className="cursor-pointer flex items-start gap-3 p-3"
-                    onClick={() => setCustomerServiceOpen(false)}
-                  >
-                    <Layers className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="font-medium text-slate-50">Triage</span>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Process emails
-                      </p>
-                    </div>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="flex items-start gap-3">
-    <Layers className="mt-1 h-5 w-5 text-teal-400" />
-    <div className="flex flex-col">
-      <span className="text-base font-semibold text-white">Templates</span>
-      <span className="text-sm text-slate-400">Response templates</span>
-    </div>
-  </DropdownMenuSubTrigger>
-
-  <DropdownMenuSubContent className="w-64">
-    <DropdownMenuItem asChild>
-      <Link to="/templates" className="flex items-center gap-2">
-        <span className="text-sm font-medium">Templates</span>
-      </Link>
-    </DropdownMenuItem>
-
-    <DropdownMenuItem asChild>
-      <Link to="/signatures" className="flex items-center gap-2">
-        <span className="text-sm font-medium">Signatures</span>
-      </Link>
-    </DropdownMenuItem>
-  </DropdownMenuSubContent>
-</DropdownMenuSub>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/settings"
-                    className="cursor-pointer flex items-start gap-3 p-3"
-                    onClick={() => setCustomerServiceOpen(false)}
-                  >
-                    <Settings className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="font-medium text-slate-50">Settings</span>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Configure service
-                      </p>
-                    </div>
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Templates dropdown */}
-            <DropdownMenu open={templatesOpen} onOpenChange={setTemplatesOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive("/templates") || isActive("/signatures")
-                      ? "bg-slate-800 text-white"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                  }`}
-                >
-                  Templates
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-slate-900 border-slate-800" align="start">
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/templates"
-                    className="cursor-pointer text-slate-300 hover:text-slate-50"
-                    onClick={() => setTemplatesOpen(false)}
-                  >
-                    <Layers className="mr-2 h-4 w-4" />
-                    <span>Templates</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/signatures"
-                    className="cursor-pointer text-slate-300 hover:text-slate-50"
-                    onClick={() => setTemplatesOpen(false)}
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    <span>Signatures</span>
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-
+                    {mod.label}
+                  </Button>
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right: Actions and User */}
@@ -342,45 +205,22 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
                   </div>
 
                   <nav className="flex flex-col gap-2">
-                    <Link to="/"
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        isActive("/") && !isActive("/triage") && !isActive("/conversations") &&
-                        !isActive("/templates") && !isActive("/signatures") && !isActive("/settings")
-                          ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                      }`}
-                    >Customer Service</Link>
-                    <Link to="/"
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        isActive("/") && !isActive("/triage") && !isActive("/conversations") &&
-                        !isActive("/templates") && !isActive("/signatures") && !isActive("/settings")
-                          ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                      }`}
-                    >Dashboard</Link>
-                    <Link to="/conversations"
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        isActive("/conversations") ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                      }`}
-                    >Conversations</Link>
-                    <Link to="/triage"
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        isActive("/triage") ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                      }`}
-                    >Triage</Link>
-                    <Link to="/templates"
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        isActive("/templates") ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                      }`}
-                    >Templates</Link>
-                    <Link to="/signatures"
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        isActive("/signatures") ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                      }`}
-                    >Signatures</Link>
-                    <Link to="/settings"
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        isActive("/settings") ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                      }`}
-                    >Settings</Link>
+                    {modules.map((mod) => {
+                      const active = isModuleActive(mod);
+                      return (
+                        <Link
+                          key={mod.id}
+                          to={mod.path}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            active
+                              ? "bg-teal-500/15 text-teal-400"
+                              : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                          }`}
+                        >
+                          {mod.label}
+                        </Link>
+                      );
+                    })}
                   </nav>
 
                   <div className="mt-auto pt-4 border-t border-slate-800">

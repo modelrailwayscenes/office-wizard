@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link as RouterLink, useLocation } from "react-router";
 import { useFindMany, useGlobalAction } from "@gadgetinc/react";
 import { api } from "../api";
 import { Card } from "@/components/ui/card";
@@ -22,41 +23,110 @@ import {
   Send,
   Archive,
   CheckSquare,
+  LayoutDashboard,
+  MessageSquare,
+  Layers,
+  FileText,
+  PenLine,
+  Settings,
 } from "lucide-react";
 
+// ── Customer Sidebar ────────────────────────────────────────────────
+const customerTabs = [
+  { id: "dashboard",     label: "Dashboard",     icon: LayoutDashboard, path: "/" },
+  { id: "conversations", label: "Conversations", icon: MessageSquare,   path: "/conversations" },
+  { id: "threads",       label: "Threads",       icon: MessageSquare,   path: "/threads" },
+  { id: "triage",        label: "Triage",        icon: Layers,          path: "/triage" },
+  { id: "templates",     label: "Templates",     icon: FileText,        path: "/templates",
+    children: [
+      { id: "templates-list", label: "Templates",  icon: FileText, path: "/templates" },
+      { id: "signatures",     label: "Signatures", icon: PenLine,  path: "/signatures" },
+    ],
+  },
+  { id: "settings",      label: "Settings",      icon: Settings,        path: "/settings" },
+];
+
+function CustomerSidebar({ currentPath }: { currentPath: string }) {
+  const isActive = (path: string, children?: { path: string }[]) => {
+    if (path === "/") return currentPath === "/";
+    if (children) {
+      return children.some((child) => currentPath === child.path || currentPath.startsWith(child.path + "/"));
+    }
+    return currentPath.startsWith(path);
+  };
+
+  return (
+    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-white px-3">Customer</h2>
+      </div>
+      <nav className="space-y-1">
+        {customerTabs.map(({ id, label, icon: Icon, path, children }) => (
+          <div key={id}>
+            <RouterLink
+              to={children ? children[0].path : path}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                isActive(path, children)
+                  ? "bg-teal-600/10 text-teal-400 font-medium"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+              }`}
+            >
+              <Icon className="h-4 w-4 flex-shrink-0" />
+              <span className="text-sm">{label}</span>
+            </RouterLink>
+            {children && (
+              <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-3">
+                {children.map((child) => (
+                  <RouterLink
+                    key={child.id}
+                    to={child.path}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+                      currentPath === child.path || currentPath.startsWith(child.path + "/")
+                        ? "text-teal-400 font-medium"
+                        : "text-slate-500 hover:text-white hover:bg-slate-800/50"
+                    }`}
+                  >
+                    <child.icon className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>{child.label}</span>
+                  </RouterLink>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+// ── Main Page ───────────────────────────────────────────────────────
 export default function TriageQueuePage() {
+  const location = useLocation();
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "urgent" | "pending" | "due" | "starred">("all");
   const [generatingDraft, setGeneratingDraft] = useState(false);
 
-  // EmailMessage-first selection (IMPORTANT)
   const [selectedEmailIds, setSelectedEmailIds] = useState<string[]>([]);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
-  // Optional toolbar fields (modal supports these)
   const [assignToUserId, setAssignToUserId] = useState("");
   const [moveToCategory, setMoveToCategory] = useState("");
 
-  // ── Helper: Extract order numbers from text ────────────────────────────────
   const extractOrderNumber = (text: string): string | null => {
     const match = text?.match(/\b(MRS|NRS)[-\s]?\d{5}\b/i);
     return match ? match[0].replace(/\s/g, "-").toUpperCase() : null;
   };
 
-  // ── Helper: Get all order numbers from conversation ───────────────────────
   const getOrderNumbers = (conv: any): string[] => {
     const orders = new Set<string>();
-
     const subjectOrder = extractOrderNumber(conv.subject || "");
     if (subjectOrder) orders.add(subjectOrder);
-
     conv.messages?.edges?.forEach((edge: any) => {
       const msg = edge?.node;
       const bodyOrder = extractOrderNumber(msg?.bodyPreview || "");
       if (bodyOrder) orders.add(bodyOrder);
     });
-
     return Array.from(orders);
   };
 
@@ -84,7 +154,7 @@ export default function TriageQueuePage() {
       messages: {
         edges: {
           node: {
-            id: true, // ✅ treat this as emailMessage id
+            id: true,
             subject: true,
             bodyPreview: true,
             fromAddress: true,
@@ -142,24 +212,17 @@ export default function TriageQueuePage() {
   const selectedConv = conversations?.find((c: any) => c.id === selectedConvId) as any;
   const firstMessage = selectedConv?.messages?.edges?.[0]?.node as any;
 
-  // Priority counts
   const criticalCount = conversations?.filter((c: any) => c.currentPriorityBand === "urgent").length || 0;
   const totalQueue = conversations?.length || 0;
 
   const getPriorityLabel = (band: string | null | undefined) => {
     switch (band) {
-      case "urgent":
-        return "URGENT";
-      case "high":
-        return "HIGH";
-      case "medium":
-        return "MEDIUM";
-      case "low":
-        return "LOW";
-      case "unclassified":
-        return "UNCLASSIFIED";
-      default:
-        return "UNCLASSIFIED";
+      case "urgent": return "URGENT";
+      case "high": return "HIGH";
+      case "medium": return "MEDIUM";
+      case "low": return "LOW";
+      case "unclassified": return "UNCLASSIFIED";
+      default: return "UNCLASSIFIED";
     }
   };
 
@@ -171,14 +234,12 @@ export default function TriageQueuePage() {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
-
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     return d.toLocaleDateString();
   };
 
-  // ✅ Batch object uses emailMessage IDs (not conversation IDs)
   const batchForModal = useMemo(() => {
     const emails =
       (conversations || [])
@@ -188,8 +249,8 @@ export default function TriageQueuePage() {
           if (!emailId) return null;
 
           return {
-            id: emailId, // ✅ emailMessage id
-            conversationId: c.id, // keep for context/debug
+            id: emailId,
+            conversationId: c.id,
             customerName: c.primaryCustomerName || "Unknown",
             customerEmail: c.primaryCustomerEmail || "unknown@example.com",
             orderId: getOrderNumbers(c)[0],
@@ -209,7 +270,7 @@ export default function TriageQueuePage() {
             status: "pending" as const,
           };
         })
-        .filter(Boolean)
+        .filter((e): e is NonNullable<typeof e> => e !== null)
         .filter((e: any) => selectedEmailIds.includes(e.id)) || [];
 
     return {
@@ -217,6 +278,7 @@ export default function TriageQueuePage() {
       type: "manual",
       label: `Selected (${selectedEmailIds.length})`,
       emails,
+      emailCount: emails.length,
       aiSuggestion: `Review and process ${emails.length} item(s).`,
       estimatedTimeSaved: emails.length * 3,
     };
@@ -230,7 +292,6 @@ export default function TriageQueuePage() {
       ?.filter((c: any) => {
         if (showUrgentOnly && c.currentPriorityBand !== "urgent") return false;
         if (showPendingOnly && !c.requiresHumanReview) return false;
-
         if (!searchQuery) return true;
         const q = searchQuery.toLowerCase();
         return (
@@ -246,253 +307,256 @@ export default function TriageQueuePage() {
   const loading = batchLoading || applyEditsLoading;
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-white">Triage Queue</h1>
-            <p className="text-sm text-slate-400 mt-1">Browse and search all emails with a flexible approach to triage</p>
-          </div>
+    <div className="flex flex-1 min-h-0 bg-slate-950 text-white">
+      <CustomerSidebar currentPath={location.pathname} />
 
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-teal-400 border-teal-500/30 bg-teal-500/10">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              {draftsPendingCount} DRAFTS PENDING
-            </Badge>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">Triage Queue</h1>
+              <p className="text-sm text-slate-400 mt-1">Browse and search all emails with a flexible approach to triage</p>
+            </div>
 
-            {/* ✅ screenshot fix: selectedEmailIds (not selectedConvIds) */}
-            {selectedEmailIds.length > 0 && (
-              <Button
-                onClick={() => setBatchModalOpen(true)}
-                variant="outline"
-                className="border-slate-700 hover:bg-slate-800"
-              >
-                <CheckSquare className="h-4 w-4 mr-2" />
-                Batch Actions ({selectedEmailIds.length})
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="text-teal-400 border-teal-500/30 bg-teal-500/10">
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                {draftsPendingCount} DRAFTS PENDING
+              </Badge>
 
-            <Button
-              onClick={handleRunTriage}
-              disabled={triaging}
-              className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
-            >
-              {triaging ? "Running..." : "Run Triage"}
-            </Button>
-
-            <Button onClick={refresh} variant="outline" className="border-slate-700 hover:bg-slate-800">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="px-8 py-4 border-b border-slate-800">
-        <Input
-          placeholder="Search by customer, order ID, subject, or keywords..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
-        />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex flex-1 h-[calc(100vh-180px)]">
-        {/* Left List */}
-        <div className="w-1/2 border-r border-slate-800 overflow-y-auto">
-          {/* Quick Filters */}
-          <div className="flex gap-2 p-4 border-b border-slate-800 bg-slate-900/30">
-            <Button
-              variant={activeTab === "all" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("all")}
-              className={activeTab === "all" ? "bg-teal-500 hover:bg-teal-600 text-black" : ""}
-            >
-              ALL ({totalQueue})
-            </Button>
-
-            <Button
-              variant={activeTab === "urgent" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("urgent")}
-              className={activeTab === "urgent" ? "bg-red-500 hover:bg-red-600 text-black" : ""}
-            >
-              URGENT ({criticalCount})
-            </Button>
-
-            <Button
-              variant={activeTab === "pending" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("pending")}
-              className={activeTab === "pending" ? "bg-amber-500 hover:bg-amber-600 text-black" : ""}
-            >
-              PENDING
-            </Button>
-          </div>
-
-          {/* Conversation List */}
-          <div className="divide-y divide-slate-800">
-            {filteredConversations.length === 0 && (
-              <div className="p-8 text-center text-slate-500">No conversations to triage</div>
-            )}
-
-            {filteredConversations.map((conv: any) => {
-              const emailId = getPrimaryEmailId(conv);
-              const checked = !!emailId && selectedEmailIds.includes(emailId);
-
-              return (
-                <div
-                  key={conv.id}
-                  className={`p-4 hover:bg-slate-900/50 transition-colors ${
-                    selectedConvId === conv.id ? "bg-slate-900/80 border-l-2 border-teal-500" : ""
-                  }`}
+              {selectedEmailIds.length > 0 && (
+                <Button
+                  onClick={() => setBatchModalOpen(true)}
+                  variant="outline"
+                  className="border-slate-700 hover:bg-slate-800"
                 >
-                  {/* Row 1 */}
-                  <div className="flex items-start gap-2 mb-2">
-                    <Checkbox
-                      checked={checked}
-                      disabled={!emailId}
-                      onCheckedChange={(v) => {
-                        if (!emailId) return;
-                        handleToggleEmailSelection(emailId, !!v);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-0.5"
-                    />
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Batch Actions ({selectedEmailIds.length})
+                </Button>
+              )}
 
-                    <UnifiedBadge type={conv.currentPriorityBand} label={getPriorityLabel(conv.currentPriorityBand)} />
+              <Button
+                onClick={handleRunTriage}
+                disabled={triaging}
+                className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
+              >
+                {triaging ? "Running..." : "Run Triage"}
+              </Button>
 
-                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedConvId(conv.id)}>
-                      <div className="text-white font-medium truncate">{conv.subject || "(No subject)"}</div>
-                    </div>
-
-                    {conv.requiresHumanReview && <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />}
-                  </div>
-
-                  {/* Row 2 */}
-                  <div className="text-sm text-slate-400 truncate mb-2 flex items-center gap-2">
-                    <User className="h-3 w-3" />
-                    {conv.primaryCustomerEmail || conv.primaryCustomerName || "Unknown"}
-                  </div>
-
-                  {/* Row 3 */}
-                  <div className="flex items-center gap-2 text-xs">
-                    <SentimentBadge sentiment={conv.sentiment} />
-                    <Separator orientation="vertical" className="h-4" />
-                    <Clock className="h-3 w-3 text-slate-500" />
-                    <span className="text-slate-500">{formatTime(conv.latestMessageAt)}</span>
-
-                    {getOrderNumbers(conv).length > 0 && (
-                      <>
-                        <Separator orientation="vertical" className="h-4" />
-                        <Tag className="h-3 w-3 text-teal-400" />
-                        <span className="text-teal-400">{getOrderNumbers(conv)[0]}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+              <Button onClick={refresh} variant="outline" className="border-slate-700 hover:bg-slate-800">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Right Panel - Details */}
-        <div className="w-1/2 overflow-y-auto">
-          {!selectedConv ? (
-            <div className="flex items-center justify-center h-full text-slate-500">
-              Select a conversation to view details
+        {/* Search Bar */}
+        <div className="px-8 py-4 border-b border-slate-800 flex-shrink-0">
+          <Input
+            placeholder="Search by customer, order ID, subject, or keywords..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
+          />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left List */}
+          <div className="w-1/2 border-r border-slate-800 overflow-y-auto">
+            {/* Quick Filters */}
+            <div className="flex gap-2 p-4 border-b border-slate-800 bg-slate-900/30">
+              <Button
+                variant={activeTab === "all" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setActiveTab("all")}
+                className={activeTab === "all" ? "bg-teal-500 hover:bg-teal-600 text-black" : ""}
+              >
+                ALL ({totalQueue})
+              </Button>
+
+              <Button
+                variant={activeTab === "urgent" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setActiveTab("urgent")}
+                className={activeTab === "urgent" ? "bg-red-500 hover:bg-red-600 text-black" : ""}
+              >
+                URGENT ({criticalCount})
+              </Button>
+
+              <Button
+                variant={activeTab === "pending" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setActiveTab("pending")}
+                className={activeTab === "pending" ? "bg-amber-500 hover:bg-amber-600 text-black" : ""}
+              >
+                PENDING
+              </Button>
             </div>
-          ) : (
-            <div className="p-6 space-y-6">
-              {/* Conversation Header */}
-              <div>
-                <h2 className="text-xl font-semibold text-white mb-2">{selectedConv.subject || "(No subject)"}</h2>
-                <div className="text-sm text-slate-400 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <span>{selectedConv.primaryCustomerName || selectedConv.primaryCustomerEmail || "Unknown"}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    <span>{selectedConv.primaryCustomerEmail || "—"}</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Original Message */}
-              <Card className="bg-slate-900/50 border-slate-800 p-4">
-                <h3 className="text-sm font-medium text-slate-300 mb-3">ORIGINAL MESSAGE</h3>
-                <div className="text-sm text-slate-400 leading-relaxed">
-                  {firstMessage?.bodyPreview || "No message content available"}
-                </div>
-              </Card>
+            {/* Conversation List */}
+            <div className="divide-y divide-slate-800">
+              {filteredConversations.length === 0 && (
+                <div className="p-8 text-center text-slate-500">No conversations to triage</div>
+              )}
 
-              {/* AI-Generated Response */}
-              <Card className="bg-slate-900/50 border-slate-800 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                    <Send className="h-4 w-4" />
-                    AI-GENERATED RESPONSE
-                  </h3>
-                </div>
+              {filteredConversations.map((conv: any) => {
+                const emailId = getPrimaryEmailId(conv);
+                const checked = !!emailId && selectedEmailIds.includes(emailId);
 
-                {selectedConv.aiDraftContent ? (
-                  <>
-                    <div className="text-sm text-white leading-relaxed bg-slate-950/50 p-4 rounded-lg border border-slate-700 mb-4 whitespace-pre-wrap">
-                      Dear {selectedConv.primaryCustomerName || "Customer"},
-                      {"\n\n"}
-                      {selectedConv.aiDraftContent}
-                      {"\n\n"}
-                      Best regards,
-                      {"\n"}
-                      Model Railway Scenes Team
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 border-slate-700 hover:bg-slate-800"
-                        onClick={() => handleGenerateDraft(selectedConv.id, true)}
-                        disabled={generatingDraft}
-                      >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${generatingDraft ? "animate-spin" : ""}`} />
-                        {generatingDraft ? "Regenerating..." : "Regenerate"}
-                      </Button>
-
-                      <Button className="flex-1 bg-teal-500 hover:bg-teal-600 text-black font-medium">
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Draft
-                      </Button>
-
-                      <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
-                        <Archive className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <Button
-                    className="w-full bg-teal-500 hover:bg-teal-600 text-black font-medium"
-                    onClick={() => handleGenerateDraft(selectedConv.id, false)}
-                    disabled={generatingDraft}
+                return (
+                  <div
+                    key={conv.id}
+                    className={`p-4 hover:bg-slate-900/50 transition-colors ${
+                      selectedConvId === conv.id ? "bg-slate-900/80 border-l-2 border-teal-500" : ""
+                    }`}
                   >
-                    {generatingDraft ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Generating Draft...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Generate AI Draft
-                      </>
-                    )}
-                  </Button>
-                )}
-              </Card>
+                    {/* Row 1 */}
+                    <div className="flex items-start gap-2 mb-2">
+                      <Checkbox
+                        checked={checked}
+                        disabled={!emailId}
+                        onCheckedChange={(v) => {
+                          if (!emailId) return;
+                          handleToggleEmailSelection(emailId, !!v);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-0.5"
+                      />
+
+                      <UnifiedBadge type={conv.currentPriorityBand} label={getPriorityLabel(conv.currentPriorityBand)} />
+
+                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedConvId(conv.id)}>
+                        <div className="text-white font-medium truncate">{conv.subject || "(No subject)"}</div>
+                      </div>
+
+                      {conv.requiresHumanReview && <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />}
+                    </div>
+
+                    {/* Row 2 */}
+                    <div className="text-sm text-slate-400 truncate mb-2 flex items-center gap-2">
+                      <User className="h-3 w-3" />
+                      {conv.primaryCustomerEmail || conv.primaryCustomerName || "Unknown"}
+                    </div>
+
+                    {/* Row 3 */}
+                    <div className="flex items-center gap-2 text-xs">
+                      <SentimentBadge sentiment={conv.sentiment} />
+                      <Separator orientation="vertical" className="h-4" />
+                      <Clock className="h-3 w-3 text-slate-500" />
+                      <span className="text-slate-500">{formatTime(conv.latestMessageAt)}</span>
+
+                      {getOrderNumbers(conv).length > 0 && (
+                        <>
+                          <Separator orientation="vertical" className="h-4" />
+                          <Tag className="h-3 w-3 text-teal-400" />
+                          <span className="text-teal-400">{getOrderNumbers(conv)[0]}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
+          </div>
+
+          {/* Right Panel - Details */}
+          <div className="w-1/2 overflow-y-auto">
+            {!selectedConv ? (
+              <div className="flex items-center justify-center h-full text-slate-500">
+                Select a conversation to view details
+              </div>
+            ) : (
+              <div className="p-6 space-y-6">
+                {/* Conversation Header */}
+                <div>
+                  <h2 className="text-xl font-semibold text-white mb-2">{selectedConv.subject || "(No subject)"}</h2>
+                  <div className="text-sm text-slate-400 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span>{selectedConv.primaryCustomerName || selectedConv.primaryCustomerEmail || "Unknown"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      <span>{selectedConv.primaryCustomerEmail || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Original Message */}
+                <Card className="bg-slate-900/50 border-slate-800 p-4">
+                  <h3 className="text-sm font-medium text-slate-300 mb-3">ORIGINAL MESSAGE</h3>
+                  <div className="text-sm text-slate-400 leading-relaxed">
+                    {firstMessage?.bodyPreview || "No message content available"}
+                  </div>
+                </Card>
+
+                {/* AI-Generated Response */}
+                <Card className="bg-slate-900/50 border-slate-800 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                      <Send className="h-4 w-4" />
+                      AI-GENERATED RESPONSE
+                    </h3>
+                  </div>
+
+                  {selectedConv.aiDraftContent ? (
+                    <>
+                      <div className="text-sm text-white leading-relaxed bg-slate-950/50 p-4 rounded-lg border border-slate-700 mb-4 whitespace-pre-wrap">
+                        Dear {selectedConv.primaryCustomerName || "Customer"},
+                        {"\n\n"}
+                        {selectedConv.aiDraftContent}
+                        {"\n\n"}
+                        Best regards,
+                        {"\n"}
+                        Model Railway Scenes Team
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1 border-slate-700 hover:bg-slate-800"
+                          onClick={() => handleGenerateDraft(selectedConv.id, true)}
+                          disabled={generatingDraft}
+                        >
+                          <RefreshCw className={`h-4 w-4 mr-2 ${generatingDraft ? "animate-spin" : ""}`} />
+                          {generatingDraft ? "Regenerating..." : "Regenerate"}
+                        </Button>
+
+                        <Button className="flex-1 bg-teal-500 hover:bg-teal-600 text-black font-medium">
+                          <Send className="h-4 w-4 mr-2" />
+                          Send Draft
+                        </Button>
+
+                        <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
+                          <Archive className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <Button
+                      className="w-full bg-teal-500 hover:bg-teal-600 text-black font-medium"
+                      onClick={() => handleGenerateDraft(selectedConv.id, false)}
+                      disabled={generatingDraft}
+                    >
+                      {generatingDraft ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Generating Draft...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Generate AI Draft
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </Card>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -507,13 +571,10 @@ export default function TriageQueuePage() {
         moveToCategory={moveToCategory}
         onMoveToCategoryChange={setMoveToCategory}
         onSendAll={async (emailIds, batchId, draftsByEmailId) => {
-          // 1) persist edits
           await applyDraftEdits({
             emailIds: JSON.stringify(emailIds),
             draftsByEmailId: JSON.stringify(draftsByEmailId),
           });
-
-          // 2) execute send batch
           await runBatchOperation({
             batchId,
             action: "send",
@@ -521,20 +582,16 @@ export default function TriageQueuePage() {
             conversationIds: JSON.stringify([]),
             estimatedTimeSaved: (emailIds?.length || 0) * 3,
           });
-
           toast.success(`Queued send for ${emailIds.length} item(s)`);
           setBatchModalOpen(false);
           setSelectedEmailIds([]);
           refresh();
         }}
         onSaveDrafts={async (emailIds, batchId, draftsByEmailId) => {
-          // persist edits
           await applyDraftEdits({
             emailIds: JSON.stringify(emailIds),
             draftsByEmailId: JSON.stringify(draftsByEmailId),
           });
-
-          // mark as draft batch
           await runBatchOperation({
             batchId,
             action: "save_drafts",
@@ -542,7 +599,6 @@ export default function TriageQueuePage() {
             conversationIds: JSON.stringify([]),
             estimatedTimeSaved: (emailIds?.length || 0) * 3,
           });
-
           toast.success(`Saved ${emailIds.length} draft(s)`);
           setBatchModalOpen(false);
           setSelectedEmailIds([]);
@@ -556,7 +612,6 @@ export default function TriageQueuePage() {
             conversationIds: JSON.stringify([]),
             estimatedTimeSaved: (emailIds?.length || 0) * 1,
           });
-
           toast.success(`Resolved ${emailIds.length} item(s)`);
           setBatchModalOpen(false);
           setSelectedEmailIds([]);
@@ -570,14 +625,12 @@ export default function TriageQueuePage() {
             conversationIds: JSON.stringify([]),
             estimatedTimeSaved: (emailIds?.length || 0) * 1,
           });
-
           toast.success(`Archived ${emailIds.length} item(s)`);
           setBatchModalOpen(false);
           setSelectedEmailIds([]);
           refresh();
         }}
         onRejectAll={async (emailIds, batchId) => {
-          // You can extend the modal to collect a reject reason; for now pass a default.
           await runBatchOperation({
             batchId,
             action: "reject",
@@ -586,7 +639,6 @@ export default function TriageQueuePage() {
             rejectReason: "Rejected in batch review",
             estimatedTimeSaved: 0,
           });
-
           toast.success(`Rejected ${emailIds.length} item(s)`);
           setBatchModalOpen(false);
           setSelectedEmailIds([]);
@@ -601,14 +653,12 @@ export default function TriageQueuePage() {
             assignToUserId: assignId,
             estimatedTimeSaved: 0,
           });
-
           toast.success(`Assigned ${emailIds.length} item(s)`);
           setBatchModalOpen(false);
           setSelectedEmailIds([]);
           refresh();
         }}
         onMoveAll={async (emailIds, batchId, category) => {
-          // Only works if you implement "move" in runBatchOperation (see note below).
           await runBatchOperation({
             batchId,
             action: "move",
@@ -618,14 +668,12 @@ export default function TriageQueuePage() {
             label: `Move to ${category || "category"}`,
             estimatedTimeSaved: 0,
           });
-
           toast.success(`Moved ${emailIds.length} item(s)`);
           setBatchModalOpen(false);
           setSelectedEmailIds([]);
           refresh();
         }}
         onRegenerateResponse={async (emailId) => {
-          // We regenerate at conversation-level; find the conversation containing this emailId.
           const conv = (conversations || []).find((c: any) => getPrimaryEmailId(c) === emailId);
           if (!conv?.id) return "Regenerated";
           await handleGenerateDraft(conv.id, true);

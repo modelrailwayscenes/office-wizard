@@ -1,8 +1,7 @@
 import type { ActionOptions } from "gadget-server";
 import { Client } from "@microsoft/microsoft-graph-client";
-import type { Message } from "@microsoft/microsoft-graph-types";
+import "isomorphic-fetch";
 
-// Helper functions for extracting data from Graph API objects
 const asEmail = (addr: any): string | null => {
   return addr?.emailAddress?.address || null;
 };
@@ -13,30 +12,14 @@ const asName = (addr: any): string | null => {
 
 const toEmailList = (recipients: any[]): string[] => {
   if (!Array.isArray(recipients)) return [];
-  return recipients
-    .map(r => asEmail(r))
-    .filter((email): email is string => email !== null);
+  return recipients.map((r) => asEmail(r)).filter((email): email is string => email !== null);
 };
 
-const getConversationKeyFromGraphMessage = (msg: Message): string | null => {
-  return msg.conversationId || null;
+const getConversationKeyFromGraphMessage = (msg: any): string | null => {
+  return msg?.conversationId || null;
 };
-
-// AccessTokenAuthProvider for Microsoft Graph Client
-class AccessTokenAuthProvider {
-  private accessToken: string;
-
-  constructor(accessToken: string) {
-    this.accessToken = accessToken;
-  }
-
-  async getAccessToken(): Promise<string> {
-    return this.accessToken;
-  }
-}
 
 export const run: ActionRun = async ({ logger, api, params }) => {
-  // Load app configuration with Microsoft token
   let config = await api.appConfiguration.findFirst({
     select: {
       id: true,
@@ -47,20 +30,22 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     },
   });
 
-  if (!config) {
-    throw new Error("App configuration not found");
-  }
+  if (!config) throw new Error("App configuration not found");
 
-  // Refresh token if expiring within 5 minutes
   const now = new Date();
   const expiresAt = config.microsoftTokenExpiresAt ? new Date(config.microsoftTokenExpiresAt) : null;
   const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
 
   if (!expiresAt || expiresAt <= fiveMinutesFromNow) {
     logger.info("Token expiring soon, refreshing");
-    await api.refreshAccessToken();
-    
-    // Reload config after refresh
+
+    const refreshed = await api.refreshAccessToken();
+    const refreshedResult: any = (refreshed as any)?.data ?? refreshed;
+
+    if (!refreshedResult?.success) {
+      throw new Error(refreshedResult?.error || "Token refresh failed");
+    }
+
     config = await api.appConfiguration.findFirst({
       select: {
         id: true,
@@ -72,28 +57,18 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     });
   }
 
-  if (!config?.microsoftAccessToken) {
-    throw new Error("No access token available");
-  }
+  if (!config?.microsoftAccessToken) throw new Error("No access token available");
 
-  // Create Microsoft Graph Client with auth provider
-  const authProvider = new AccessTokenAuthProvider(config.microsoftAccessToken);
   const client = Client.init({
-    authProvider: (done) => {
-      authProvider.getAccessToken().then(token => {
-        done(null, token);
-      }).catch(err => {
-        done(err, null);
-      });
+    authProvider: (done: any) => {
+      done(null, config.microsoftAccessToken);
     },
   });
 
-  // Parse parameters
-  const top = Math.min(Math.max(Number(params.top ?? 100), 1), 100);
-  const unreadOnly = Boolean(params.unreadOnly ?? false);
+  const top = Math.min(Math.max(Number((params as any)?.top ?? 100), 1), 100);
+  const unreadOnly = Boolean((params as any)?.unreadOnly ?? false);
   const lastSyncAt = config.lastSyncAt;
 
-  // Build query
   let query = client
     .api("/me/mailFolders/Inbox/messages")
     .top(top)
@@ -114,13 +89,9 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     ])
     .orderby("receivedDateTime desc");
 
-  // Build filter conditions
   const filterConditions: string[] = [];
-  
-  if (unreadOnly) {
-    filterConditions.push("isRead eq false");
-  }
-  
+  if (unreadOnly) filterConditions.push("isRead eq false");
+
   if (lastSyncAt) {
     const lastSyncDate = new Date(lastSyncAt).toISOString();
     filterConditions.push(`receivedDateTime gt ${lastSyncDate}`);
@@ -132,36 +103,35 @@ export const run: ActionRun = async ({ logger, api, params }) => {
 
   logger.info({ top, unreadOnly, lastSyncAt, filterConditions }, "Fetching messages from Graph API");
 
-  // Execute query
   const response = await query.get();
-  const messages: Message[] = response.value || [];
+  const messages: any[] = response?.value || [];
 
   logger.info({ count: messages.length }, "Fetched messages from Graph API");
 
-  // Counters
   let messagesCreated = 0;
   let messagesDuplicate = 0;
   let conversationsCreated = 0;
   let conversationsUpdated = 0;
   let errors = 0;
 
-  // Process each message
   for (const msg of messages) {
     try {
-      // Check for duplicate by externalMessageId
-      if (msg.id) {
-        const existing = await api.emailMessage.findMany({
-          filter: { externalMessageId: { equals: msg.id } },
-          first: 1,
-        });
-        
-        if (existing && existing.length > 0) {
-          messagesDuplicate++;
-          continue;
-        }
+      if (!msg.id) {
+        errors++;
+        continue;
       }
 
-      // Extract conversation key
+      const existing = await api.emailMessage.findMany({
+        filter: { externalMessageId: { equals: msg.id } },
+        first: 1,
+        select: { id: true },
+      });
+
+      if (existing?.length) {
+        messagesDuplicate++;
+        continue;
+      }
+
       const graphConversationId = getConversationKeyFromGraphMessage(msg);
       if (!graphConversationId) {
         logger.warn({ messageId: msg.id }, "Message missing conversationId, skipping");
@@ -169,112 +139,132 @@ export const run: ActionRun = async ({ logger, api, params }) => {
         continue;
       }
 
-      // Find or create conversation
-      let conversation = null;
-      const existingConversations = await api.conversation.findMany({
-        filter: { graphConversationId: { equals: graphConversationId } },
-        first: 1,
-      });
+      const normalizedSubject = (msg.subject || "(No subject)")
+        .replace(/^(Re:|Fwd?:)\s*/gi, "")
+        .trim();
 
-      if (existingConversations && existingConversations.length > 0) {
-        conversation = existingConversations[0];
-      }
-
-      const normalizedSubject = (msg.subject || "(No subject)").replace(/^(Re:|Fwd?:)\s*/gi, '').trim();
       const fromAddress = asEmail(msg.from);
       const fromName = asName(msg.from);
       const receivedDateTime = msg.receivedDateTime || msg.sentDateTime;
 
+      const existingConversations = await api.conversation.findMany({
+        filter: { graphConversationId: { equals: graphConversationId } },
+        first: 1,
+        select: {
+          id: true,
+          messageCount: true,
+          unreadCount: true,
+          firstMessageAt: true,
+        },
+      });
+
+      let conversation = existingConversations?.[0] ?? null;
+
       if (!conversation) {
-        // Create new conversation
         conversation = await api.conversation.create({
-          conversationId: graphConversationId,
-          graphConversationId: graphConversationId,
-          subject: normalizedSubject,
-          primaryCustomerEmail: fromAddress,
-          primaryCustomerName: fromName,
-          firstMessageAt: receivedDateTime,
-          latestMessageAt: receivedDateTime,
-          messageCount: 1,
-          unreadCount: msg.isRead ? 0 : 1,
-          status: "new",
+          conversation: {
+            graphConversationId,
+            subject: normalizedSubject,
+            primaryCustomerEmail: fromAddress,
+            primaryCustomerName: fromName,
+            firstMessageAt: receivedDateTime,
+            latestMessageAt: receivedDateTime,
+            messageCount: 1,
+            unreadCount: msg.isRead ? 0 : 1,
+            status: "new",
+          },
+          select: { id: true, messageCount: true, unreadCount: true, firstMessageAt: true },
         });
+
         conversationsCreated++;
       } else {
-        // Update existing conversation
-        const newMessageCount = (conversation.messageCount || 0) + 1;
-        const newUnreadCount = msg.isRead ? conversation.unreadCount : (conversation.unreadCount || 0) + 1;
-        const newLatestMessageAt = receivedDateTime;
-        const newFirstMessageAt = conversation.firstMessageAt && new Date(conversation.firstMessageAt) < new Date(receivedDateTime)
-          ? conversation.firstMessageAt
-          : receivedDateTime;
+        const prevCount = Number(conversation.messageCount ?? 0);
+        const prevUnread = Number(conversation.unreadCount ?? 0);
 
-        await api.conversation.update(conversation.id, {
-          messageCount: newMessageCount,
-          unreadCount: newUnreadCount,
-          latestMessageAt: newLatestMessageAt,
-          firstMessageAt: newFirstMessageAt,
+        const newMessageCount = prevCount + 1;
+        const newUnreadCount = msg.isRead ? prevUnread : prevUnread + 1;
+
+        const existingFirst = conversation.firstMessageAt ? new Date(conversation.firstMessageAt) : null;
+        const incoming = receivedDateTime ? new Date(receivedDateTime) : null;
+
+        const newFirstMessageAt =
+          existingFirst && incoming && existingFirst <= incoming ? conversation.firstMessageAt : receivedDateTime;
+
+        await api.conversation.update({
+          id: conversation.id,
+          conversation: {
+            messageCount: newMessageCount,
+            unreadCount: newUnreadCount,
+            latestMessageAt: receivedDateTime,
+            firstMessageAt: newFirstMessageAt,
+          },
+          select: { id: true },
         });
+
         conversationsUpdated++;
       }
 
-      // Validate required fields for emailMessage
-      if (!fromAddress || !receivedDateTime || !msg.id || !graphConversationId) {
-        logger.warn({
-          messageId: msg.id,
-          subject: msg.subject,
-          missing: {
-            fromAddress: !fromAddress,
-            receivedDateTime: !receivedDateTime,
-            id: !msg.id,
-            graphConversationId: !graphConversationId,
+      if (!fromAddress || !receivedDateTime) {
+        logger.warn(
+          {
+            messageId: msg.id,
+            subject: msg.subject,
+            missing: { fromAddress: !fromAddress, receivedDateTime: !receivedDateTime },
           },
-        }, "Skipping message - missing required fields");
+          "Skipping message - missing required fields"
+        );
         errors++;
         continue;
       }
 
-      // Create email message
       await api.emailMessage.create({
-        conversation: { _link: conversation.id },
-        messageId: msg.id,
-        externalMessageId: msg.id,
-        graphConversationId: graphConversationId,
-        internetMessageId: msg.internetMessageId || null,
-        fromAddress: fromAddress,
-        fromEmail: fromAddress,
-        fromName: fromName,
-        subject: msg.subject || "(No subject)",
-        bodyPreview: msg.bodyPreview || null,
-        bodyHtml: msg.body?.contentType === "html" ? msg.body.content : null,
-        bodyText: msg.body?.contentType === "text" ? msg.body.content : msg.bodyPreview || null,
-        receivedDateTime: receivedDateTime,
-        sentDateTime: msg.sentDateTime || null,
-        isRead: msg.isRead || false,
-        hasAttachments: msg.hasAttachments || false,
-        toAddresses: toEmailList(msg.toRecipients || []),
-        ccAddresses: toEmailList(msg.ccRecipients || []),
-        shopifyCustomerFound: false,
-        shopifyLookupCompleted: false,
+        emailMessage: {
+          conversation: { _link: conversation.id },
+          messageId: msg.id,
+          externalMessageId: msg.id,
+          graphConversationId,
+          internetMessageId: msg.internetMessageId || null,
+          fromAddress,
+          fromEmail: fromAddress,
+          fromName,
+          subject: msg.subject || "(No subject)",
+          bodyPreview: msg.bodyPreview || null,
+          bodyHtml: msg.body?.contentType === "html" ? msg.body.content : null,
+          bodyText: msg.body?.contentType === "text" ? msg.body.content : msg.bodyPreview || null,
+          receivedDateTime,
+          sentDateTime: msg.sentDateTime || null,
+          isRead: Boolean(msg.isRead),
+          hasAttachments: Boolean(msg.hasAttachments),
+          toAddresses: toEmailList(msg.toRecipients || []),
+          ccAddresses: toEmailList(msg.ccRecipients || []),
+          shopifyCustomerFound: false,
+          shopifyLookupCompleted: false,
+        },
+        select: { id: true },
       });
 
       messagesCreated++;
-
     } catch (err: any) {
-      logger.error({
-        err,
-        messageId: msg.id,
-        subject: msg.subject,
-        errorMessage: err?.message || String(err),
-      }, "Failed to process message");
+      logger.error(
+        {
+          err,
+          messageId: msg?.id,
+          subject: msg?.subject,
+          errorMessage: err?.message || String(err),
+        },
+        "Failed to process message"
+      );
       errors++;
     }
   }
 
-  // Update lastSyncAt in appConfiguration
   if (messagesCreated > 0 || messagesDuplicate > 0) {
-    await api.appConfiguration.update(config.id, {
-      lastSyncAt: now,
+    await api.appConfiguration.update({
+      id: config.id,
+      appConfiguration: {
+        lastSyncAt: now,
+      },
+      select: { id: true },
     });
   }
 
@@ -296,9 +286,9 @@ export const run: ActionRun = async ({ logger, api, params }) => {
 export const params = {
   top: { type: "number" },
   unreadOnly: { type: "boolean" },
-  folderPath: { type: "string" },
 };
 
 export const options: ActionOptions = {
   timeoutMS: 300000,
+  returnType: true,
 };

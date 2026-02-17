@@ -1,42 +1,62 @@
-import { randomUUID } from "crypto";
 import type { ActionOptions } from "gadget-server";
+import { randomBytes } from "crypto";
 
-export const run: ActionRun = async ({ logger, config, session, currentAppUrl }) => {
-  const clientId = config.MICROSOFT_CLIENT_ID;
-  const tenantId = config.MICROSOFT_TENANT_ID;
+function generateState(len = 32): string {
+  return randomBytes(len).toString("hex").slice(0, len);
+}
 
-  if (!clientId || !tenantId) {
-    throw new Error(
-      "Microsoft OAuth credentials not configured. Please set MICROSOFT_CLIENT_ID and MICROSOFT_TENANT_ID."
-    );
+function normalizeBaseUrl(currentAppUrl: string): string {
+  return currentAppUrl.replace(/\/+$/, "");
+}
+
+export const run: ActionRun = async ({ logger, session, context }) => {
+  const currentAppUrl = context?.currentAppUrl;
+  if (!currentAppUrl) {
+    return { success: false, error: "Missing currentAppUrl in context" };
   }
 
-  if (!session) {
-    throw new Error("No session found. Please sign in first.");
+  const tenantId = process.env.MICROSOFT_TENANT_ID;
+  const clientId = process.env.MICROSOFT_CLIENT_ID;
+
+  if (!tenantId || !clientId) {
+    return { success: false, error: "Missing MICROSOFT_TENANT_ID or MICROSOFT_CLIENT_ID env vars" };
   }
 
-  const state = randomUUID();
-  await session.set("oauthState", state);
+  const baseUrl = normalizeBaseUrl(currentAppUrl);
+  const redirectUri = `${baseUrl}/authorize`;
 
-  const redirectUri = new URL("/authorize", currentAppUrl).toString();
+  const state = generateState(32);
 
-  const authParams = new URLSearchParams({
-    response_type: "code",
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope: "offline_access User.Read Mail.Read Mail.ReadWrite Mail.Send",
-    state,
-    prompt: "consent",
-  });
+  if (session) {
+    session.set("microsoftOAuthState", state);
+  }
 
-  const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?${authParams.toString()}`;
+  const url = new URL(`https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/authorize`);
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("redirect_uri", redirectUri);
 
-  logger.info({ redirectUri, authUrl }, "Generated Microsoft OAuth URL");
+  // Graph permissions (minimal but usable)
+  url.searchParams.set("scope", [
+    "offline_access",
+    "openid",
+    "profile",
+    "email",
+    "https://graph.microsoft.com/Mail.Read",
+    "https://graph.microsoft.com/User.Read",
+  ].join(" "));
 
-  return { ok: true, authUrl };
+  url.searchParams.set("state", state);
+  url.searchParams.set("response_mode", "query");
+  url.searchParams.set("prompt", "select_account");
+
+  const authUrl = url.toString();
+
+  logger.info({ redirectUri }, "Generated Microsoft OAuth URL");
+
+  return { success: true, authUrl, state, redirectUri };
 };
 
 export const options: ActionOptions = {
   returnType: true,
-  triggers: { api: true },
 };

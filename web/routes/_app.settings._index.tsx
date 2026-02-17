@@ -5,7 +5,6 @@ export default function SettingsIndex() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to summary by default
     navigate("/settings/summary", { replace: true });
   }, [navigate]);
 
