@@ -101,7 +101,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
                       : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                   }`}
                 >
-                  Customer Service
+                  Customer
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>

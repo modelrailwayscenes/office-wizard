@@ -75,6 +75,22 @@ export const schema: GadgetModel = {
       storageKey: "1Zjj-eVwLHC_",
       filterIndex: false,
     },
+    savedCount: {
+      type: "number",
+      default: 0,
+      decimals: 0,
+      validations: { numberRange: { min: 0, max: null } },
+      storageKey: "yZzIG_2OrUSo",
+      searchIndex: false,
+    },
+    sentCount: {
+      type: "number",
+      default: 0,
+      decimals: 0,
+      validations: { numberRange: { min: 0, max: null } },
+      storageKey: "MjAl8OlM_aQ1",
+      searchIndex: false,
+    },
     status: {
       type: "string",
       default: "in_progress",

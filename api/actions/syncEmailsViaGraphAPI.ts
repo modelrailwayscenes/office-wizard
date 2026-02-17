@@ -1,35 +1,49 @@
-// FIXED syncEmailsViaGraphAPI.ts - Proper TypeScript error handling
-// This works with YOUR actual schema
-
 import type { ActionOptions } from "gadget-server";
+import { Client } from "@microsoft/microsoft-graph-client";
+import type { Message } from "@microsoft/microsoft-graph-types";
 
-type GraphMessage = {
-  id: string;
-  subject?: string;
-  receivedDateTime?: string;
-  sentDateTime?: string;
-  from?: { emailAddress?: { address?: string; name?: string } };
-  isRead?: boolean;
-  bodyPreview?: string;
-  body?: { content?: string; contentType?: string };
-  conversationId?: string;
-  internetMessageId?: string;
-  hasAttachments?: boolean;
+// Helper functions for extracting data from Graph API objects
+const asEmail = (addr: any): string | null => {
+  return addr?.emailAddress?.address || null;
 };
 
-type GraphResponse = {
-  value: GraphMessage[];
-  "@odata.nextLink"?: string;
+const asName = (addr: any): string | null => {
+  return addr?.emailAddress?.name || null;
 };
+
+const toEmailList = (recipients: any[]): string[] => {
+  if (!Array.isArray(recipients)) return [];
+  return recipients
+    .map(r => asEmail(r))
+    .filter((email): email is string => email !== null);
+};
+
+const getConversationKeyFromGraphMessage = (msg: Message): string | null => {
+  return msg.conversationId || null;
+};
+
+// AccessTokenAuthProvider for Microsoft Graph Client
+class AccessTokenAuthProvider {
+  private accessToken: string;
+
+  constructor(accessToken: string) {
+    this.accessToken = accessToken;
+  }
+
+  async getAccessToken(): Promise<string> {
+    return this.accessToken;
+  }
+}
 
 export const run: ActionRun = async ({ logger, api, params }) => {
-  // Get Microsoft access token
+  // Load app configuration with Microsoft token
   let config = await api.appConfiguration.findFirst({
     select: {
       id: true,
       microsoftAccessToken: true,
       microsoftRefreshToken: true,
       microsoftTokenExpiresAt: true,
+      lastSyncAt: true,
     },
   });
 
@@ -37,197 +51,244 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     throw new Error("App configuration not found");
   }
 
-  // Refresh token if needed
+  // Refresh token if expiring within 5 minutes
   const now = new Date();
   const expiresAt = config.microsoftTokenExpiresAt ? new Date(config.microsoftTokenExpiresAt) : null;
   const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
 
   if (!expiresAt || expiresAt <= fiveMinutesFromNow) {
-    logger.info("Refreshing token");
+    logger.info("Token expiring soon, refreshing");
     await api.refreshAccessToken();
+    
+    // Reload config after refresh
     config = await api.appConfiguration.findFirst({
       select: {
         id: true,
         microsoftAccessToken: true,
         microsoftRefreshToken: true,
         microsoftTokenExpiresAt: true,
+        lastSyncAt: true,
       },
     });
   }
 
   if (!config?.microsoftAccessToken) {
-    throw new Error("No access token");
+    throw new Error("No access token available");
   }
 
-  // Parameters
-  const top = Number((params as any)?.top ?? 100);
-  const filterUnreadOnly = Boolean((params as any)?.unreadOnly ?? false);
-
-  // Build Graph API URL
-  const queryParams = [
-    `$top=${Math.min(Math.max(top, 1), 100)}`,
-    `$select=id,subject,receivedDateTime,sentDateTime,from,isRead,bodyPreview,body,conversationId,internetMessageId,hasAttachments`,
-    `$orderby=receivedDateTime desc`,
-  ];
-
-  if (filterUnreadOnly) {
-    queryParams.push(`$filter=isRead eq false`);
-  }
-
-  const url = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?${queryParams.join('&')}`;
-
-  logger.info({ url, top }, "Fetching emails");
-
-  const response = await fetch(url, {
-    headers: {
-      'Authorization': `Bearer ${config.microsoftAccessToken}`,
-      'Content-Type': 'application/json',
+  // Create Microsoft Graph Client with auth provider
+  const authProvider = new AccessTokenAuthProvider(config.microsoftAccessToken);
+  const client = Client.init({
+    authProvider: (done) => {
+      authProvider.getAccessToken().then(token => {
+        done(null, token);
+      }).catch(err => {
+        done(err, null);
+      });
     },
   });
 
-  if (!response.ok) {
-    throw new Error(`Graph API error: ${response.status}`);
+  // Parse parameters
+  const top = Math.min(Math.max(Number(params.top ?? 100), 1), 100);
+  const unreadOnly = Boolean(params.unreadOnly ?? false);
+  const lastSyncAt = config.lastSyncAt;
+
+  // Build query
+  let query = client
+    .api("/me/mailFolders/Inbox/messages")
+    .top(top)
+    .select([
+      "id",
+      "subject",
+      "receivedDateTime",
+      "sentDateTime",
+      "from",
+      "toRecipients",
+      "ccRecipients",
+      "isRead",
+      "bodyPreview",
+      "body",
+      "conversationId",
+      "internetMessageId",
+      "hasAttachments",
+    ])
+    .orderby("receivedDateTime desc");
+
+  // Build filter conditions
+  const filterConditions: string[] = [];
+  
+  if (unreadOnly) {
+    filterConditions.push("isRead eq false");
+  }
+  
+  if (lastSyncAt) {
+    const lastSyncDate = new Date(lastSyncAt).toISOString();
+    filterConditions.push(`receivedDateTime gt ${lastSyncDate}`);
   }
 
-  const data: GraphResponse = await response.json();
-  const messages = data.value || [];
+  if (filterConditions.length > 0) {
+    query = query.filter(filterConditions.join(" and "));
+  }
 
-  logger.info({ count: messages.length }, "Fetched messages");
+  logger.info({ top, unreadOnly, lastSyncAt, filterConditions }, "Fetching messages from Graph API");
 
-  let created = 0;
-  let updated = 0;
+  // Execute query
+  const response = await query.get();
+  const messages: Message[] = response.value || [];
+
+  logger.info({ count: messages.length }, "Fetched messages from Graph API");
+
+  // Counters
+  let messagesCreated = 0;
+  let messagesDuplicate = 0;
   let conversationsCreated = 0;
+  let conversationsUpdated = 0;
   let errors = 0;
-  let skipped = 0;
 
+  // Process each message
   for (const msg of messages) {
     try {
-      const normalizedSubject = (msg.subject || "(No subject)").replace(/^(Re:|Fwd?:)\s*/gi, '').trim();
-
-      // Find existing conversation
-      let conversation = null;
-      
-      if (msg.conversationId) {
-        const convs = await api.conversation.findMany({
-          filter: { conversationId: { equals: msg.conversationId } },
-          first: 1,
-        });
-        if (convs && convs.length > 0) {
-          conversation = convs[0];
-        }
-      }
-
-      // Create new conversation if not found
-      if (!conversation) {
-        conversation = await api.conversation.create({
-          conversationId: msg.conversationId || `generated-${Date.now()}-${Math.random()}`,
-          externalConversationId: msg.conversationId,
-          subject: normalizedSubject,
-          primaryCustomerEmail: msg.from?.emailAddress?.address,
-          primaryCustomerName: msg.from?.emailAddress?.name,
-          firstMessageAt: msg.receivedDateTime,
-          latestMessageAt: msg.receivedDateTime,
-          messageCount: 1,
-          unreadCount: msg.isRead ? 0 : 1,
-        });
-        conversationsCreated++;
-      } else {
-        // Update existing
-        await api.conversation.update(conversation.id, {
-          latestMessageAt: msg.receivedDateTime,
-          messageCount: (conversation.messageCount || 0) + 1,
-          unreadCount: msg.isRead ? conversation.unreadCount : (conversation.unreadCount || 0) + 1,
-        });
-      }
-
-      // Check if message exists
-      let existingMsg = null;
+      // Check for duplicate by externalMessageId
       if (msg.id) {
-        const msgs = await api.emailMessage.findMany({
+        const existing = await api.emailMessage.findMany({
           filter: { externalMessageId: { equals: msg.id } },
           first: 1,
         });
-        if (msgs && msgs.length > 0) {
-          existingMsg = msgs[0];
-        }
-      }
-
-      if (!existingMsg) {
-        // Validate required fields
-        const fromAddress = msg.from?.emailAddress?.address ?? null;
-        const receivedDateTime = msg.receivedDateTime ?? msg.sentDateTime ?? null;
-        const messageId = msg.id ?? null;
-        const graphConversationId = msg.conversationId ?? null;
         
-        if (!fromAddress || !receivedDateTime || !messageId || !graphConversationId) {
-          logger.warn({
-            subject: msg.subject,
-            id: msg.id,
-            missing: {
-              fromAddress: !fromAddress,
-              receivedDateTime: !receivedDateTime,
-              messageId: !messageId,
-              graphConversationId: !graphConversationId,
-            }
-          }, "Skipping invalid Graph message - missing required fields");
-          errors++;
-          skipped++;
+        if (existing && existing.length > 0) {
+          messagesDuplicate++;
           continue;
         }
-
-        // Create email message
-        await api.emailMessage.create({
-          messageId,
-          graphConversationId,
-          fromAddress,
-          receivedDateTime,
-          externalMessageId: msg.id,
-          internetMessageId: msg.internetMessageId,
-          conversation: { _link: conversation.id },
-          subject: msg.subject || "(No subject)",
-          fromEmail: msg.from?.emailAddress?.address,
-          fromName: msg.from?.emailAddress?.name,
-          sentDateTime: msg.sentDateTime,
-          bodyPreview: msg.bodyPreview,
-          bodyHtml: msg.body?.contentType === 'html' ? msg.body.content : null,
-          bodyText: msg.body?.contentType === 'text' ? msg.body.content : msg.bodyPreview,
-          isRead: msg.isRead,
-          hasAttachments: msg.hasAttachments,
-          shopifyCustomerFound: false,
-          shopifyLookupCompleted: false,
-        });
-        created++;
-      } else {
-        await api.emailMessage.update(existingMsg.id, {
-          isRead: msg.isRead,
-        });
-        updated++;
       }
 
+      // Extract conversation key
+      const graphConversationId = getConversationKeyFromGraphMessage(msg);
+      if (!graphConversationId) {
+        logger.warn({ messageId: msg.id }, "Message missing conversationId, skipping");
+        errors++;
+        continue;
+      }
+
+      // Find or create conversation
+      let conversation = null;
+      const existingConversations = await api.conversation.findMany({
+        filter: { graphConversationId: { equals: graphConversationId } },
+        first: 1,
+      });
+
+      if (existingConversations && existingConversations.length > 0) {
+        conversation = existingConversations[0];
+      }
+
+      const normalizedSubject = (msg.subject || "(No subject)").replace(/^(Re:|Fwd?:)\s*/gi, '').trim();
+      const fromAddress = asEmail(msg.from);
+      const fromName = asName(msg.from);
+      const receivedDateTime = msg.receivedDateTime || msg.sentDateTime;
+
+      if (!conversation) {
+        // Create new conversation
+        conversation = await api.conversation.create({
+          conversationId: graphConversationId,
+          graphConversationId: graphConversationId,
+          subject: normalizedSubject,
+          primaryCustomerEmail: fromAddress,
+          primaryCustomerName: fromName,
+          firstMessageAt: receivedDateTime,
+          latestMessageAt: receivedDateTime,
+          messageCount: 1,
+          unreadCount: msg.isRead ? 0 : 1,
+          status: "new",
+        });
+        conversationsCreated++;
+      } else {
+        // Update existing conversation
+        const newMessageCount = (conversation.messageCount || 0) + 1;
+        const newUnreadCount = msg.isRead ? conversation.unreadCount : (conversation.unreadCount || 0) + 1;
+        const newLatestMessageAt = receivedDateTime;
+        const newFirstMessageAt = conversation.firstMessageAt && new Date(conversation.firstMessageAt) < new Date(receivedDateTime)
+          ? conversation.firstMessageAt
+          : receivedDateTime;
+
+        await api.conversation.update(conversation.id, {
+          messageCount: newMessageCount,
+          unreadCount: newUnreadCount,
+          latestMessageAt: newLatestMessageAt,
+          firstMessageAt: newFirstMessageAt,
+        });
+        conversationsUpdated++;
+      }
+
+      // Validate required fields for emailMessage
+      if (!fromAddress || !receivedDateTime || !msg.id || !graphConversationId) {
+        logger.warn({
+          messageId: msg.id,
+          subject: msg.subject,
+          missing: {
+            fromAddress: !fromAddress,
+            receivedDateTime: !receivedDateTime,
+            id: !msg.id,
+            graphConversationId: !graphConversationId,
+          },
+        }, "Skipping message - missing required fields");
+        errors++;
+        continue;
+      }
+
+      // Create email message
+      await api.emailMessage.create({
+        conversation: { _link: conversation.id },
+        messageId: msg.id,
+        externalMessageId: msg.id,
+        graphConversationId: graphConversationId,
+        internetMessageId: msg.internetMessageId || null,
+        fromAddress: fromAddress,
+        fromEmail: fromAddress,
+        fromName: fromName,
+        subject: msg.subject || "(No subject)",
+        bodyPreview: msg.bodyPreview || null,
+        bodyHtml: msg.body?.contentType === "html" ? msg.body.content : null,
+        bodyText: msg.body?.contentType === "text" ? msg.body.content : msg.bodyPreview || null,
+        receivedDateTime: receivedDateTime,
+        sentDateTime: msg.sentDateTime || null,
+        isRead: msg.isRead || false,
+        hasAttachments: msg.hasAttachments || false,
+        toAddresses: toEmailList(msg.toRecipients || []),
+        ccAddresses: toEmailList(msg.ccRecipients || []),
+        shopifyCustomerFound: false,
+        shopifyLookupCompleted: false,
+      });
+
+      messagesCreated++;
+
     } catch (err: any) {
-      // ✅ Fixed TypeScript error by typing as 'any'
-      logger.error({ 
-        err, 
+      logger.error({
+        err,
         messageId: msg.id,
         subject: msg.subject,
-        errorMessage: err?.message || String(err)
+        errorMessage: err?.message || String(err),
       }, "Failed to process message");
       errors++;
     }
   }
 
+  // Update lastSyncAt in appConfiguration
+  if (messagesCreated > 0 || messagesDuplicate > 0) {
+    await api.appConfiguration.update(config.id, {
+      lastSyncAt: now,
+    });
+  }
+
   const result = {
     ok: true,
-    fetched: messages.length,
-    created,
-    updated,
+    messagesCreated,
+    messagesDuplicate,
     conversationsCreated,
+    conversationsUpdated,
     errors,
-    skipped,
-    hasMore: !!data["@odata.nextLink"],
+    totalFetched: messages.length,
   };
 
-  logger.info(result, `Sync complete. Created: ${created}, Updated: ${updated}, Skipped: ${skipped} invalid messages`);
+  logger.info(result, "Sync completed");
 
   return result;
 };

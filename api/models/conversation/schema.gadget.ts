@@ -46,7 +46,11 @@ export const schema: GadgetModel = {
       storageKey: "dWPEmPddcBs3",
       searchIndex: false,
     },
-    assignedTo: { type: "email", storageKey: "UAtvUD0VlqBj" },
+    assignedTo: {
+      type: "belongsTo",
+      parent: { model: "user" },
+      storageKey: "UAtvUD0VlqBj",
+    },
     autoResolved: {
       type: "boolean",
       default: false,
@@ -142,6 +146,11 @@ export const schema: GadgetModel = {
       storageKey: "v2JX2AwdR4Q7",
     },
     folderPath: { type: "string", storageKey: "qX3v5pHizOLW" },
+    graphConversationId: {
+      type: "string",
+      validations: { unique: true },
+      storageKey: "e6IXA9cBl1nW",
+    },
     hasDeadline: {
       type: "boolean",
       default: false,
