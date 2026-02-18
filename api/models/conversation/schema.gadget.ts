@@ -51,6 +51,11 @@ export const schema: GadgetModel = {
       parent: { model: "user" },
       storageKey: "UAtvUD0VlqBj",
     },
+    assignedToUser: {
+      type: "belongsTo",
+      parent: { model: "user" },
+      storageKey: "X2MXdVreYX-D",
+    },
     autoResolved: {
       type: "boolean",
       default: false,

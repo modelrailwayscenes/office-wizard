@@ -486,7 +486,7 @@ export const run = async (context: any) => {
           await api.internal.conversation.update(convId, {
             batchOperation: { _link: batchOp.id },
             batchResultStatus: "assigned",
-            assignedTo: { _link: assignToUserId },
+            assignedToUser: { _link: assignToUserId },
           });
 
           await writeBatchComment({
