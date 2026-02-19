@@ -230,7 +230,7 @@ export default function ConversationsIndex() {
       toast.success("Emails fetched successfully");
       setTelemetryEvent({
         lastAction: "Emails fetched",
-        details: `Imported ${result?.sync?.imported ?? 0}, created ${result?.sync?.conversationsCreated ?? 0}, errors ${result?.sync?.errors ?? 0}`,
+        details: `Fetched ${result?.sync?.totalFetched ?? 0}, imported ${result?.sync?.imported ?? 0}, duplicates ${result?.sync?.skipped ?? 0}, created ${result?.sync?.conversationsCreated ?? 0}, errors ${result?.sync?.errors ?? 0}`,
         severity: (result?.sync?.errors ?? 0) > 0 ? "warning" : "success",
         durationMs: Date.now() - start,
       });
