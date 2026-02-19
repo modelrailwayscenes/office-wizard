@@ -5,19 +5,19 @@ import React from "react";
 const BADGE_CONFIGS = {
   // Priority badges
   urgent: {
-    bg: "#7f1d1d",  // red-900
+    bg: "#7F1D1D",
     text: "#ffffff",
   },
   high: {
-    bg: "#7c2d12",  // orange-900
+    bg: "#5B2F22",
     text: "#ffffff",
   },
   medium: {
-    bg: "#115e59",  // teal-900
+    bg: "#384128",
     text: "#ffffff",
   },
   low: {
-    bg: "#14532d",  // green-900
+    bg: "#14532D",
     text: "#ffffff",
   },
   
@@ -69,8 +69,8 @@ const BADGE_CONFIGS = {
     text: "#ffffff",
   },
   unclassified: {
-    bg: "#1e293b",  // slate-800
-    text: "#94a3b8",  // slate-400
+    bg: "#545454",
+    text: "#94a3b8",
   },
   
   // Connection status badges

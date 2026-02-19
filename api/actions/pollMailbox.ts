@@ -1,12 +1,17 @@
 import type { ActionOptions } from "gadget-server";
+import { run as runSyncEmails } from "./syncEmailsViaGraphAPI";
 
 export const run: ActionRun = async ({ logger, api }) => {
   logger.info("Starting mailbox polling");
 
-  const syncResult = await api.syncEmailsViaGraphAPI({
-    top: 50,
-    unreadOnly: false,
-  });
+  const syncResult = await runSyncEmails({
+    logger,
+    api,
+    params: {
+      top: 50,
+      unreadOnly: false,
+    },
+  } as any);
 
   const messagesCreated = (syncResult as any)?.messagesCreated ?? 0;
 

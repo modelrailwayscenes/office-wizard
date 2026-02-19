@@ -1,4 +1,5 @@
 import type { ActionOptions } from "gadget-server";
+import { run as runSyncEmails } from "./syncEmailsViaGraphAPI";
 
 /**
  * Fetch new emails from Microsoft 365 and optionally run AI triage
@@ -37,13 +38,14 @@ export const run: ActionRun = async ({ params, logger, api }) => {
   try {
     // Step 1: Sync emails from Microsoft 365
     logger.info("Syncing emails from Microsoft 365...");
-    const syncResult = await api.syncEmailsViaGraphAPI({
-      top: maxEmails,
-      unreadOnly,
-      ignoreLastSyncAt,
-      maxPages,
-      folderPath: "Inbox",
-    } as any); // Type assertion until Gadget generates types
+    const syncResult = await runSyncEmails({
+      logger,
+      api,
+      params: {
+        top: maxEmails,
+        unreadOnly,
+      },
+    } as any);
 
     logger.info(syncResult, "Email sync completed");
 

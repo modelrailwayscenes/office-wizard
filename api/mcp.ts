@@ -31,7 +31,7 @@ mcpServer.registerTool({
   },
   handler: async () => {
     try {
-      const conversations = await api.conversation.findMany({
+      const conversations = (await api.conversation.findMany({
         filter: {
           AND: [
             {
@@ -71,10 +71,10 @@ mcpServer.registerTool({
         sort: [
           { currentPriorityScore: "Descending" }
         ]
-      });
+      } as any)) as any[];
 
       const structuredContent = {
-        conversations: conversations.map(conv => {
+        conversations: conversations.map((conv: any) => {
           const latestClassification = conv.classifications.edges.length > 0 
             ? conv.classifications.edges[0].node 
             : null;
@@ -99,7 +99,7 @@ mcpServer.registerTool({
       };
 
       const content = `Found ${conversations.length} high priority email(s):\n\n` +
-        conversations.map((conv, idx) => {
+        conversations.map((conv: any, idx: number) => {
           const latestClassification = conv.classifications.edges.length > 0 
             ? conv.classifications.edges[0].node 
             : null;
@@ -197,7 +197,7 @@ mcpServer.registerTool({
   },
   handler: async ({ conversationId }: { conversationId: string }) => {
     try {
-      const conversation = await api.conversation.findOne(conversationId, {
+      const conversation = (await api.conversation.findOne(conversationId, {
         select: {
           id: true,
           conversationId: true,
@@ -209,7 +209,10 @@ mcpServer.registerTool({
           currentCategory: true,
           automationTag: true,
           status: true,
-          assignedTo: true,
+          assignedTo: {
+            id: true,
+            email: true,
+          },
           resolved: true,
           resolvedAt: true,
           autoResolved: true,
@@ -264,7 +267,7 @@ mcpServer.registerTool({
             }
           }
         }
-      });
+      } as any)) as any;
 
       const structuredContent = {
         conversation: {
@@ -287,8 +290,8 @@ mcpServer.registerTool({
           assignedTo: conversation.assignedTo,
           resolved: conversation.resolved,
           messageCount: conversation.messageCount,
-          messages: conversation.messages.edges.map(edge => edge.node),
-          classifications: conversation.classifications.edges.map(edge => edge.node)
+          messages: conversation.messages.edges.map((edge: any) => edge.node),
+          classifications: conversation.classifications.edges.map((edge: any) => edge.node)
         }
       };
 
@@ -302,7 +305,7 @@ mcpServer.registerTool({
         `AI Recommendation: ${conversation.automationTag}\n` +
         `Requires Human Review: ${conversation.requiresHumanReview}\n\n` +
         `Recent Messages:\n` +
-        conversation.messages.edges.slice(0, 3).map((edge, idx) => 
+        conversation.messages.edges.slice(0, 3).map((edge: any, idx: number) => 
           `${idx + 1}. From: ${edge.node.fromName || edge.node.fromAddress}\n` +
           `   Date: ${edge.node.receivedDateTime}\n` +
           `   Preview: ${edge.node.bodyPreview}\n`
@@ -429,7 +432,7 @@ mcpServer.registerTool({
         });
       }
 
-      const conversations = await api.conversation.findMany({
+      const conversations = (await api.conversation.findMany({
         filter: filters.length > 0 ? { AND: filters } : undefined,
         select: {
           id: true,
@@ -455,10 +458,10 @@ mcpServer.registerTool({
         sort: [
           { latestMessageAt: "Descending" }
         ]
-      });
+      } as any)) as any[];
 
       const structuredContent = {
-        conversations: conversations.map(conv => {
+        conversations: conversations.map((conv: any) => {
           const latestClassification = conv.classifications.edges.length > 0 
             ? conv.classifications.edges[0].node 
             : null;
@@ -490,7 +493,7 @@ mcpServer.registerTool({
       };
 
       const content = `Found ${conversations.length} conversation(s):\n\n` +
-        conversations.map((conv, idx) => {
+        conversations.map((conv: any, idx: number) => {
           const latestClassification = conv.classifications.edges.length > 0 
             ? conv.classifications.edges[0].node 
             : null;
@@ -624,7 +627,7 @@ mcpServer.registerTool({
         });
       }
 
-      const conversations = await api.conversation.findMany({
+      const conversations = (await api.conversation.findMany({
         filter: filters.length > 0 ? { AND: filters } : undefined,
         select: {
           id: true,
@@ -658,10 +661,10 @@ mcpServer.registerTool({
         sort: [
           { latestMessageAt: "Descending" }
         ]
-      });
+      } as any)) as any[];
 
       const structuredContent = {
-        conversations: conversations.map(conv => {
+        conversations: conversations.map((conv: any) => {
           const latestClassification = conv.classifications.edges.length > 0 
             ? conv.classifications.edges[0].node 
             : null;
@@ -706,7 +709,7 @@ mcpServer.registerTool({
       };
 
       const content = `Found ${conversations.length} conversation(s) matching sentiment criteria:\n\n` +
-        conversations.map((conv, idx) => {
+        conversations.map((conv: any, idx: number) => {
           const latestClassification = conv.classifications.edges.length > 0 
             ? conv.classifications.edges[0].node 
             : null;

@@ -14,7 +14,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
@@ -503,6 +502,7 @@ export default function ConversationsIndex() {
                 },
               ]}
               filter={buildFilter()}
+              initialSort={{ currentPriorityScore: "Descending" }}
               onClick={handleRowClick}
               select={{
                 id: true,
@@ -531,22 +531,31 @@ export default function ConversationsIndex() {
 
         {/* Conversation Details Drawer */}
         <Sheet open={drawerOpen} onOpenChange={(open) => !open && handleCloseDrawer()}>
-          <SheetContent side="right" className="w-full sm:max-w-2xl bg-slate-900 border-slate-800 overflow-y-auto">
-            <SheetHeader className="mb-6">
+          <SheetContent side="right" className="w-full sm:max-w-2xl bg-slate-900 border-slate-800 overflow-y-auto p-0">
+            {/* Drawer header band */}
+            <div className="border-b border-slate-800 bg-slate-900/50 px-6 py-5 sticky top-0 z-10">
               <div className="flex items-start justify-between">
-                <SheetTitle className="text-xl font-semibold text-white pr-8">
-                  Conversation Details
-                </SheetTitle>
+                <div>
+                  <SheetTitle className="text-xl font-semibold text-white">
+                    Conversation Details
+                  </SheetTitle>
+                  {conversationData?.subject && (
+                    <p className="text-sm text-slate-400 mt-1 line-clamp-1 pr-8">{conversationData.subject}</p>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleCloseDrawer}
-                  className="text-slate-400 hover:text-white"
+                  className="text-slate-400 hover:text-white flex-shrink-0"
                 >
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-            </SheetHeader>
+            </div>
+
+            {/* Drawer content */}
+            <div className="px-6 py-6">
 
             {fetchingConversation && (
               <div className="flex items-center justify-center py-12">
@@ -562,16 +571,7 @@ export default function ConversationsIndex() {
             )}
 
             {conversationData && (
-              <div className="space-y-6">
-                {/* Subject */}
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-white">Subject</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-slate-200">{conversationData.subject || "—"}</p>
-                  </CardContent>
-                </Card>
+              <div className="space-y-4">
 
                 {/* Metadata */}
                 <Card className="bg-slate-800/50 border-slate-700">
@@ -787,6 +787,7 @@ export default function ConversationsIndex() {
                 </Card>
               </div>
             )}
+            </div>
           </SheetContent>
         </Sheet>
       </div>

@@ -1,6 +1,4 @@
 import type { ActionOptions } from "gadget-server";
-import { Client } from "@microsoft/microsoft-graph-client";
-import "isomorphic-fetch";
 
 const asEmail = (addr: any): string | null => {
   return addr?.emailAddress?.address || null;
@@ -27,6 +25,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
       microsoftRefreshToken: true,
       microsoftTokenExpiresAt: true,
       lastSyncAt: true,
+      ignoreLastSyncAt: true,
     },
   });
 
@@ -53,28 +52,32 @@ export const run: ActionRun = async ({ logger, api, params }) => {
         microsoftRefreshToken: true,
         microsoftTokenExpiresAt: true,
         lastSyncAt: true,
+        ignoreLastSyncAt: true,
       },
     });
   }
 
   if (!config?.microsoftAccessToken) throw new Error("No access token available");
 
-  const client = Client.init({
-    authProvider: (done: any) => {
-      done(null, config.microsoftAccessToken);
-    },
-  });
-
   const top = Math.min(Math.max(Number((params as any)?.top ?? 100), 1), 100);
   const unreadOnly = Boolean((params as any)?.unreadOnly ?? false);
-  const ignoreLastSyncAt = Boolean((params as any)?.ignoreLastSyncAt ?? false);
-  const maxPages = Math.min(Math.max(Number((params as any)?.maxPages ?? 1), 1), 50);
+  const ignoreLastSyncAt = Boolean(
+    (params as any)?.ignoreLastSyncAt ?? (config as any)?.ignoreLastSyncAt ?? false
+  );
+  const maxPages = Math.min(Math.max(Number((params as any)?.maxPages ?? 10), 1), 50);
   const lastSyncAt = config.lastSyncAt;
 
-  let query = client
-    .api("/me/mailFolders/Inbox/messages")
-    .top(top)
-    .select([
+  const filterConditions: string[] = [];
+  if (unreadOnly) filterConditions.push("isRead eq false");
+
+  if (lastSyncAt && !ignoreLastSyncAt) {
+    const lastSyncDate = new Date(lastSyncAt).toISOString();
+    filterConditions.push(`receivedDateTime gt ${lastSyncDate}`);
+  }
+
+  const queryParams: Record<string, string> = {
+    $top: String(top),
+    $select: [
       "id",
       "subject",
       "receivedDateTime",
@@ -88,19 +91,12 @@ export const run: ActionRun = async ({ logger, api, params }) => {
       "conversationId",
       "internetMessageId",
       "hasAttachments",
-    ])
-    .orderby("receivedDateTime desc");
-
-  const filterConditions: string[] = [];
-  if (unreadOnly) filterConditions.push("isRead eq false");
-
-  if (lastSyncAt && !ignoreLastSyncAt) {
-    const lastSyncDate = new Date(lastSyncAt).toISOString();
-    filterConditions.push(`receivedDateTime gt ${lastSyncDate}`);
-  }
+    ].join(","),
+    $orderby: "receivedDateTime desc",
+  };
 
   if (filterConditions.length > 0) {
-    query = query.filter(filterConditions.join(" and "));
+    queryParams.$filter = filterConditions.join(" and ");
   }
 
   logger.info(
@@ -116,10 +112,24 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   let errors = 0;
 
   let page = 0;
-  let response = await query.get();
+  const baseUrl = "https://graph.microsoft.com/v1.0/me/mailFolders/Inbox/messages";
+  const paramsString = new URLSearchParams(queryParams).toString();
+  let nextLink = `${baseUrl}?${paramsString}`;
 
   while (true) {
-    const messages: any[] = response?.value || [];
+    const response = await fetch(nextLink, {
+      headers: {
+        Authorization: `Bearer ${config.microsoftAccessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text();
+      throw new Error(`Graph API error ${response.status}: ${bodyText}`);
+    }
+
+    const payload = await response.json();
+    const messages: any[] = payload?.value || [];
     totalFetched += messages.length;
 
     logger.info({ count: messages.length, page: page + 1 }, "Fetched messages from Graph API");
@@ -172,19 +182,17 @@ export const run: ActionRun = async ({ logger, api, params }) => {
 
         if (!conversation) {
           conversation = await api.conversation.create({
-            conversation: {
-              graphConversationId,
-              subject: normalizedSubject,
-              primaryCustomerEmail: fromAddress,
-              primaryCustomerName: fromName,
-              firstMessageAt: receivedDateTime,
-              latestMessageAt: receivedDateTime,
-              messageCount: 1,
-              unreadCount: msg.isRead ? 0 : 1,
-              status: "new",
-            },
-            select: { id: true, messageCount: true, unreadCount: true, firstMessageAt: true },
-          });
+            conversationId: graphConversationId,
+            graphConversationId,
+            subject: normalizedSubject,
+            primaryCustomerEmail: fromAddress,
+            primaryCustomerName: fromName,
+            firstMessageAt: receivedDateTime,
+            latestMessageAt: receivedDateTime,
+            messageCount: 1,
+            unreadCount: msg.isRead ? 0 : 1,
+            status: "new",
+          } as any);
 
           conversationsCreated++;
         } else {
@@ -200,16 +208,12 @@ export const run: ActionRun = async ({ logger, api, params }) => {
           const newFirstMessageAt =
             existingFirst && incoming && existingFirst <= incoming ? conversation.firstMessageAt : receivedDateTime;
 
-          await api.conversation.update({
-            id: conversation.id,
-            conversation: {
-              messageCount: newMessageCount,
-              unreadCount: newUnreadCount,
-              latestMessageAt: receivedDateTime,
-              firstMessageAt: newFirstMessageAt,
-            },
-            select: { id: true },
-          });
+        await api.conversation.update(conversation.id, {
+          messageCount: newMessageCount,
+          unreadCount: newUnreadCount,
+          latestMessageAt: receivedDateTime,
+          firstMessageAt: newFirstMessageAt,
+        } as any);
 
           conversationsUpdated++;
         }
@@ -228,30 +232,27 @@ export const run: ActionRun = async ({ logger, api, params }) => {
         }
 
         await api.emailMessage.create({
-          emailMessage: {
-            conversation: { _link: conversation.id },
-            messageId: msg.id,
-            externalMessageId: msg.id,
-            graphConversationId,
-            internetMessageId: msg.internetMessageId || null,
-            fromAddress,
-            fromEmail: fromAddress,
-            fromName,
-            subject: msg.subject || "(No subject)",
-            bodyPreview: msg.bodyPreview || null,
-            bodyHtml: msg.body?.contentType === "html" ? msg.body.content : null,
-            bodyText: msg.body?.contentType === "text" ? msg.body.content : msg.bodyPreview || null,
-            receivedDateTime,
-            sentDateTime: msg.sentDateTime || null,
-            isRead: Boolean(msg.isRead),
-            hasAttachments: Boolean(msg.hasAttachments),
-            toAddresses: toEmailList(msg.toRecipients || []),
-            ccAddresses: toEmailList(msg.ccRecipients || []),
-            shopifyCustomerFound: false,
-            shopifyLookupCompleted: false,
-          },
-          select: { id: true },
-        });
+          conversation: { _link: conversation.id },
+          messageId: msg.id,
+          externalMessageId: msg.id,
+          graphConversationId,
+          internetMessageId: msg.internetMessageId || null,
+          fromAddress,
+          fromEmail: fromAddress,
+          fromName,
+          subject: msg.subject || "(No subject)",
+          bodyPreview: msg.bodyPreview || null,
+          bodyHtml: msg.body?.contentType === "html" ? msg.body.content : null,
+          bodyText: msg.body?.contentType === "text" ? msg.body.content : msg.bodyPreview || null,
+          receivedDateTime,
+          sentDateTime: msg.sentDateTime || null,
+          isRead: Boolean(msg.isRead),
+          hasAttachments: Boolean(msg.hasAttachments),
+          toAddresses: toEmailList(msg.toRecipients || []),
+          ccAddresses: toEmailList(msg.ccRecipients || []),
+          shopifyCustomerFound: false,
+          shopifyLookupCompleted: false,
+        } as any);
 
         messagesCreated++;
       } catch (err: any) {
@@ -269,9 +270,9 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     }
 
     page += 1;
-    const nextLink = response?.["@odata.nextLink"];
-    if (!nextLink || page >= maxPages) break;
-    response = await client.api(nextLink).get();
+    const nextPage = payload?.["@odata.nextLink"];
+    if (!nextPage || page >= maxPages) break;
+    nextLink = nextPage;
   }
 
   if (messagesCreated > 0 || messagesDuplicate > 0) {
