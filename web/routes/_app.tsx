@@ -23,8 +23,37 @@ export type AuthOutletContext = {
 };
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
-  const { session } = context;
-  const user = session?.get("user");
+  const { session, api } = context;
+  const userRef = session?.get("user");
+  if (!userRef) throw redirect("/sign-in");
+  
+  // Handle different possible formats of the user reference
+  // Could be: string ID, { _link: string }, or { id: string }
+  let userId: string;
+  if (typeof userRef === 'string') {
+    userId = userRef;
+  } else if (userRef._link) {
+    userId = userRef._link;
+  } else if (userRef.id) {
+    userId = userRef.id;
+  } else {
+    throw redirect("/sign-in");
+  }
+  
+  // Fetch full user record with roles
+  const user = await api.user.findOne(userId, {
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      roleList: {
+        key: true,
+        name: true,
+      },
+    },
+  });
+  
   if (!user) throw redirect("/sign-in");
   return { session: { user } };
 };

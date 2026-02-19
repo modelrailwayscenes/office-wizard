@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link as RouterLink, useLocation } from "react-router";
-import { useFindMany } from "@gadgetinc/react";
+import { Link as RouterLink, useLocation, useOutletContext } from "react-router";
+import { useFindMany, useGlobalAction } from "@gadgetinc/react";
 import { api } from "../api";
+import { toast } from "sonner";
+import type { AuthOutletContext } from "./_app";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
@@ -85,6 +87,14 @@ export default function ThreadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
 
+  const { user } = useOutletContext<AuthOutletContext>();
+
+  // Check if user has system-admin role
+  // roleList is an array of role objects like [{ key: 'system-admin', name: 'System Admin' }]
+  const isAdmin = Array.isArray(user?.roleList) && user.roleList.some((role: any) => role?.key === 'system-admin');
+
+  const [{ fetching: triaging }, runTriage] = useGlobalAction(api.triageAllPending);
+
   const [{ data: conversationsData, fetching }, refresh] = useFindMany(api.conversation, {
     select: {
       id: true,
@@ -112,6 +122,16 @@ export default function ThreadsPage() {
   });
 
   const conversations = conversationsData || [];
+
+  const handleRunTriage = async () => {
+    try {
+      const result = (await runTriage({})) as any;
+      toast.success(`Triage complete! Processed: ${result.processed}`);
+      void refresh();
+    } catch (err: any) {
+      toast.error(`Triage failed: ${err?.message || String(err)}`);
+    }
+  };
 
   const filteredConversations = conversations.filter((c) =>
     searchQuery
@@ -179,15 +199,31 @@ export default function ThreadsPage() {
                 View conversation data and metadata for debugging
               </p>
             </div>
-            <Button
-              onClick={() => refresh()}
-              disabled={fetching}
-              variant="outline"
-              className="border-slate-700 hover:bg-slate-800"
-            >
-              <RefreshCw className={`mr-2 h-4 w-4 ${fetching ? "animate-spin" : ""}`} />
-              {fetching ? "Refreshing..." : "Refresh"}
-            </Button>
+            <div className="flex items-center gap-4">
+              {isAdmin && (
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Operations</span>
+                  <Button
+                    onClick={handleRunTriage}
+                    disabled={triaging || fetching}
+                    variant="outline"
+                    className="border-teal-600 text-teal-400 hover:bg-teal-600/10"
+                  >
+                    <Layers className={`mr-2 h-4 w-4 ${triaging ? "animate-pulse" : ""}`} />
+                    {triaging ? "Running Triage..." : "Run Triage"}
+                  </Button>
+                </div>
+              )}
+              <Button
+                onClick={() => refresh()}
+                disabled={fetching}
+                variant="outline"
+                className="border-slate-700 hover:bg-slate-800"
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${fetching ? "animate-spin" : ""}`} />
+                {fetching ? "Refreshing..." : "Refresh"}
+              </Button>
+            </div>
           </div>
         </div>
 

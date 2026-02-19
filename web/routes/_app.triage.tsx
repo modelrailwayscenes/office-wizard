@@ -131,7 +131,7 @@ export default function TriageQueuePage() {
     return Array.from(orders);
   };
 
-  const [{ data: conversationsData }, refresh] = useFindMany(api.conversation, {
+  const [{ data: conversationsData, fetching }, refresh] = useFindMany(api.conversation, {
     filter: { status: { notEquals: "resolved" } },
     select: {
       id: true,
@@ -170,20 +170,9 @@ export default function TriageQueuePage() {
 
   const conversations = conversationsData as any[];
 
-  const [{ fetching: triaging }, runTriage] = useGlobalAction(api.triageAllPending);
   const [{ fetching: batchLoading }, runBatchOperation] = useGlobalAction(api.runBatchOperation);
   const [{ fetching: applyEditsLoading }, applyDraftEdits] = useGlobalAction(api.applyDraftEdits);
   const [, generateDraft] = useGlobalAction(api.generateDraft);
-
-  const handleRunTriage = async () => {
-    try {
-      const result = (await runTriage({})) as any;
-      toast.success(`Triage complete! Processed: ${result.processed}`);
-      handleRefresh();
-    } catch (err: any) {
-      toast.error(`Triage failed: ${err?.message || String(err)}`);
-    }
-  };
 
   const handleGenerateDraft = async (conversationId: string, regenerate = false) => {
     setGeneratingDraft(true);
@@ -223,8 +212,20 @@ export default function TriageQueuePage() {
     }
   };
 
+  const getPrimaryMessage = (conv: any): any => {
+    const messages = conv?.messages?.edges?.map((e: any) => e?.node).filter(Boolean) || [];
+    if (messages.length === 0) return null;
+    // Sort by receivedDateTime descending (newest first)
+    const sorted = [...messages].sort((a, b) => {
+      const dateA = a.receivedDateTime ? new Date(a.receivedDateTime).getTime() : 0;
+      const dateB = b.receivedDateTime ? new Date(b.receivedDateTime).getTime() : 0;
+      return dateB - dateA;
+    });
+    return sorted[0];
+  };
+
   const getPrimaryEmailId = (conv: any): string | null => {
-    const primaryMsg = conv?.messages?.edges?.[0]?.node;
+    const primaryMsg = getPrimaryMessage(conv);
     return primaryMsg?.id || null;
   };
 
@@ -270,7 +271,7 @@ export default function TriageQueuePage() {
     const emails =
       (conversations || [])
         .map((c: any) => {
-          const primaryMsg = c?.messages?.edges?.[0]?.node;
+          const primaryMsg = getPrimaryMessage(c);
           const emailId = primaryMsg?.id;
           if (!emailId) return null;
 
@@ -300,10 +301,16 @@ export default function TriageQueuePage() {
         .filter((e): e is NonNullable<typeof e> => e !== null)
         .filter((e: any) => selectedEmailIds.includes(e.id)) || [];
 
+    const selectedCount = selectedEmailIds.length;
+    const loadedCount = emails.length;
+    const label = selectedCount === loadedCount 
+      ? `Selected (${selectedCount})`
+      : `Selected (${loadedCount} of ${selectedCount} loaded)`;
+
     return {
       id: "batch-selected",
       type: "manual",
-      label: `Selected (${selectedEmailIds.length})`,
+      label,
       emails,
       emailCount: emails.length,
       aiSuggestion: `Review and process ${emails.length} item(s).`,
@@ -354,7 +361,14 @@ export default function TriageQueuePage() {
 
               {selectedEmailIds.length > 0 && (
                 <Button
-                  onClick={() => setBatchModalOpen(true)}
+                  onClick={() => {
+                    const validEmails = batchForModal.emails.length;
+                    if (validEmails === 0) {
+                      toast.error("No valid emails found in selection");
+                      return;
+                    }
+                    setBatchModalOpen(true);
+                  }}
                   variant="outline"
                   className="border-slate-700 hover:bg-slate-800"
                 >
@@ -364,23 +378,13 @@ export default function TriageQueuePage() {
               )}
 
               <Button
-                onClick={handleRunTriage}
-                disabled={triaging}
-                variant="outline"
-                className="border-slate-700 hover:bg-slate-800"
-              >
-                <Layers className={`h-4 w-4 mr-2 ${triaging ? "animate-spin" : ""}`} />
-                {triaging ? "Running..." : "Run Triage"}
-              </Button>
-
-              <Button
                 onClick={handleRefresh}
-                disabled={isRefreshing}
+                disabled={isRefreshing || fetching}
                 variant="outline"
                 className="border-slate-700 hover:bg-slate-800"
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-                {isRefreshing ? "Refreshing..." : "Refresh"}
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing || fetching ? "animate-spin" : ""}`} />
+                {isRefreshing || fetching ? "Refreshing..." : "Refresh"}
               </Button>
             </div>
           </div>
