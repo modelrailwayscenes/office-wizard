@@ -49,12 +49,18 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
       lastName: true,
       roleList: {
         key: true,
-        name: true,
+        name: true
       },
     },
   });
   
   if (!user) throw redirect("/sign-in");
+  
+  console.log('🔍 DEBUG LOADER - user:', user);
+  console.log('🔍 DEBUG LOADER - user.roleList:', user?.roleList);
+  console.log('🔍 DEBUG LOADER - typeof user.roleList:', typeof user?.roleList);
+  console.log('🔍 DEBUG LOADER - Array.isArray(user.roleList):', Array.isArray(user?.roleList));
+  
   return { session: { user } };
 };
 

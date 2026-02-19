@@ -344,6 +344,22 @@ export const schema: GadgetModel = {
       storageKey: "YfmNF2Q1Rr3k",
       searchIndex: false,
     },
+    mondayApiToken: {
+      type: "encryptedString",
+      storageKey: "WMIGbQhsUbph",
+    },
+    mondayConnectionStatus: {
+      type: "string",
+      default: "disconnected",
+      validations: { regex: ["^(disconnected|connected|error)$"] },
+      storageKey: "1L9I-2G8JRWU",
+    },
+    mondayLastVerifiedAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "noEdVsmzxGZ_",
+      searchIndex: false,
+    },
     neverAutoSendCategories: {
       type: "json",
       default: '["refund_cancellation","complaint"]',
@@ -542,6 +558,18 @@ export const schema: GadgetModel = {
     shopifyAccessToken: {
       type: "encryptedString",
       storageKey: "xfwOm1B5C0AA::String-xfwOm1B5C0AA",
+    },
+    shopifyConnectionStatus: {
+      type: "string",
+      default: "disconnected",
+      validations: { regex: ["^(disconnected|connected|error)$"] },
+      storageKey: "z95thshZolpn",
+    },
+    shopifyLastVerifiedAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "3RlxGne3_IWu",
+      searchIndex: false,
     },
     shopifyStoreDomain: {
       type: "string",

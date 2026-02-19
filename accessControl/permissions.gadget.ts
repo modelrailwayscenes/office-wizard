@@ -120,6 +120,8 @@ export const permissions: GadgetPermissions = {
         applyDraftEdits: true,
         approveQuarantinedEmail: true,
         detectBatchOpportunities: true,
+        disconnectMonday: true,
+        disconnectShopify: true,
         fetchEmails: true,
         generateDraft: true,
         makeUserAdmin: true,
@@ -129,6 +131,8 @@ export const permissions: GadgetPermissions = {
         runTriage: true,
         shopifyLookupDirectAPI: true,
         triageAllPending: true,
+        verifyMondayConnection: true,
+        verifyShopifyConnection: true,
       },
     },
     unauthenticated: {

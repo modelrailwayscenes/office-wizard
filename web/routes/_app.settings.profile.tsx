@@ -138,6 +138,7 @@ export default function ProfilePage() {
       textSize: true,
       roleList: {
         key: true,
+        name: true
       },
     },
   });

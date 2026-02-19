@@ -90,8 +90,8 @@ export default function ThreadsPage() {
   const { user } = useOutletContext<AuthOutletContext>();
 
   // Check if user has system-admin role
-  // roleList is an array of role objects like [{ key: 'system-admin', name: 'System Admin' }]
-  const isAdmin = Array.isArray(user?.roleList) && user.roleList.some((role: any) => role?.key === 'system-admin');
+  // roleList is an array of role objects with a `key` property
+  const isAdmin = Array.isArray(user?.roleList) && user.roleList.some((role: any) => role?.key === "system-admin");
 
   const [{ fetching: triaging }, runTriage] = useGlobalAction(api.triageAllPending);
 
@@ -119,6 +119,7 @@ export default function ThreadsPage() {
       },
     },
     first: 50,
+    pause: !isAdmin,
   });
 
   const conversations = conversationsData || [];
@@ -145,9 +146,9 @@ export default function ThreadsPage() {
     ? conversations.find((c) => c.id === selectedConvId)
     : null;
 
-  const formatDate = (dateStr: string | null | undefined) => {
-    if (!dateStr) return "—";
-    const d = new Date(dateStr);
+  const formatDate = (dateValue: string | Date | null | undefined) => {
+    if (!dateValue) return "—";
+    const d = typeof dateValue === "string" ? new Date(dateValue) : dateValue;
     return d.toLocaleString("en-GB", {
       day: "2-digit",
       month: "short",
@@ -184,6 +185,23 @@ export default function ThreadsPage() {
     if (!category) return "UNCLASSIFIED";
     return category.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ").toUpperCase();
   };
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-8">
+        <div className="max-w-md text-center">
+          <AlertTriangle className="h-10 w-10 text-amber-400 mx-auto mb-4" />
+          <h1 className="text-xl font-semibold">Admin access required</h1>
+          <p className="text-sm text-slate-400 mt-2">
+            The Threads debug view is restricted to system admins.
+          </p>
+          <Button asChild className="mt-6 bg-teal-500 hover:bg-teal-600 text-black">
+            <RouterLink to="/">Back to dashboard</RouterLink>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 min-h-0 bg-slate-950 text-white">

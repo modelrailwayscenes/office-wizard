@@ -73,6 +73,24 @@ const BADGE_CONFIGS = {
     text: "#94a3b8",  // slate-400
   },
   
+  // Connection status badges
+  connected: {
+    bg: "#14532d",  // green-900
+    text: "#ffffff",
+  },
+  disconnected: {
+    bg: "#1e293b",  // slate-800
+    text: "#94a3b8",  // slate-400
+  },
+  error: {
+    bg: "#7f1d1d",  // red-900
+    text: "#ffffff",
+  },
+  coming_soon: {
+    bg: "#1e293b",  // slate-800
+    text: "#64748b",  // slate-500
+  },
+
   // Default fallback
   default: {
     bg: "#1e293b",  // slate-800
