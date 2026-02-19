@@ -38,7 +38,7 @@ const conversationSelect = {
   resolvedAt: true,
   requiresHumanReview: true,
   internalNotes: true,
-} as const;
+};
 
 const messageSelect = {
   id: true,
@@ -52,7 +52,7 @@ const messageSelect = {
   isRead: true,
   hasAttachments: true,
   importance: true,
-} as const;
+};
 
 export default function ConversationDetail() {
   const params = useParams<{ id: string }>();

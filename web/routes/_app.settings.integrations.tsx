@@ -33,7 +33,7 @@ export default function IntegrationsSettings() {
     { id: "templates", label: "Templates & Batching", icon: FileText, path: "/settings/templates" },
     { id: "alerts", label: "Alerts & Notifications", icon: Bell, path: "/settings/alerts" },
     { id: "security", label: "Security & Compliance", icon: Shield, path: "/settings/security" },
-    { id: "advanced", label: "Advanced", icon: Settings, path: "/settings/advanced" },
+    { id: "advanced", label: "Admin Only", icon: Settings, path: "/settings/advanced" },
   ];
 
   const location = useLocation();

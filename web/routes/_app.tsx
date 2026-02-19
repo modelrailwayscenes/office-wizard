@@ -33,15 +33,15 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
 const modules = [
   {
     id: "customer",
-    label: "Customer",
+    label: "CUSTOMER",
     path: "/",
     // Any path starting with these counts as "in this module"
     activePaths: ["/", "/conversations", "/threads", "/triage", "/templates", "/signatures", "/settings"],
   },
-  { id: "finance",   label: "Finance",   path: "/finance",   activePaths: ["/finance"] },
+  { id: "finance",   label: "FINANCE",   path: "/finance",   activePaths: ["/finance"] },
   { id: "it",        label: "IT",        path: "/it",        activePaths: ["/it"] },
-  { id: "sales",     label: "Sales",     path: "/sales",     activePaths: ["/sales"] },
-  { id: "marketing", label: "Marketing", path: "/marketing", activePaths: ["/marketing"] },
+  { id: "sales",     label: "SHOPIFY",     path: "/sales",     activePaths: ["/sales"] },
+  { id: "marketing", label: "MARKETING", path: "/marketing", activePaths: ["/marketing"] },
 ];
 
 export default function AppLayout({ loaderData }: Route.ComponentProps) {

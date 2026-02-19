@@ -109,6 +109,7 @@ export default function TriageQueuePage() {
 
   const [selectedEmailIds, setSelectedEmailIds] = useState<string[]>([]);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [assignToUserId, setAssignToUserId] = useState("");
   const [moveToCategory, setMoveToCategory] = useState("");
@@ -178,7 +179,7 @@ export default function TriageQueuePage() {
     try {
       const result = (await runTriage({})) as any;
       toast.success(`Triage complete! Processed: ${result.processed}`);
-      refresh();
+      handleRefresh();
     } catch (err: any) {
       toast.error(`Triage failed: ${err?.message || String(err)}`);
     }
@@ -194,6 +195,31 @@ export default function TriageQueuePage() {
       toast.error(err?.message || "Failed to generate draft");
     } finally {
       setGeneratingDraft(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const result = await refresh();
+      const freshData = result?.data as any[] | undefined;
+
+      // Prune selected email IDs that no longer exist in the refreshed data
+      if (freshData) {
+        const allEmailIds = new Set(
+          freshData.map((c: any) => c?.messages?.edges?.[0]?.node?.id).filter(Boolean)
+        );
+        setSelectedEmailIds((prev) => prev.filter((id) => allEmailIds.has(id)));
+
+        // Clear detail pane if selected conversation no longer exists or doesn't match filter
+        if (selectedConvId && !freshData.find((c: any) => c.id === selectedConvId)) {
+          setSelectedConvId(null);
+        }
+      }
+    } catch (err: any) {
+      toast.error(`Refresh failed: ${err?.message || String(err)}`);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -248,20 +274,21 @@ export default function TriageQueuePage() {
           const emailId = primaryMsg?.id;
           if (!emailId) return null;
 
+          const priority = c.currentPriorityBand === "urgent"
+            ? "P1"
+            : c.currentPriorityBand === "high"
+              ? "P2"
+              : c.currentPriorityBand === "medium"
+                ? "P3"
+                : "P4";
+
           return {
             id: emailId,
             conversationId: c.id,
             customerName: c.primaryCustomerName || "Unknown",
             customerEmail: c.primaryCustomerEmail || "unknown@example.com",
             orderId: getOrderNumbers(c)[0],
-            priority:
-              c.currentPriorityBand === "urgent"
-                ? "P1"
-                : c.currentPriorityBand === "high"
-                  ? "P2"
-                  : c.currentPriorityBand === "medium"
-                    ? "P3"
-                    : "P4",
+            priority: priority as "P1" | "P2" | "P3" | "P4",
             receivedAt: primaryMsg?.receivedDateTime || c.latestMessageAt || c.firstMessageAt || new Date().toISOString(),
             originalSubject: primaryMsg?.subject || c.subject || "(No subject)",
             originalBody: primaryMsg?.bodyPreview || "",
@@ -339,13 +366,21 @@ export default function TriageQueuePage() {
               <Button
                 onClick={handleRunTriage}
                 disabled={triaging}
-                className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
+                variant="outline"
+                className="border-slate-700 hover:bg-slate-800"
               >
+                <Layers className={`h-4 w-4 mr-2 ${triaging ? "animate-spin" : ""}`} />
                 {triaging ? "Running..." : "Run Triage"}
               </Button>
 
-              <Button onClick={refresh} variant="outline" className="border-slate-700 hover:bg-slate-800">
-                <RefreshCw className="h-4 w-4" />
+              <Button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                variant="outline"
+                className="border-slate-700 hover:bg-slate-800"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+                {isRefreshing ? "Refreshing..." : "Refresh"}
               </Button>
             </div>
           </div>
@@ -412,48 +447,54 @@ export default function TriageQueuePage() {
                       selectedConvId === conv.id ? "bg-slate-900/80 border-l-2 border-teal-500" : ""
                     }`}
                   >
-                    {/* Row 1 */}
-                    <div className="flex items-start gap-2 mb-2">
-                      <Checkbox
-                        checked={checked}
-                        disabled={!emailId}
-                        onCheckedChange={(v) => {
-                          if (!emailId) return;
-                          handleToggleEmailSelection(emailId, !!v);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="mt-0.5"
-                      />
-
-                      <UnifiedBadge type={conv.currentPriorityBand} label={getPriorityLabel(conv.currentPriorityBand)} />
-
-                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedConvId(conv.id)}>
-                        <div className="text-white font-medium truncate">{conv.subject || "(No subject)"}</div>
+                    <div className="flex gap-3">
+                      {/* Checkbox column */}
+                      <div className="flex items-start pt-0.5 flex-shrink-0">
+                        <Checkbox
+                          checked={checked}
+                          disabled={!emailId}
+                          onCheckedChange={(v) => {
+                            if (!emailId) return;
+                            handleToggleEmailSelection(emailId, !!v);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="border-slate-600 data-[state=checked]:border-teal-500 data-[state=checked]:bg-teal-500"
+                        />
                       </div>
 
-                      {conv.requiresHumanReview && <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />}
-                    </div>
+                      {/* Content column */}
+                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedConvId(conv.id)}>
+                        {/* Row 1: Priority + Subject + Alert */}
+                        <div className="flex items-start gap-2 mb-2">
+                          <UnifiedBadge type={conv.currentPriorityBand} label={getPriorityLabel(conv.currentPriorityBand)} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-white font-medium truncate">{conv.subject || "(No subject)"}</div>
+                          </div>
+                          {conv.requiresHumanReview && <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />}
+                        </div>
 
-                    {/* Row 2 */}
-                    <div className="text-sm text-slate-400 truncate mb-2 flex items-center gap-2">
-                      <User className="h-3 w-3" />
-                      {conv.primaryCustomerEmail || conv.primaryCustomerName || "Unknown"}
-                    </div>
+                        {/* Row 2: Customer */}
+                        <div className="text-sm text-slate-400 truncate mb-2 flex items-center gap-2">
+                          <User className="h-3 w-3" />
+                          {conv.primaryCustomerEmail || conv.primaryCustomerName || "Unknown"}
+                        </div>
 
-                    {/* Row 3 */}
-                    <div className="flex items-center gap-2 text-xs">
-                      <SentimentBadge sentiment={conv.sentiment} />
-                      <Separator orientation="vertical" className="h-4" />
-                      <Clock className="h-3 w-3 text-slate-500" />
-                      <span className="text-slate-500">{formatTime(conv.latestMessageAt)}</span>
-
-                      {getOrderNumbers(conv).length > 0 && (
-                        <>
+                        {/* Row 3: Sentiment + Time + Order */}
+                        <div className="flex items-center gap-2 text-xs">
+                          <SentimentBadge sentiment={conv.sentiment} />
                           <Separator orientation="vertical" className="h-4" />
-                          <Tag className="h-3 w-3 text-teal-400" />
-                          <span className="text-teal-400">{getOrderNumbers(conv)[0]}</span>
-                        </>
-                      )}
+                          <Clock className="h-3 w-3 text-slate-500" />
+                          <span className="text-slate-500">{formatTime(conv.latestMessageAt)}</span>
+
+                          {getOrderNumbers(conv).length > 0 && (
+                            <>
+                              <Separator orientation="vertical" className="h-4" />
+                              <Tag className="h-3 w-3 text-teal-400" />
+                              <span className="text-teal-400">{getOrderNumbers(conv)[0]}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );

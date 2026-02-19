@@ -18,7 +18,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 
-// ── Customer Service Sidebar ────────────────────────────────────────
+// ── Customer Sidebar ────────────────────────────────────────
 // Same pattern as settings Sidebar — will be extracted to a shared
 // component once we roll it out to all Customer pages.
 
