@@ -91,7 +91,12 @@ export default function ThreadsPage() {
 
   // Check if user has system-admin role
   // roleList is an array of role objects with a `key` property
-  const isAdmin = Array.isArray(user?.roleList) && user.roleList.some((role: any) => role?.key === "system-admin");
+  const roleKeys = Array.isArray(user?.roleList)
+    ? user.roleList
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin");
 
   const [{ fetching: triaging }, runTriage] = useGlobalAction(api.triageAllPending);
 
