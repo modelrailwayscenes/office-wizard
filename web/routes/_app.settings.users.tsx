@@ -21,6 +21,10 @@ function formatDate(date: string | Date) {
 }
 
 export default function TeamPage() {
+  const getPrimaryRoleKey = (roleList: any[] | undefined) => {
+    const primaryRole = roleList?.[0];
+    return typeof primaryRole === "string" ? primaryRole : primaryRole?.key;
+  };
 const tabs = [
   { id: "summary",      label: "Summary",                icon: User2,        path: "/settings/summary" },
   { id: "profile",      label: "Profile",                icon: User2,        path: "/settings/profile" },
@@ -84,7 +88,7 @@ const adminTabs = [
       email:     user.email      || "",
       firstName: user.firstName  || "",
       lastName:  user.lastName   || "",
-      role:      user.roleList?.[0]?.key || "signed-in",
+      role:      getPrimaryRoleKey(user.roleList) || "signed-in",
     });
   };
 
@@ -101,7 +105,7 @@ const adminTabs = [
       
       // Update the user's role using the internal API
       await api.internal.user.update(editingUser.id, {
-        roleList: [{ key: editForm.role }],
+        roleList: [editForm.role],
       });
       
       toast.success("User updated successfully");
@@ -122,7 +126,7 @@ const adminTabs = [
       if (newUsers.length > 0) {
         await api.user.update(newUsers[0].id, { firstName: newUserForm.firstName, lastName: newUserForm.lastName });
         if (newUserForm.role !== "signed-in") {
-          await api.internal.user.update(newUsers[0].id, { roleList: [{ key: newUserForm.role }] });
+          await api.internal.user.update(newUsers[0].id, { roleList: [newUserForm.role] });
         }
       }
 
@@ -138,7 +142,9 @@ const adminTabs = [
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case "system-admin": return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+      case "system-admin":
+      case "sysadmin":
+        return "bg-purple-500/10 text-purple-400 border-purple-500/20";
       case "signed-in":    return "bg-teal-500/10 text-teal-400 border-teal-500/20";
       default:             return "bg-slate-500/10 text-slate-400 border-slate-500/20";
     }
@@ -146,7 +152,9 @@ const adminTabs = [
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
-      case "system-admin": return "Admin";
+      case "system-admin":
+      case "sysadmin":
+        return "Admin";
       case "signed-in":    return "Standard user";
       default:             return role;
     }
@@ -232,8 +240,8 @@ const adminTabs = [
                           {user.firstName} {user.lastName}
                         </h3>
                         <UnifiedBadge 
-                          type={user.roleList?.[0]?.key || "signed-in"} 
-                          label={getRoleDisplayName(user.roleList?.[0]?.key || "")} 
+                          type={getPrimaryRoleKey(user.roleList) || "signed-in"} 
+                          label={getRoleDisplayName(getPrimaryRoleKey(user.roleList) || "")} 
                         />
                       </div>
                       <p className="text-slate-400 mb-2">{user.email}</p>
@@ -296,7 +304,8 @@ const adminTabs = [
                   <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-700">
                     <SelectItem value="signed-in"    className="text-white hover:bg-slate-700">Standard user</SelectItem>
-                    <SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin</SelectItem>
+                    <SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin (system-admin)</SelectItem>
+                    <SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Admin (sysadmin)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -351,7 +360,8 @@ const adminTabs = [
                   <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-700">
                     <SelectItem value="signed-in"    className="text-white hover:bg-slate-700">Standard user</SelectItem>
-                    <SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin</SelectItem>
+                    <SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin (system-admin)</SelectItem>
+                    <SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Admin (sysadmin)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -37,7 +37,12 @@ const adminTabs = [
 ];
 
 function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
-  const isAdmin = user?.roleList?.some((role: any) => role.key === "system-admin");
+  const roleKeys = Array.isArray(user?.roleList)
+    ? user.roleList
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
   
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
@@ -185,7 +190,9 @@ export default function ProfilePage() {
     setEditFirstName(loggedInUser.firstName || "");
     setEditLastName(loggedInUser.lastName || "");
     setEditEmail(loggedInUser.email || "");
-    setEditRole(loggedInUser.roleList?.[0]?.key || "signed-in");
+    const primaryRole = loggedInUser.roleList?.[0];
+    const primaryRoleKey = typeof primaryRole === "string" ? primaryRole : primaryRole?.key;
+    setEditRole(primaryRoleKey || "signed-in");
   }, [loggedInUser]);
 
   const handleUserToggle = (field: string, setter: (v: boolean) => void) => async (value: boolean) => {
@@ -428,7 +435,10 @@ export default function ProfilePage() {
                       Standard User
                     </SelectItem>
                     <SelectItem value="system-admin" className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                      Administrator
+                      Administrator (system-admin)
+                    </SelectItem>
+                    <SelectItem value="sysadmin" className="text-white hover:bg-slate-700 focus:bg-slate-700">
+                      Administrator (sysadmin)
                     </SelectItem>
                   </SelectContent>
                 </Select>

@@ -96,7 +96,7 @@ export default function ThreadsPage() {
         .map((role: any) => (typeof role === "string" ? role : role?.key))
         .filter((role: string | undefined): role is string => Boolean(role))
     : [];
-  const isAdmin = roleKeys.includes("system-admin");
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
 
   const [{ fetching: triaging }, runTriage] = useGlobalAction(api.triageAllPending);
 
@@ -200,6 +200,9 @@ export default function ThreadsPage() {
           <p className="text-sm text-slate-400 mt-2">
             The Threads debug view is restricted to system admins.
           </p>
+          <div className="mt-4 text-xs text-slate-400">
+            Current roles: {roleKeys.length > 0 ? roleKeys.join(", ") : "none"}
+          </div>
           <Button asChild className="mt-6 bg-teal-500 hover:bg-teal-600 text-black">
             <RouterLink to="/">Back to dashboard</RouterLink>
           </Button>
