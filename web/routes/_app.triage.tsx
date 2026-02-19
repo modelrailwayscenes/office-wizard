@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
-import { useFindMany, useGlobalAction } from "@gadgetinc/react";
+import { useFindMany, useFindFirst, useGlobalAction } from "@gadgetinc/react";
 import { api } from "../api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import BatchReviewModal from "@/components/BatchReviewModal";
+import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
 import {
   Mail,
   Clock,
@@ -106,6 +107,7 @@ export default function TriageQueuePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "urgent" | "pending" | "due" | "starred">("all");
   const [generatingDraft, setGeneratingDraft] = useState(false);
+  const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
 
   const [selectedEmailIds, setSelectedEmailIds] = useState<string[]>([]);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
@@ -173,15 +175,35 @@ export default function TriageQueuePage() {
   const [{ fetching: batchLoading }, runBatchOperation] = useGlobalAction(api.runBatchOperation);
   const [{ fetching: applyEditsLoading }, applyDraftEdits] = useGlobalAction(api.applyDraftEdits);
   const [, generateDraft] = useGlobalAction(api.generateDraft);
+  const [{ data: configData }] = useFindFirst(api.appConfiguration);
+  const telemetryEnabled = (configData as any)?.telemetryBannersEnabled ?? true;
+
+  const setTelemetryEvent = (event: Omit<PageTelemetry, "at">) => {
+    if (!telemetryEnabled) return;
+    setTelemetry({ ...event, at: new Date().toISOString() });
+  };
 
   const handleGenerateDraft = async (conversationId: string, regenerate = false) => {
     setGeneratingDraft(true);
+    const start = Date.now();
     try {
       await generateDraft({ conversationId, regenerate });
       toast.success(regenerate ? "Draft regenerated!" : "Draft generated!");
-      refresh();
+      await refresh();
+      setTelemetryEvent({
+        lastAction: regenerate ? "Draft regenerated" : "Draft generated",
+        details: `Conversation ${conversationId}`,
+        severity: "success",
+        durationMs: Date.now() - start,
+      });
     } catch (err: any) {
       toast.error(err?.message || "Failed to generate draft");
+      setTelemetryEvent({
+        lastAction: regenerate ? "Draft regeneration failed" : "Draft generation failed",
+        details: err?.message || String(err),
+        severity: "error",
+        durationMs: Date.now() - start,
+      });
     } finally {
       setGeneratingDraft(false);
     }
@@ -189,9 +211,11 @@ export default function TriageQueuePage() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    const start = Date.now();
+    let freshData: any[] | undefined;
     try {
       const result = await refresh();
-      const freshData = result?.data as any[] | undefined;
+      freshData = result?.data as any[] | undefined;
 
       // Prune selected email IDs that no longer exist in the refreshed data
       if (freshData) {
@@ -205,8 +229,20 @@ export default function TriageQueuePage() {
           setSelectedConvId(null);
         }
       }
+      setTelemetryEvent({
+        lastAction: "Queue refreshed",
+        details: `${freshData?.length ?? conversations?.length ?? 0} conversations`,
+        severity: "info",
+        durationMs: Date.now() - start,
+      });
     } catch (err: any) {
       toast.error(`Refresh failed: ${err?.message || String(err)}`);
+      setTelemetryEvent({
+        lastAction: "Refresh failed",
+        details: err?.message || String(err),
+        severity: "error",
+        durationMs: Date.now() - start,
+      });
     } finally {
       setIsRefreshing(false);
     }
@@ -389,6 +425,12 @@ export default function TriageQueuePage() {
             </div>
           </div>
         </div>
+
+        {telemetryEnabled && telemetry && (
+          <div className="px-8 pt-4">
+            <TelemetryBanner telemetry={telemetry} onDismiss={() => setTelemetry(null)} />
+          </div>
+        )}
 
         {/* Search Bar */}
         <div className="px-8 py-4 border-b border-slate-800 flex-shrink-0">
@@ -616,107 +658,226 @@ export default function TriageQueuePage() {
         moveToCategory={moveToCategory}
         onMoveToCategoryChange={setMoveToCategory}
         onSendAll={async (emailIds, batchId, draftsByEmailId) => {
-          await applyDraftEdits({
-            emailIds: JSON.stringify(emailIds),
-            draftsByEmailId: JSON.stringify(draftsByEmailId),
-          });
-          await runBatchOperation({
-            batchId,
-            action: "send",
-            emailIds: JSON.stringify(emailIds),
-            conversationIds: JSON.stringify([]),
-            estimatedTimeSaved: (emailIds?.length || 0) * 3,
-          });
-          toast.success(`Queued send for ${emailIds.length} item(s)`);
-          setBatchModalOpen(false);
-          setSelectedEmailIds([]);
-          refresh();
+          const start = Date.now();
+          try {
+            await applyDraftEdits({
+              emailIds: JSON.stringify(emailIds),
+              draftsByEmailId: JSON.stringify(draftsByEmailId),
+            });
+            await runBatchOperation({
+              batchId,
+              action: "send",
+              emailIds: JSON.stringify(emailIds),
+              conversationIds: JSON.stringify([]),
+              estimatedTimeSaved: (emailIds?.length || 0) * 3,
+            });
+            toast.success(`Queued send for ${emailIds.length} item(s)`);
+            setTelemetryEvent({
+              lastAction: "Batch send queued",
+              details: `${emailIds.length} item(s)`,
+              severity: "success",
+              durationMs: Date.now() - start,
+            });
+            setBatchModalOpen(false);
+            setSelectedEmailIds([]);
+            refresh();
+          } catch (error: any) {
+            toast.error("Send failed: " + (error?.message || error));
+            setTelemetryEvent({
+              lastAction: "Batch send failed",
+              details: error?.message || String(error),
+              severity: "error",
+              durationMs: Date.now() - start,
+            });
+          }
         }}
         onSaveDrafts={async (emailIds, batchId, draftsByEmailId) => {
-          await applyDraftEdits({
-            emailIds: JSON.stringify(emailIds),
-            draftsByEmailId: JSON.stringify(draftsByEmailId),
-          });
-          await runBatchOperation({
-            batchId,
-            action: "save_drafts",
-            emailIds: JSON.stringify(emailIds),
-            conversationIds: JSON.stringify([]),
-            estimatedTimeSaved: (emailIds?.length || 0) * 3,
-          });
-          toast.success(`Saved ${emailIds.length} draft(s)`);
-          setBatchModalOpen(false);
-          setSelectedEmailIds([]);
-          refresh();
+          const start = Date.now();
+          try {
+            await applyDraftEdits({
+              emailIds: JSON.stringify(emailIds),
+              draftsByEmailId: JSON.stringify(draftsByEmailId),
+            });
+            await runBatchOperation({
+              batchId,
+              action: "save_drafts",
+              emailIds: JSON.stringify(emailIds),
+              conversationIds: JSON.stringify([]),
+              estimatedTimeSaved: (emailIds?.length || 0) * 3,
+            });
+            toast.success(`Saved ${emailIds.length} draft(s)`);
+            setTelemetryEvent({
+              lastAction: "Batch drafts saved",
+              details: `${emailIds.length} draft(s)`,
+              severity: "success",
+              durationMs: Date.now() - start,
+            });
+            setBatchModalOpen(false);
+            setSelectedEmailIds([]);
+            refresh();
+          } catch (error: any) {
+            toast.error("Save drafts failed: " + (error?.message || error));
+            setTelemetryEvent({
+              lastAction: "Batch save drafts failed",
+              details: error?.message || String(error),
+              severity: "error",
+              durationMs: Date.now() - start,
+            });
+          }
         }}
         onResolveAll={async (emailIds, batchId) => {
-          await runBatchOperation({
-            batchId,
-            action: "resolve",
-            emailIds: JSON.stringify(emailIds),
-            conversationIds: JSON.stringify([]),
-            estimatedTimeSaved: (emailIds?.length || 0) * 1,
-          });
-          toast.success(`Resolved ${emailIds.length} item(s)`);
-          setBatchModalOpen(false);
-          setSelectedEmailIds([]);
-          refresh();
+          const start = Date.now();
+          try {
+            await runBatchOperation({
+              batchId,
+              action: "resolve",
+              emailIds: JSON.stringify(emailIds),
+              conversationIds: JSON.stringify([]),
+              estimatedTimeSaved: (emailIds?.length || 0) * 1,
+            });
+            toast.success(`Resolved ${emailIds.length} item(s)`);
+            setTelemetryEvent({
+              lastAction: "Batch resolved",
+              details: `${emailIds.length} item(s)`,
+              severity: "success",
+              durationMs: Date.now() - start,
+            });
+            setBatchModalOpen(false);
+            setSelectedEmailIds([]);
+            refresh();
+          } catch (error: any) {
+            toast.error("Resolve failed: " + (error?.message || error));
+            setTelemetryEvent({
+              lastAction: "Batch resolve failed",
+              details: error?.message || String(error),
+              severity: "error",
+              durationMs: Date.now() - start,
+            });
+          }
         }}
         onArchiveAll={async (emailIds, batchId) => {
-          await runBatchOperation({
-            batchId,
-            action: "archive",
-            emailIds: JSON.stringify(emailIds),
-            conversationIds: JSON.stringify([]),
-            estimatedTimeSaved: (emailIds?.length || 0) * 1,
-          });
-          toast.success(`Archived ${emailIds.length} item(s)`);
-          setBatchModalOpen(false);
-          setSelectedEmailIds([]);
-          refresh();
+          const start = Date.now();
+          try {
+            await runBatchOperation({
+              batchId,
+              action: "archive",
+              emailIds: JSON.stringify(emailIds),
+              conversationIds: JSON.stringify([]),
+              estimatedTimeSaved: (emailIds?.length || 0) * 1,
+            });
+            toast.success(`Archived ${emailIds.length} item(s)`);
+            setTelemetryEvent({
+              lastAction: "Batch archived",
+              details: `${emailIds.length} item(s)`,
+              severity: "success",
+              durationMs: Date.now() - start,
+            });
+            setBatchModalOpen(false);
+            setSelectedEmailIds([]);
+            refresh();
+          } catch (error: any) {
+            toast.error("Archive failed: " + (error?.message || error));
+            setTelemetryEvent({
+              lastAction: "Batch archive failed",
+              details: error?.message || String(error),
+              severity: "error",
+              durationMs: Date.now() - start,
+            });
+          }
         }}
         onRejectAll={async (emailIds, batchId) => {
-          await runBatchOperation({
-            batchId,
-            action: "reject",
-            emailIds: JSON.stringify(emailIds),
-            conversationIds: JSON.stringify([]),
-            rejectReason: "Rejected in batch review",
-            estimatedTimeSaved: 0,
-          });
-          toast.success(`Rejected ${emailIds.length} item(s)`);
-          setBatchModalOpen(false);
-          setSelectedEmailIds([]);
-          refresh();
+          const start = Date.now();
+          try {
+            await runBatchOperation({
+              batchId,
+              action: "reject",
+              emailIds: JSON.stringify(emailIds),
+              conversationIds: JSON.stringify([]),
+              rejectReason: "Rejected in batch review",
+              estimatedTimeSaved: 0,
+            });
+            toast.success(`Rejected ${emailIds.length} item(s)`);
+            setTelemetryEvent({
+              lastAction: "Batch rejected",
+              details: `${emailIds.length} item(s)`,
+              severity: "success",
+              durationMs: Date.now() - start,
+            });
+            setBatchModalOpen(false);
+            setSelectedEmailIds([]);
+            refresh();
+          } catch (error: any) {
+            toast.error("Reject failed: " + (error?.message || error));
+            setTelemetryEvent({
+              lastAction: "Batch reject failed",
+              details: error?.message || String(error),
+              severity: "error",
+              durationMs: Date.now() - start,
+            });
+          }
         }}
         onAssignAll={async (emailIds, batchId, assignId) => {
-          await runBatchOperation({
-            batchId,
-            action: "assign",
-            emailIds: JSON.stringify(emailIds),
-            conversationIds: JSON.stringify([]),
-            assignToUserId: assignId,
-            estimatedTimeSaved: 0,
-          });
-          toast.success(`Assigned ${emailIds.length} item(s)`);
-          setBatchModalOpen(false);
-          setSelectedEmailIds([]);
-          refresh();
+          const start = Date.now();
+          try {
+            await runBatchOperation({
+              batchId,
+              action: "assign",
+              emailIds: JSON.stringify(emailIds),
+              conversationIds: JSON.stringify([]),
+              assignToUserId: assignId,
+              estimatedTimeSaved: 0,
+            });
+            toast.success(`Assigned ${emailIds.length} item(s)`);
+            setTelemetryEvent({
+              lastAction: "Batch assigned",
+              details: `${emailIds.length} item(s)`,
+              severity: "success",
+              durationMs: Date.now() - start,
+            });
+            setBatchModalOpen(false);
+            setSelectedEmailIds([]);
+            refresh();
+          } catch (error: any) {
+            toast.error("Assign failed: " + (error?.message || error));
+            setTelemetryEvent({
+              lastAction: "Batch assign failed",
+              details: error?.message || String(error),
+              severity: "error",
+              durationMs: Date.now() - start,
+            });
+          }
         }}
         onMoveAll={async (emailIds, batchId, category) => {
-          await runBatchOperation({
-            batchId,
-            action: "move",
-            emailIds: JSON.stringify(emailIds),
-            conversationIds: JSON.stringify([]),
-            type: category,
-            label: `Move to ${category || "category"}`,
-            estimatedTimeSaved: 0,
-          });
-          toast.success(`Moved ${emailIds.length} item(s)`);
-          setBatchModalOpen(false);
-          setSelectedEmailIds([]);
-          refresh();
+          const start = Date.now();
+          try {
+            await runBatchOperation({
+              batchId,
+              action: "move",
+              emailIds: JSON.stringify(emailIds),
+              conversationIds: JSON.stringify([]),
+              type: category,
+              label: `Move to ${category || "category"}`,
+              estimatedTimeSaved: 0,
+            });
+            toast.success(`Moved ${emailIds.length} item(s)`);
+            setTelemetryEvent({
+              lastAction: "Batch moved",
+              details: `${emailIds.length} item(s)`,
+              severity: "success",
+              durationMs: Date.now() - start,
+            });
+            setBatchModalOpen(false);
+            setSelectedEmailIds([]);
+            refresh();
+          } catch (error: any) {
+            toast.error("Move failed: " + (error?.message || error));
+            setTelemetryEvent({
+              lastAction: "Batch move failed",
+              details: error?.message || String(error),
+              severity: "error",
+              durationMs: Date.now() - start,
+            });
+          }
         }}
         onRegenerateResponse={async (emailId) => {
           const conv = (conversations || []).find((c: any) => getPrimaryEmailId(c) === emailId);

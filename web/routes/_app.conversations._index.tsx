@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
 import { AutoTable } from "@/components/auto";
 import { api } from "../api";
@@ -24,12 +24,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useGlobalAction, useFindOne, useFindMany } from "@gadgetinc/react";
+import { useGlobalAction, useFindOne, useFindMany, useFindFirst } from "@gadgetinc/react";
 import { toast } from "sonner";
 import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { format } from "date-fns";
+import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
 
 // ── Customer Sidebar (same as dashboard) ────────────────────────────
 const customerTabs = [
@@ -107,9 +108,41 @@ export default function ConversationsIndex() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const [{ fetching: fetchingEmails }, fetchEmails] = useGlobalAction(api.fetchEmails);
   const [{ fetching: rebuildingConversations }, rebuildConversations] = useGlobalAction(api.rebuildConversations);
+  const [{ data: configData }] = useFindFirst(api.appConfiguration);
+  const telemetryEnabled = (configData as any)?.telemetryBannersEnabled ?? true;
+
+  const setTelemetryEvent = (event: Omit<PageTelemetry, "at">) => {
+    if (!telemetryEnabled) return;
+    setTelemetry({ ...event, at: new Date().toISOString() });
+  };
+
+  const listFilter = useMemo(() => {
+    const filters: any[] = [];
+    if (statusFilter !== "all") filters.push({ status: { equals: statusFilter } });
+    if (priorityFilter !== "all") filters.push({ currentPriorityBand: { equals: priorityFilter } });
+    if (search.trim()) {
+      filters.push({
+        OR: [
+          { subject: { matches: search } },
+          { primaryCustomerEmail: { matches: search } },
+        ],
+      });
+    }
+    if (filters.length === 0) return undefined;
+    if (filters.length === 1) return filters[0];
+    return { AND: filters };
+  }, [priorityFilter, search, statusFilter]);
+
+  const [{ data: conversationListData, fetching: fetchingList }] = useFindMany(api.conversation, {
+    select: { id: true },
+    filter: listFilter,
+    first: 100,
+  });
 
   const [{ data: conversationData, fetching: fetchingConversation, error: conversationError }] = useFindOne(
     api.conversation,
@@ -185,21 +218,47 @@ export default function ConversationsIndex() {
   };
 
   const handleFetchEmails = async () => {
+    const start = Date.now();
     try {
       await fetchEmails({});
       toast.success("Emails fetched successfully");
+      setTelemetryEvent({
+        lastAction: "Emails fetched",
+        details: "Mailbox sync started",
+        severity: "success",
+        durationMs: Date.now() - start,
+      });
     } catch (error) {
       toast.error(`Failed to fetch emails: ${error}`);
+      setTelemetryEvent({
+        lastAction: "Email fetch failed",
+        details: String(error),
+        severity: "error",
+        durationMs: Date.now() - start,
+      });
     }
   };
 
   const handleRebuildConversations = async () => {
+    const start = Date.now();
     try {
       const result = await rebuildConversations({});
       const r = result as any;
       toast.success(`Rebuilt ${r?.created ?? 0} conversations (${r?.skipped ?? 0} skipped)`);
+      setTelemetryEvent({
+        lastAction: "Conversations rebuilt",
+        details: `Created ${r?.created ?? 0}, skipped ${r?.skipped ?? 0}`,
+        severity: "success",
+        durationMs: Date.now() - start,
+      });
     } catch (error) {
       toast.error(`Rebuild failed: ${error}`);
+      setTelemetryEvent({
+        lastAction: "Rebuild failed",
+        details: String(error),
+        severity: "error",
+        durationMs: Date.now() - start,
+      });
     }
   };
 
@@ -252,22 +311,18 @@ export default function ConversationsIndex() {
     return cfg[status || ""] ?? { label: "UNKNOWN", color: "bg-slate-500/20 text-slate-400 border-slate-500/30" };
   };
 
-  const buildFilter = () => {
-    const filters: any[] = [];
-    if (statusFilter !== "all") filters.push({ status: { equals: statusFilter } });
-    if (priorityFilter !== "all") filters.push({ currentPriorityBand: { equals: priorityFilter } });
-    if (search.trim()) {
-      filters.push({
-        OR: [
-          { subject: { matches: search } },
-          { primaryCustomerEmail: { matches: search } },
-        ],
+  const buildFilter = () => listFilter;
+
+  useEffect(() => {
+    if (!fetchingList && conversationListData && !hasLoaded) {
+      setTelemetryEvent({
+        lastAction: "Conversations refreshed",
+        details: `${conversationListData.length} conversations`,
+        severity: "info",
       });
+      setHasLoaded(true);
     }
-    if (filters.length === 0) return undefined;
-    if (filters.length === 1) return filters[0];
-    return { AND: filters };
-  };
+  }, [conversationListData, fetchingList, hasLoaded]);
 
   return (
     <div className="flex flex-1 min-h-0 bg-slate-950 text-white">
@@ -304,6 +359,12 @@ export default function ConversationsIndex() {
             </div>
           </div>
         </div>
+
+        {telemetryEnabled && telemetry && (
+          <div className="px-8 pt-4">
+            <TelemetryBanner telemetry={telemetry} onDismiss={() => setTelemetry(null)} />
+          </div>
+        )}
 
         {/* Content */}
         <div className="px-8 pb-8">

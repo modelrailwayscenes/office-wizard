@@ -673,6 +673,13 @@ export const schema: GadgetModel = {
       filterIndex: false,
       searchIndex: false,
     },
+    telemetryBannersEnabled: {
+      type: "boolean",
+      default: true,
+      storageKey: "telemetryBannersEnabled",
+      filterIndex: false,
+      searchIndex: false,
+    },
     triageSchedule: {
       type: "string",
       storageKey: "0qKMelUhIgjD",

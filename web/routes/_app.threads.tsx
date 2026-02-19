@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link as RouterLink, useLocation, useOutletContext } from "react-router";
-import { useFindMany, useGlobalAction } from "@gadgetinc/react";
+import { useFindMany, useFindFirst, useGlobalAction } from "@gadgetinc/react";
 import { api } from "../api";
 import { toast } from "sonner";
 import type { AuthOutletContext } from "./_app";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SentimentBadge } from "@/components/SentimentBadge";
+import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
 import {
   Search, RefreshCw, Mail, Calendar, User, MessageSquare, Clock, Tag, AlertTriangle,
   LayoutDashboard, Layers, FileText, PenLine, Settings,
@@ -86,6 +87,8 @@ export default function ThreadsPage() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
+  const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
+  const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
 
   const { user } = useOutletContext<AuthOutletContext>();
 
@@ -99,6 +102,13 @@ export default function ThreadsPage() {
   const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
 
   const [{ fetching: triaging }, runTriage] = useGlobalAction(api.triageAllPending);
+  const [{ data: configData }] = useFindFirst(api.appConfiguration);
+  const telemetryEnabled = (configData as any)?.telemetryBannersEnabled ?? true;
+
+  const setTelemetryEvent = (event: Omit<PageTelemetry, "at">) => {
+    if (!telemetryEnabled) return;
+    setTelemetry({ ...event, at: new Date().toISOString() });
+  };
 
   const [{ data: conversationsData, fetching }, refresh] = useFindMany(api.conversation, {
     select: {
@@ -112,6 +122,18 @@ export default function ThreadsPage() {
       latestMessageAt: true,
       createdAt: true,
       updatedAt: true,
+      messages: {
+        edges: {
+          node: {
+            id: true,
+            subject: true,
+            bodyPreview: true,
+            fromAddress: true,
+            fromName: true,
+            receivedDateTime: true,
+          },
+        },
+      },
       classifications: {
         edges: {
           node: {
@@ -130,12 +152,46 @@ export default function ThreadsPage() {
   const conversations = conversationsData || [];
 
   const handleRunTriage = async () => {
+    const start = Date.now();
     try {
       const result = (await runTriage({})) as any;
       toast.success(`Triage complete! Processed: ${result.processed}`);
+      setTelemetryEvent({
+        lastAction: "Auto-triage ran",
+        details: `Processed ${result?.processed ?? 0}, skipped ${result?.skipped ?? 0}, errors ${result?.errors ?? 0}`,
+        severity: (result?.errors ?? 0) > 0 ? "warning" : "success",
+        durationMs: Date.now() - start,
+      });
       void refresh();
     } catch (err: any) {
       toast.error(`Triage failed: ${err?.message || String(err)}`);
+      setTelemetryEvent({
+        lastAction: "Auto-triage failed",
+        details: err?.message || String(err),
+        severity: "error",
+        durationMs: Date.now() - start,
+      });
+    }
+  };
+
+  const handleRefresh = async () => {
+    const start = Date.now();
+    try {
+      const result = (await refresh()) as any;
+      const count = Array.isArray(result?.data) ? result.data.length : conversations.length;
+      setTelemetryEvent({
+        lastAction: "Threads refreshed",
+        details: `${count} conversations`,
+        severity: "info",
+        durationMs: Date.now() - start,
+      });
+    } catch (err: any) {
+      setTelemetryEvent({
+        lastAction: "Refresh failed",
+        details: err?.message || String(err),
+        severity: "error",
+        durationMs: Date.now() - start,
+      });
     }
   };
 
@@ -146,6 +202,21 @@ export default function ThreadsPage() {
         c.id.toLowerCase().includes(searchQuery.toLowerCase())
       : true
   );
+
+  const threadRows = useMemo(() => {
+    return filteredConversations.map((conv) => {
+      const allMessages =
+        conv.messages?.edges?.map((edge: any) => edge?.node).filter(Boolean) ?? [];
+      const sortedMessages = [...allMessages].sort((a: any, b: any) => {
+        const aTime = a?.receivedDateTime ? new Date(a.receivedDateTime).getTime() : 0;
+        const bTime = b?.receivedDateTime ? new Date(b.receivedDateTime).getTime() : 0;
+        return aTime - bTime;
+      });
+      const parentMessage = sortedMessages[sortedMessages.length - 1] ?? null;
+      const childMessages = sortedMessages.slice(0, -1);
+      return { conv, parentMessage, childMessages };
+    });
+  }, [filteredConversations]);
 
   const selectedConversation = selectedConvId
     ? conversations.find((c) => c.id === selectedConvId)
@@ -241,7 +312,7 @@ export default function ThreadsPage() {
                 </div>
               )}
               <Button
-                onClick={() => refresh()}
+                onClick={handleRefresh}
                 disabled={fetching}
                 variant="outline"
                 className="border-slate-700 hover:bg-slate-800"
@@ -252,6 +323,12 @@ export default function ThreadsPage() {
             </div>
           </div>
         </div>
+
+        {telemetryEnabled && telemetry && (
+          <div className="px-8 pt-4">
+            <TelemetryBanner telemetry={telemetry} onDismiss={() => setTelemetry(null)} />
+          </div>
+        )}
 
         {/* Main content area */}
         <div className="flex-1 overflow-hidden flex">
@@ -278,8 +355,14 @@ export default function ThreadsPage() {
                 </div>
               ) : (
                 <div className="divide-y divide-slate-800">
-                  {filteredConversations.map((conv) => {
+                  {threadRows.map(({ conv, parentMessage, childMessages }) => {
                     const isSelected = selectedConvId === conv.id;
+                    const maxVisibleChildren = 3;
+                    const isExpanded = expandedThreads[conv.id] ?? childMessages.length <= maxVisibleChildren;
+                    const visibleChildren = isExpanded
+                      ? childMessages
+                      : childMessages.slice(-maxVisibleChildren);
+                    const hiddenCount = childMessages.length - visibleChildren.length;
                     return (
                       <button
                         key={conv.id}
@@ -293,7 +376,7 @@ export default function ThreadsPage() {
                         <div className="flex items-start gap-2 mb-1">
                           <SentimentBadge sentiment={conv.sentiment} />
                           <span className="text-sm font-medium text-slate-100 flex-1 truncate">
-                            {conv.subject || "(No subject)"}
+                            {parentMessage?.subject || conv.subject || "(No subject)"}
                           </span>
                         </div>
                         <div className="text-xs text-slate-400 truncate mb-1">
@@ -303,6 +386,47 @@ export default function ThreadsPage() {
                           <UnifiedBadge type={conv.status} label={getStatusBadge(conv.status).label} />
                           <UnifiedBadge type={conv.currentPriorityBand} label={getPriorityLabel(conv.currentPriorityBand)} />
                         </div>
+                        {childMessages.length > 0 && (
+                          <div className="mt-3 ml-4 border-l border-slate-800 pl-4 space-y-2">
+                            {visibleChildren.map((msg: any) => (
+                              <div key={msg.id} className="flex items-start gap-2 text-xs text-slate-400">
+                                <span className="whitespace-nowrap text-slate-500">
+                                  {formatDate(msg.receivedDateTime)}
+                                </span>
+                                <span className="text-slate-300">
+                                  {msg.fromName || msg.fromAddress || "Unknown sender"}
+                                </span>
+                                <span className="text-slate-500 truncate">
+                                  {msg.bodyPreview || "(No preview)"}
+                                </span>
+                              </div>
+                            ))}
+                            {hiddenCount > 0 && (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setExpandedThreads((prev) => ({ ...prev, [conv.id]: true }));
+                                }}
+                                className="text-[11px] text-teal-400 hover:text-teal-300"
+                              >
+                                Show {hiddenCount} more
+                              </button>
+                            )}
+                            {hiddenCount === 0 && childMessages.length > maxVisibleChildren && (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setExpandedThreads((prev) => ({ ...prev, [conv.id]: false }));
+                                }}
+                                className="text-[11px] text-slate-400 hover:text-slate-200"
+                              >
+                                Show fewer
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </button>
                     );
                   })}

@@ -121,6 +121,7 @@ function AdvancedSettings() {
   // ── Developer state ────────────────────────────────────────────────────────
   const [apiRateLimitPerMinute, setApiRateLimitPerMinute] = useState("60");
   const [debugModeEnabled, setDebugModeEnabled]           = useState(false);
+  const [telemetryBannersEnabled, setTelemetryBannersEnabled] = useState(true);
 
   // ── Seed from appConfiguration ─────────────────────────────────────────────
   useEffect(() => {
@@ -139,6 +140,7 @@ function AdvancedSettings() {
     setPrefetchLinks(config.prefetchLinks                   ?? true);
     if (config.apiRateLimitPerMinute)   setApiRateLimitPerMinute(String(config.apiRateLimitPerMinute));
     setDebugModeEnabled(config.debugModeEnabled             ?? false);
+    setTelemetryBannersEnabled(config.telemetryBannersEnabled ?? true);
   }, [config]);
 
   // ── Save helpers ───────────────────────────────────────────────────────────
@@ -187,7 +189,7 @@ function AdvancedSettings() {
       <div className="flex-1 overflow-auto bg-slate-950">
 
         <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-          <h1 className="text-2xl font-semibold text-white">Advanced</h1>
+          <h1 className="text-2xl font-semibold text-white">Admin Only</h1>
           <p className="text-sm text-slate-400 mt-1">Localisation, backups, performance, and developer options</p>
         </div>
 
@@ -345,6 +347,16 @@ function AdvancedSettings() {
               <Switch checked={debugModeEnabled}
                 onCheckedChange={handleConfigToggle("debugModeEnabled", setDebugModeEnabled)}
                 disabled={updatingConfig} />
+            </SettingRow>
+            <SettingRow
+              label="Telemetry Banners (temporary)"
+              description="Show last action banners on Triage, Conversations, and Threads"
+            >
+              <Switch
+                checked={telemetryBannersEnabled}
+                onCheckedChange={handleConfigToggle("telemetryBannersEnabled", setTelemetryBannersEnabled)}
+                disabled={updatingConfig}
+              />
             </SettingRow>
             <div className="px-6 py-4">
               <div className="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 flex items-center justify-between">
