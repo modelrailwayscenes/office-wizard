@@ -98,14 +98,10 @@ export const run: ActionRun = async ({ logger, api, params, session, context }) 
 
   const config = await requireConfig(api);
 
-  await api.appConfiguration.update({
-    id: config.id,
-    appConfiguration: {
-      microsoftAccessToken: accessToken,
-      microsoftRefreshToken: refreshToken ?? null,
-      microsoftTokenExpiresAt: expiresAt,
-    },
-    select: { id: true },
+  await api.appConfiguration.update(config.id, {
+    microsoftAccessToken: accessToken,
+    microsoftRefreshToken: refreshToken ?? null,
+    microsoftTokenExpiresAt: expiresAt,
   });
 
   if (session) {

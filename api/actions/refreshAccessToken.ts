@@ -77,15 +77,11 @@ export const run: ActionRun = async ({ logger, api }) => {
   const expiresInSec = Number(tokenRes?.expires_in ?? 3600);
   const expiresAt = new Date(Date.now() + expiresInSec * 1000);
 
-  await api.appConfiguration.update({
-    id: config.id,
-    appConfiguration: {
-      microsoftAccessToken: accessToken,
-      // Microsoft may rotate refresh tokens; if present, store the new one
-      microsoftRefreshToken: tokenRes?.refresh_token ?? config.microsoftRefreshToken,
-      microsoftTokenExpiresAt: expiresAt,
-    },
-    select: { id: true },
+  await api.appConfiguration.update(config.id, {
+    microsoftAccessToken: accessToken,
+    // Microsoft may rotate refresh tokens; if present, store the new one
+    microsoftRefreshToken: tokenRes?.refresh_token ?? config.microsoftRefreshToken,
+    microsoftTokenExpiresAt: expiresAt,
   });
 
   logger.info({ expiresAt }, "Microsoft access token refreshed");

@@ -275,12 +275,8 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   }
 
   if (messagesCreated > 0 || messagesDuplicate > 0) {
-    await api.appConfiguration.update({
-      id: config.id,
-      appConfiguration: {
-        lastSyncAt: now,
-      },
-      select: { id: true },
+    await api.appConfiguration.update(config.id, {
+      lastSyncAt: now,
     });
   }
 
