@@ -257,6 +257,13 @@ export const schema: GadgetModel = {
       filterIndex: false,
       searchIndex: false,
     },
+    ignoreLastSyncAt: {
+      type: "boolean",
+      default: true,
+      storageKey: "ignoreLastSyncAt",
+      filterIndex: false,
+      searchIndex: false,
+    },
     imapHost: {
       type: "string",
       storageKey: "TE_0xc_zDGT5",

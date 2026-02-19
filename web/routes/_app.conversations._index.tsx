@@ -148,7 +148,7 @@ export default function ConversationsIndex() {
     api.conversation,
     selectedConversationId ?? "",
     {
-      skip: !selectedConversationId,
+      pause: !selectedConversationId,
       select: {
         id: true,
         subject: true,
@@ -182,7 +182,7 @@ export default function ConversationsIndex() {
   const [{ data: messagesData, fetching: fetchingMessages }] = useFindMany(
     api.emailMessage,
     {
-      skip: !selectedConversationId,
+      pause: !selectedConversationId,
       filter: {
         conversationId: { equals: selectedConversationId ?? "" },
       },
@@ -200,10 +200,11 @@ export default function ConversationsIndex() {
     }
   );
 
-  const formatDateTime = (date: string | null | undefined) => {
+  const formatDateTime = (date: string | Date | null | undefined) => {
     if (!date) return "—";
     try {
-      return format(new Date(date), "dd MMM yyyy, HH:mm");
+      const parsed = typeof date === "string" ? new Date(date) : date;
+      return format(parsed, "dd MMM yyyy, HH:mm");
     } catch {
       return "—";
     }
@@ -220,12 +221,17 @@ export default function ConversationsIndex() {
   const handleFetchEmails = async () => {
     const start = Date.now();
     try {
-      await fetchEmails({});
+      const result = (await fetchEmails({
+        unreadOnly: true,
+        maxEmails: 100,
+        maxPages: 10,
+        runTriage: true,
+      })) as any;
       toast.success("Emails fetched successfully");
       setTelemetryEvent({
         lastAction: "Emails fetched",
-        details: "Mailbox sync started",
-        severity: "success",
+        details: `Imported ${result?.sync?.imported ?? 0}, created ${result?.sync?.conversationsCreated ?? 0}, errors ${result?.sync?.errors ?? 0}`,
+        severity: (result?.sync?.errors ?? 0) > 0 ? "warning" : "success",
         durationMs: Date.now() - start,
       });
     } catch (error) {

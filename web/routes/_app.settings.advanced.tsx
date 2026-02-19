@@ -122,6 +122,7 @@ function AdvancedSettings() {
   const [apiRateLimitPerMinute, setApiRateLimitPerMinute] = useState("60");
   const [debugModeEnabled, setDebugModeEnabled]           = useState(false);
   const [telemetryBannersEnabled, setTelemetryBannersEnabled] = useState(true);
+  const [ignoreLastSyncAt, setIgnoreLastSyncAt] = useState(false);
 
   // ── Seed from appConfiguration ─────────────────────────────────────────────
   useEffect(() => {
@@ -141,6 +142,7 @@ function AdvancedSettings() {
     if (config.apiRateLimitPerMinute)   setApiRateLimitPerMinute(String(config.apiRateLimitPerMinute));
     setDebugModeEnabled(config.debugModeEnabled             ?? false);
     setTelemetryBannersEnabled(config.telemetryBannersEnabled ?? true);
+    setIgnoreLastSyncAt(config.ignoreLastSyncAt ?? false);
   }, [config]);
 
   // ── Save helpers ───────────────────────────────────────────────────────────
@@ -355,6 +357,16 @@ function AdvancedSettings() {
               <Switch
                 checked={telemetryBannersEnabled}
                 onCheckedChange={handleConfigToggle("telemetryBannersEnabled", setTelemetryBannersEnabled)}
+                disabled={updatingConfig}
+              />
+            </SettingRow>
+            <SettingRow
+              label="Full sync (ignore last sync)"
+              description="Fetch all unread emails regardless of last sync timestamp"
+            >
+              <Switch
+                checked={ignoreLastSyncAt}
+                onCheckedChange={handleConfigToggle("ignoreLastSyncAt", setIgnoreLastSyncAt)}
                 disabled={updatingConfig}
               />
             </SettingRow>

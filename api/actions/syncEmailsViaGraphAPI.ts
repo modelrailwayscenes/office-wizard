@@ -67,6 +67,8 @@ export const run: ActionRun = async ({ logger, api, params }) => {
 
   const top = Math.min(Math.max(Number((params as any)?.top ?? 100), 1), 100);
   const unreadOnly = Boolean((params as any)?.unreadOnly ?? false);
+  const ignoreLastSyncAt = Boolean((params as any)?.ignoreLastSyncAt ?? false);
+  const maxPages = Math.min(Math.max(Number((params as any)?.maxPages ?? 1), 1), 50);
   const lastSyncAt = config.lastSyncAt;
 
   let query = client
@@ -92,7 +94,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   const filterConditions: string[] = [];
   if (unreadOnly) filterConditions.push("isRead eq false");
 
-  if (lastSyncAt) {
+  if (lastSyncAt && !ignoreLastSyncAt) {
     const lastSyncDate = new Date(lastSyncAt).toISOString();
     filterConditions.push(`receivedDateTime gt ${lastSyncDate}`);
   }
@@ -101,161 +103,175 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     query = query.filter(filterConditions.join(" and "));
   }
 
-  logger.info({ top, unreadOnly, lastSyncAt, filterConditions }, "Fetching messages from Graph API");
+  logger.info(
+    { top, unreadOnly, lastSyncAt, ignoreLastSyncAt, maxPages, filterConditions },
+    "Fetching messages from Graph API"
+  );
 
-  const response = await query.get();
-  const messages: any[] = response?.value || [];
-
-  logger.info({ count: messages.length }, "Fetched messages from Graph API");
-
+  let totalFetched = 0;
   let messagesCreated = 0;
   let messagesDuplicate = 0;
   let conversationsCreated = 0;
   let conversationsUpdated = 0;
   let errors = 0;
 
-  for (const msg of messages) {
-    try {
-      if (!msg.id) {
-        errors++;
-        continue;
-      }
+  let page = 0;
+  let response = await query.get();
 
-      const existing = await api.emailMessage.findMany({
-        filter: { externalMessageId: { equals: msg.id } },
-        first: 1,
-        select: { id: true },
-      });
+  while (true) {
+    const messages: any[] = response?.value || [];
+    totalFetched += messages.length;
 
-      if (existing?.length) {
-        messagesDuplicate++;
-        continue;
-      }
+    logger.info({ count: messages.length, page: page + 1 }, "Fetched messages from Graph API");
 
-      const graphConversationId = getConversationKeyFromGraphMessage(msg);
-      if (!graphConversationId) {
-        logger.warn({ messageId: msg.id }, "Message missing conversationId, skipping");
-        errors++;
-        continue;
-      }
+    for (const msg of messages) {
+      try {
+        if (!msg.id) {
+          errors++;
+          continue;
+        }
 
-      const normalizedSubject = (msg.subject || "(No subject)")
-        .replace(/^(Re:|Fwd?:)\s*/gi, "")
-        .trim();
-
-      const fromAddress = asEmail(msg.from);
-      const fromName = asName(msg.from);
-      const receivedDateTime = msg.receivedDateTime || msg.sentDateTime;
-
-      const existingConversations = await api.conversation.findMany({
-        filter: { graphConversationId: { equals: graphConversationId } },
-        first: 1,
-        select: {
-          id: true,
-          messageCount: true,
-          unreadCount: true,
-          firstMessageAt: true,
-        },
-      });
-
-      let conversation = existingConversations?.[0] ?? null;
-
-      if (!conversation) {
-        conversation = await api.conversation.create({
-          conversation: {
-            graphConversationId,
-            subject: normalizedSubject,
-            primaryCustomerEmail: fromAddress,
-            primaryCustomerName: fromName,
-            firstMessageAt: receivedDateTime,
-            latestMessageAt: receivedDateTime,
-            messageCount: 1,
-            unreadCount: msg.isRead ? 0 : 1,
-            status: "new",
-          },
-          select: { id: true, messageCount: true, unreadCount: true, firstMessageAt: true },
+        const existing = await api.emailMessage.findMany({
+          filter: { externalMessageId: { equals: msg.id } },
+          first: 1,
+          select: { id: true },
         });
 
-        conversationsCreated++;
-      } else {
-        const prevCount = Number(conversation.messageCount ?? 0);
-        const prevUnread = Number(conversation.unreadCount ?? 0);
+        if (existing?.length) {
+          messagesDuplicate++;
+          continue;
+        }
 
-        const newMessageCount = prevCount + 1;
-        const newUnreadCount = msg.isRead ? prevUnread : prevUnread + 1;
+        const graphConversationId = getConversationKeyFromGraphMessage(msg);
+        if (!graphConversationId) {
+          logger.warn({ messageId: msg.id }, "Message missing conversationId, skipping");
+          errors++;
+          continue;
+        }
 
-        const existingFirst = conversation.firstMessageAt ? new Date(conversation.firstMessageAt) : null;
-        const incoming = receivedDateTime ? new Date(receivedDateTime) : null;
+        const normalizedSubject = (msg.subject || "(No subject)")
+          .replace(/^(Re:|Fwd?:)\s*/gi, "")
+          .trim();
 
-        const newFirstMessageAt =
-          existingFirst && incoming && existingFirst <= incoming ? conversation.firstMessageAt : receivedDateTime;
+        const fromAddress = asEmail(msg.from);
+        const fromName = asName(msg.from);
+        const receivedDateTime = msg.receivedDateTime || msg.sentDateTime;
 
-        await api.conversation.update({
-          id: conversation.id,
-          conversation: {
-            messageCount: newMessageCount,
-            unreadCount: newUnreadCount,
-            latestMessageAt: receivedDateTime,
-            firstMessageAt: newFirstMessageAt,
+        const existingConversations = await api.conversation.findMany({
+          filter: { graphConversationId: { equals: graphConversationId } },
+          first: 1,
+          select: {
+            id: true,
+            messageCount: true,
+            unreadCount: true,
+            firstMessageAt: true,
+          },
+        });
+
+        let conversation = existingConversations?.[0] ?? null;
+
+        if (!conversation) {
+          conversation = await api.conversation.create({
+            conversation: {
+              graphConversationId,
+              subject: normalizedSubject,
+              primaryCustomerEmail: fromAddress,
+              primaryCustomerName: fromName,
+              firstMessageAt: receivedDateTime,
+              latestMessageAt: receivedDateTime,
+              messageCount: 1,
+              unreadCount: msg.isRead ? 0 : 1,
+              status: "new",
+            },
+            select: { id: true, messageCount: true, unreadCount: true, firstMessageAt: true },
+          });
+
+          conversationsCreated++;
+        } else {
+          const prevCount = Number(conversation.messageCount ?? 0);
+          const prevUnread = Number(conversation.unreadCount ?? 0);
+
+          const newMessageCount = prevCount + 1;
+          const newUnreadCount = msg.isRead ? prevUnread : prevUnread + 1;
+
+          const existingFirst = conversation.firstMessageAt ? new Date(conversation.firstMessageAt) : null;
+          const incoming = receivedDateTime ? new Date(receivedDateTime) : null;
+
+          const newFirstMessageAt =
+            existingFirst && incoming && existingFirst <= incoming ? conversation.firstMessageAt : receivedDateTime;
+
+          await api.conversation.update({
+            id: conversation.id,
+            conversation: {
+              messageCount: newMessageCount,
+              unreadCount: newUnreadCount,
+              latestMessageAt: receivedDateTime,
+              firstMessageAt: newFirstMessageAt,
+            },
+            select: { id: true },
+          });
+
+          conversationsUpdated++;
+        }
+
+        if (!fromAddress || !receivedDateTime) {
+          logger.warn(
+            {
+              messageId: msg.id,
+              subject: msg.subject,
+              missing: { fromAddress: !fromAddress, receivedDateTime: !receivedDateTime },
+            },
+            "Skipping message - missing required fields"
+          );
+          errors++;
+          continue;
+        }
+
+        await api.emailMessage.create({
+          emailMessage: {
+            conversation: { _link: conversation.id },
+            messageId: msg.id,
+            externalMessageId: msg.id,
+            graphConversationId,
+            internetMessageId: msg.internetMessageId || null,
+            fromAddress,
+            fromEmail: fromAddress,
+            fromName,
+            subject: msg.subject || "(No subject)",
+            bodyPreview: msg.bodyPreview || null,
+            bodyHtml: msg.body?.contentType === "html" ? msg.body.content : null,
+            bodyText: msg.body?.contentType === "text" ? msg.body.content : msg.bodyPreview || null,
+            receivedDateTime,
+            sentDateTime: msg.sentDateTime || null,
+            isRead: Boolean(msg.isRead),
+            hasAttachments: Boolean(msg.hasAttachments),
+            toAddresses: toEmailList(msg.toRecipients || []),
+            ccAddresses: toEmailList(msg.ccRecipients || []),
+            shopifyCustomerFound: false,
+            shopifyLookupCompleted: false,
           },
           select: { id: true },
         });
 
-        conversationsUpdated++;
-      }
-
-      if (!fromAddress || !receivedDateTime) {
-        logger.warn(
+        messagesCreated++;
+      } catch (err: any) {
+        logger.error(
           {
-            messageId: msg.id,
-            subject: msg.subject,
-            missing: { fromAddress: !fromAddress, receivedDateTime: !receivedDateTime },
+            err,
+            messageId: msg?.id,
+            subject: msg?.subject,
+            errorMessage: err?.message || String(err),
           },
-          "Skipping message - missing required fields"
+          "Failed to process message"
         );
         errors++;
-        continue;
       }
-
-      await api.emailMessage.create({
-        emailMessage: {
-          conversation: { _link: conversation.id },
-          messageId: msg.id,
-          externalMessageId: msg.id,
-          graphConversationId,
-          internetMessageId: msg.internetMessageId || null,
-          fromAddress,
-          fromEmail: fromAddress,
-          fromName,
-          subject: msg.subject || "(No subject)",
-          bodyPreview: msg.bodyPreview || null,
-          bodyHtml: msg.body?.contentType === "html" ? msg.body.content : null,
-          bodyText: msg.body?.contentType === "text" ? msg.body.content : msg.bodyPreview || null,
-          receivedDateTime,
-          sentDateTime: msg.sentDateTime || null,
-          isRead: Boolean(msg.isRead),
-          hasAttachments: Boolean(msg.hasAttachments),
-          toAddresses: toEmailList(msg.toRecipients || []),
-          ccAddresses: toEmailList(msg.ccRecipients || []),
-          shopifyCustomerFound: false,
-          shopifyLookupCompleted: false,
-        },
-        select: { id: true },
-      });
-
-      messagesCreated++;
-    } catch (err: any) {
-      logger.error(
-        {
-          err,
-          messageId: msg?.id,
-          subject: msg?.subject,
-          errorMessage: err?.message || String(err),
-        },
-        "Failed to process message"
-      );
-      errors++;
     }
+
+    page += 1;
+    const nextLink = response?.["@odata.nextLink"];
+    if (!nextLink || page >= maxPages) break;
+    response = await client.api(nextLink).get();
   }
 
   if (messagesCreated > 0 || messagesDuplicate > 0) {
@@ -275,7 +291,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     conversationsCreated,
     conversationsUpdated,
     errors,
-    totalFetched: messages.length,
+    totalFetched,
   };
 
   logger.info(result, "Sync completed");
@@ -286,6 +302,8 @@ export const run: ActionRun = async ({ logger, api, params }) => {
 export const params = {
   top: { type: "number" },
   unreadOnly: { type: "boolean" },
+  ignoreLastSyncAt: { type: "boolean" },
+  maxPages: { type: "number" },
 };
 
 export const options: ActionOptions = {

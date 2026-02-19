@@ -8,17 +8,31 @@ import type { ActionOptions } from "gadget-server";
  * 2. Optionally runs AI triage on new conversations
  * 
  * @param runTriage - Whether to automatically run AI triage after sync (default: true)
- * @param unreadOnly - Only fetch unread emails (default: false)
- * @param maxEmails - Maximum number of emails to fetch (default: 50, max: 100)
+ * @param unreadOnly - Only fetch unread emails (default: true)
+ * @param maxEmails - Page size for each sync request (default: 100, max: 100)
+ * @param maxPages - Maximum pages to fetch (default: 10)
+ * @param ignoreLastSyncAt - Ignore last sync timestamp (default: from config)
  */
 export const run: ActionRun = async ({ params, logger, api }) => {
   // Parse parameters with defaults - using type assertion to avoid TS errors during build
   const fetchParams = params as any;
   const runTriage = fetchParams.runTriage !== false; // Default true
-  const unreadOnly = Boolean(fetchParams.unreadOnly);
-  const maxEmails = Math.min(Number(fetchParams.maxEmails) || 50, 100);
+  const unreadOnly = fetchParams.unreadOnly !== undefined ? Boolean(fetchParams.unreadOnly) : true;
+  const maxEmails = Math.min(Number(fetchParams.maxEmails) || 100, 100);
+  const maxPages = Math.min(Number(fetchParams.maxPages) || 10, 50);
 
-  logger.info({ runTriage, unreadOnly, maxEmails }, "Starting fetchEmails action");
+  const config = await api.appConfiguration.findFirst({
+    select: { ignoreLastSyncAt: true } as any,
+  });
+  const ignoreLastSyncAt =
+    fetchParams.ignoreLastSyncAt !== undefined
+      ? Boolean(fetchParams.ignoreLastSyncAt)
+      : Boolean((config as any)?.ignoreLastSyncAt);
+
+  logger.info(
+    { runTriage, unreadOnly, maxEmails, maxPages, ignoreLastSyncAt },
+    "Starting fetchEmails action"
+  );
 
   try {
     // Step 1: Sync emails from Microsoft 365
@@ -26,6 +40,8 @@ export const run: ActionRun = async ({ params, logger, api }) => {
     const syncResult = await api.syncEmailsViaGraphAPI({
       top: maxEmails,
       unreadOnly,
+      ignoreLastSyncAt,
+      maxPages,
       folderPath: "Inbox",
     } as any); // Type assertion until Gadget generates types
 
@@ -69,6 +85,8 @@ export const params = {
   runTriage: { type: "boolean" },
   unreadOnly: { type: "boolean" },
   maxEmails: { type: "number" },
+  maxPages: { type: "number" },
+  ignoreLastSyncAt: { type: "boolean" },
 };
 
 export const options: ActionOptions = {
