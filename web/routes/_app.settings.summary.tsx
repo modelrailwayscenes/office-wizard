@@ -17,7 +17,7 @@ const tabs = [
   { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/settings/templates" },
   { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
   { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/settings/security" },
-  { id: "advanced",     label: "Admin Only",               icon: SettingsIcon, path: "/settings/advanced" },
+  { id: "advanced",     label: "Advanced",               icon: SettingsIcon, path: "/settings/advanced" },
 ];
 
 function Sidebar({ currentPath }: { currentPath: string }) {
@@ -152,12 +152,14 @@ export default function SettingsSummaryPage() {
     <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
       <Sidebar currentPath={location.pathname} />
 
-      <div className="flex-1 overflow-auto bg-slate-950 p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-          <p className="text-slate-400">Manage your Office Wizard configuration</p>
+      <div className="flex-1 overflow-auto bg-slate-950">
+
+        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+          <h1 className="text-2xl font-semibold text-white">Settings</h1>
+          <p className="text-sm text-slate-400 mt-1">Manage your Office Wizard configuration</p>
         </div>
 
+        <div className="p-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Profile */}
           <SettingsBlock
@@ -267,6 +269,7 @@ export default function SettingsSummaryPage() {
             path="/settings/advanced"
             details={["Developer settings", "System configuration", "Debug options"]}
           />
+        </div>
         </div>
       </div>
     </div>
