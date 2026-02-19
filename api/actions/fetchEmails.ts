@@ -63,11 +63,12 @@ export const run: ActionRun = async ({ params, logger, api }) => {
     return {
       success: true,
       sync: {
-        imported: syncResult.imported,
-        skipped: syncResult.skipped,
-        conversationsCreated: syncResult.conversationsCreated,
-        conversationsUpdated: syncResult.conversationsUpdated,
-        errors: syncResult.errors,
+        imported: syncResult.messagesCreated ?? syncResult.imported ?? 0,
+        skipped: syncResult.messagesDuplicate ?? syncResult.skipped ?? 0,
+        totalFetched: syncResult.totalFetched ?? 0,
+        conversationsCreated: syncResult.conversationsCreated ?? 0,
+        conversationsUpdated: syncResult.conversationsUpdated ?? 0,
+        errors: syncResult.errors ?? 0,
       },
       triage: triageResult ? {
         processed: triageResult.processedCount,
