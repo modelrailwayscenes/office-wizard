@@ -15,107 +15,107 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
 endobj
 6 0 obj
-<< /Length 2681 >>
+<< /Length 2941 >>
 stream
 BT
 /F1 18 Tf
-50.00 760.00 Td
-(Office Wizard — App Summary) Tj
+1 0 0 1 50.00 760.00 Tm
+(Office Wizard - App Summary) Tj
 /F2 12 Tf
-50.00 724.00 Td
+1 0 0 1 50.00 724.00 Tm
 (What it is) Tj
 /F1 10 Tf
-50.00 708.00 Td
+1 0 0 1 50.00 708.00 Tm
 (Internal Gadget app \(email-wizard\) for managing inbound customer email conversations,) Tj
 /F1 10 Tf
-50.00 694.00 Td
+1 0 0 1 50.00 694.00 Tm
 (triage, and responses.) Tj
 /F1 10 Tf
-50.00 680.00 Td
+1 0 0 1 50.00 680.00 Tm
 (Combines a React Router web UI with Gadget server actions that sync, classify, and reply) Tj
 /F1 10 Tf
-50.00 666.00 Td
+1 0 0 1 50.00 666.00 Tm
 (to emails.) Tj
 /F2 12 Tf
-50.00 638.00 Td
-(Who it’s for) Tj
+1 0 0 1 50.00 638.00 Tm
+(Who it's for) Tj
 /F1 10 Tf
-50.00 622.00 Td
+1 0 0 1 50.00 622.00 Tm
 (Customer support agents and admins handling email support for an e-commerce brand \(Model) Tj
 /F1 10 Tf
-50.00 608.00 Td
+1 0 0 1 50.00 608.00 Tm
 (Railway Scenes is referenced in AI prompts\).) Tj
 /F2 12 Tf
-50.00 580.00 Td
+1 0 0 1 50.00 580.00 Tm
 (What it does) Tj
 /F1 10 Tf
-50.00 564.00 Td
+1 0 0 1 50.00 564.00 Tm
 (- Syncs Microsoft 365 inbox messages into conversations and emailMessage records via) Tj
 /F1 10 Tf
-50.00 550.00 Td
+1 0 0 1 50.00 550.00 Tm
 (  Graph API.) Tj
 /F1 10 Tf
-50.00 536.00 Td
+1 0 0 1 50.00 536.00 Tm
 (- Runs triage/classification with priority, category, sentiment, and automation flags.) Tj
 /F1 10 Tf
-50.00 522.00 Td
+1 0 0 1 50.00 522.00 Tm
 (- Generates AI draft replies \(Anthropic/Claude\) and records AI comment audit logs.) Tj
 /F1 10 Tf
-50.00 508.00 Td
+1 0 0 1 50.00 508.00 Tm
 (- Sends replies or saves drafts through Microsoft Graph with template, signature, and) Tj
 /F1 10 Tf
-50.00 494.00 Td
+1 0 0 1 50.00 494.00 Tm
 (  approval checks.) Tj
 /F1 10 Tf
-50.00 480.00 Td
+1 0 0 1 50.00 480.00 Tm
 (- Supports batch review actions in the triage queue \(send, archive, assign, move,) Tj
 /F1 10 Tf
-50.00 466.00 Td
+1 0 0 1 50.00 466.00 Tm
 (  resolve\).) Tj
 /F1 10 Tf
-50.00 452.00 Td
+1 0 0 1 50.00 452.00 Tm
 (- Looks up Shopify customers/orders to enrich conversation context.) Tj
 /F2 12 Tf
-50.00 424.00 Td
+1 0 0 1 50.00 424.00 Tm
 (How it works) Tj
 /F1 10 Tf
-50.00 408.00 Td
+1 0 0 1 50.00 408.00 Tm
 (- Frontend in web/ uses React Router and @gadgetinc/react with a Gadget API client) Tj
 /F1 10 Tf
-50.00 394.00 Td
+1 0 0 1 50.00 394.00 Tm
 (  \(web/api.ts\).) Tj
 /F1 10 Tf
-50.00 380.00 Td
+1 0 0 1 50.00 380.00 Tm
 (- Backend in api/ is a Gadget server with models for conversations, email messages,) Tj
 /F1 10 Tf
-50.00 366.00 Td
+1 0 0 1 50.00 366.00 Tm
 (  templates, signatures, and settings.) Tj
 /F1 10 Tf
-50.00 352.00 Td
+1 0 0 1 50.00 352.00 Tm
 (- Email pipeline: pollMailbox/fetchEmails call syncEmailsViaGraphAPI to ingest messages,) Tj
 /F1 10 Tf
-50.00 338.00 Td
+1 0 0 1 50.00 338.00 Tm
 (  then run triage actions.) Tj
 /F1 10 Tf
-50.00 324.00 Td
+1 0 0 1 50.00 324.00 Tm
 (- AI and integrations: classificationService uses OpenAI when configured, generateDraft) Tj
 /F1 10 Tf
-50.00 310.00 Td
+1 0 0 1 50.00 310.00 Tm
 (  uses Anthropic, Shopify lookup is via REST API.) Tj
 /F2 12 Tf
-50.00 282.00 Td
+1 0 0 1 50.00 282.00 Tm
 (How to run) Tj
 /F1 10 Tf
-50.00 266.00 Td
+1 0 0 1 50.00 266.00 Tm
 (- Install dependencies: yarn install) Tj
 /F1 10 Tf
-50.00 252.00 Td
+1 0 0 1 50.00 252.00 Tm
 (- Start dev server: yarn dev \(React Router dev\).) Tj
 /F1 10 Tf
-50.00 238.00 Td
+1 0 0 1 50.00 238.00 Tm
 (- Production build: yarn build, then yarn start.) Tj
 /F1 10 Tf
-50.00 224.00 Td
+1 0 0 1 50.00 224.00 Tm
 (- Environment/credential setup details: Not found in repo.) Tj
 ET
 endstream
@@ -132,5 +132,5 @@ xref
 trailer
 << /Size 7 /Root 1 0 R >>
 startxref
-3129
+3389
 %%EOF

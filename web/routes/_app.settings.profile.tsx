@@ -21,18 +21,16 @@ const tabs = [
   { id: "summary",      label: "Summary",                icon: User2,        path: "/settings/summary" },
   { id: "profile",      label: "Profile",                icon: User2,        path: "/settings/profile" },
   { id: "users",        label: "Users",                  icon: UsersIcon,    path: "/settings/users" },
-  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/settings/integrations" },
   { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/settings/triage" },
   { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/settings/ai" },
   { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/settings/templates" },
-  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
   { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/settings/security" },
-  { id: "admin",        label: "Admin Only",             icon: SettingsIcon, path: "/settings/admin" },
 ];
 
-// Admin-only tabs (moved Integrations and Advanced here)
+// Admin-only tabs
 const adminTabs = [
   { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/settings/integrations" },
+  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
   { id: "advanced",     label: "Advanced Settings",      icon: SettingsIcon, path: "/settings/advanced" },
 ];
 
