@@ -212,7 +212,7 @@ function AdvancedSettings() {
   if (configError) {
     return (
       <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
-        <Sidebar currentPath={location.pathname} />
+        <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8 text-red-400">Error loading settings: {configError.message}</div>
       </div>
     );
