@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useFindFirst, useGlobalAction, useAction } from "@gadgetinc/react";
+import { useFindFirst, useGlobalAction, useAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   Unplug,
   Clock,
   ArrowLeft,
+  MessageSquare,
   Eye,
   EyeOff,
   Save,
@@ -34,16 +35,26 @@ const tabs = [
   { id: "summary", label: "Summary", icon: User2, path: "/settings/summary" },
   { id: "profile", label: "Profile", icon: User2, path: "/settings/profile" },
   { id: "users", label: "Users", icon: Users, path: "/settings/users" },
-  { id: "integrations", label: "Integrations", icon: LinkIcon, path: "/settings/integrations" },
   { id: "triage", label: "Triage & Workflow", icon: Layers, path: "/settings/triage" },
   { id: "ai", label: "AI & Automation", icon: Sparkles, path: "/settings/ai" },
   { id: "templates", label: "Templates & Batching", icon: FileText, path: "/settings/templates" },
-  { id: "alerts", label: "Alerts & Notifications", icon: Bell, path: "/settings/alerts" },
   { id: "security", label: "Security & Compliance", icon: Shield, path: "/settings/security" },
+];
+
+const adminTabs = [
+  { id: "integrations", label: "Integrations", icon: LinkIcon, path: "/settings/integrations" },
+  { id: "alerts", label: "Alerts & Notifications", icon: Bell, path: "/settings/alerts" },
   { id: "advanced", label: "Advanced", icon: Settings, path: "/settings/advanced" },
 ];
 
-function Sidebar({ currentPath }: { currentPath: string }) {
+function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
+  const roleKeys = Array.isArray(user?.roleList)
+    ? user.roleList
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
+
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
       <div className="mb-6">
@@ -68,6 +79,33 @@ function Sidebar({ currentPath }: { currentPath: string }) {
             </RouterLink>
           );
         })}
+
+        {isAdmin && (
+          <>
+            <div className="my-4 border-t border-slate-700" />
+            <div className="px-3 py-2">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+            </div>
+            {adminTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = currentPath === tab.path;
+              return (
+                <RouterLink
+                  key={tab.id}
+                  to={tab.path}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-teal-600/10 text-teal-400 font-medium"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">{tab.label}</span>
+                </RouterLink>
+              );
+            })}
+          </>
+        )}
       </nav>
     </div>
   );
@@ -131,6 +169,7 @@ function SecretInput({
 export default function IntegrationsSettings() {
   const location = useLocation();
   const navigate = useNavigate();
+  const user = useUser(api, { select: { roleList: { key: true } } });
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const [{ data: configData, fetching, error }, refetch] = useFindFirst(api.appConfiguration, {
@@ -328,7 +367,7 @@ export default function IntegrationsSettings() {
   if (fetching) {
     return (
       <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
-        <Sidebar currentPath={location.pathname} />
+        <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8 text-slate-400">Loading...</div>
       </div>
     );
@@ -346,7 +385,7 @@ export default function IntegrationsSettings() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
-      <Sidebar currentPath={location.pathname} />
+      <Sidebar currentPath={location.pathname} user={user} />
 
       <div className="flex-1 overflow-auto bg-slate-950">
         {/* Header band */}
@@ -626,6 +665,34 @@ export default function IntegrationsSettings() {
                     {verifyingMonday ? "Verifying..." : "Test Connection"}
                   </Button>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════
+              Slack (coming soon)
+              ═══════════════════════════════════════════════════════════════════ */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 opacity-50 pointer-events-none">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-slate-700/60 border border-slate-600">
+                <MessageSquare className="w-6 h-6 text-slate-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-1">
+                  <h3 className="text-xl font-semibold text-white">Slack Integration</h3>
+                  <UnifiedBadge type="coming_soon" label="COMING SOON" />
+                </div>
+                <p className="text-slate-400 text-sm">Send notifications to Slack channels — coming soon.</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  className="border-slate-700 bg-slate-800/50 text-slate-500 cursor-not-allowed"
+                >
+                  Connect
+                </Button>
               </div>
             </div>
           </div>

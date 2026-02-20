@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFindMany, useAction } from "@gadgetinc/react";
+import { useFindMany, useAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { Link as RouterLink, useLocation, useSearchParams, useNavigate } from "react-router";
 import { User2, Users as UsersIcon, Link as LinkIcon, Layers, Sparkles, FileText, Bell, Shield, Settings as SettingsIcon, Plus, Edit as EditIcon } from "lucide-react";
@@ -20,11 +20,6 @@ function formatDate(date: string | Date) {
   return `${day}/${month}/${year}`;
 }
 
-export default function TeamPage() {
-  const getPrimaryRoleKey = (roleList: any[] | undefined) => {
-    const primaryRole = roleList?.[0];
-    return typeof primaryRole === "string" ? primaryRole : primaryRole?.key;
-  };
 const tabs = [
   { id: "summary",      label: "Summary",                icon: User2,        path: "/settings/summary" },
   { id: "profile",      label: "Profile",                icon: User2,        path: "/settings/profile" },
@@ -32,19 +27,88 @@ const tabs = [
   { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/settings/triage" },
   { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/settings/ai" },
   { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/settings/templates" },
-  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
   { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/settings/security" },
-  { id: "admin",        label: "Admin Only",             icon: SettingsIcon, path: "/settings/admin" },
 ];
 
-// Admin-only tabs
 const adminTabs = [
   { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/settings/integrations" },
+  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
   { id: "advanced",     label: "Advanced Settings",      icon: SettingsIcon, path: "/settings/advanced" },
 ];
+
+function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
+  const roleKeys = Array.isArray(user?.roleList)
+    ? user.roleList
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
+
+  return (
+    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-white px-3">Settings</h2>
+      </div>
+      <nav className="space-y-1">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = currentPath === tab.path;
+          return (
+            <RouterLink
+              key={tab.id}
+              to={tab.path}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                isActive
+                  ? "bg-teal-600/10 text-teal-400 font-medium"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+              }`}
+            >
+              <Icon className="h-4 w-4 flex-shrink-0" />
+              <span className="text-sm">{tab.label}</span>
+            </RouterLink>
+          );
+        })}
+
+        {isAdmin && (
+          <>
+            <div className="my-4 border-t border-slate-700" />
+            <div className="px-3 py-2">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+            </div>
+            {adminTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = currentPath === tab.path;
+              return (
+                <RouterLink
+                  key={tab.id}
+                  to={tab.path}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-teal-600/10 text-teal-400 font-medium"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">{tab.label}</span>
+                </RouterLink>
+              );
+            })}
+          </>
+        )}
+      </nav>
+    </div>
+  );
+}
+
+export default function TeamPage() {
+  const getPrimaryRoleKey = (roleList: any[] | undefined) => {
+    const primaryRole = roleList?.[0];
+    return typeof primaryRole === "string" ? primaryRole : primaryRole?.key;
+  };
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const user = useUser(api, { select: { roleList: { key: true } } });
 
   const [{ data: usersRaw, fetching, error }, refetch] = useFindMany(api.user, {
     select: {
@@ -173,31 +237,7 @@ const adminTabs = [
   return (
     <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
       {/* Sidebar */}
-      <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-white px-3">Settings</h2>
-        </div>
-        <nav className="space-y-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = location.pathname === tab.path;
-            return (
-              <RouterLink
-                key={tab.id}
-                to={tab.path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-teal-600/10 text-teal-400 font-medium'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }`}
-              >
-                <Icon className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm">{tab.label}</span>
-              </RouterLink>
-            );
-          })}
-        </nav>
-      </div>
+      <Sidebar currentPath={location.pathname} user={user} />
 
       <div className="flex-1 overflow-auto bg-slate-950">
         {/* HEADER with buttons */}

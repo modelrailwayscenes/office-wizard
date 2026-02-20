@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router";
-import { useFindFirst, useAction } from "@gadgetinc/react";
+import { useFindFirst, useAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -19,16 +19,26 @@ const tabs = [
   { id: "summary",      label: "Summary",                icon: User2,        path: "/settings/summary" },
   { id: "profile",      label: "Profile",                icon: User2,        path: "/settings/profile" },
   { id: "users",         label: "Users",                  icon: UsersIcon,    path: "/settings/users" },
-  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/settings/integrations" },
   { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/settings/triage" },
   { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/settings/ai" },
   { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/settings/templates" },
-  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
   { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/settings/security" },
+];
+
+const adminTabs = [
+  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/settings/integrations" },
+  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
   { id: "advanced",     label: "Admin Only",               icon: SettingsIcon, path: "/settings/advanced" },
 ];
 
-function Sidebar({ currentPath }: { currentPath: string }) {
+function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
+  const roleKeys = Array.isArray(user?.roleList)
+    ? user.roleList
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
+
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
       <div className="mb-6">
@@ -49,6 +59,29 @@ function Sidebar({ currentPath }: { currentPath: string }) {
             <span className="text-sm">{label}</span>
           </RouterLink>
         ))}
+
+        {isAdmin && (
+          <>
+            <div className="my-4 border-t border-slate-700" />
+            <div className="px-3 py-2">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+            </div>
+            {adminTabs.map(({ id, label, icon: Icon, path }) => (
+              <RouterLink
+                key={id}
+                to={path}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  currentPath === path
+                    ? "bg-teal-600/10 text-teal-400 font-medium"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                }`}
+              >
+                <Icon className="h-4 w-4 flex-shrink-0" />
+                <span className="text-sm">{label}</span>
+              </RouterLink>
+            ))}
+          </>
+        )}
       </nav>
     </div>
   );
@@ -93,6 +126,7 @@ function SettingRow({ label, description, children }: {
 export default function TemplatesSettings() {
   const location = useLocation();
   const navigate = useNavigate();
+  const user = useUser(api, { select: { roleList: { key: true } } });
 
   const handleCancel = () => {
     navigate(-1);
@@ -160,7 +194,7 @@ export default function TemplatesSettings() {
   if (fetching) {
     return (
       <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
-        <Sidebar currentPath={location.pathname} />
+        <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8 text-slate-400">Loading...</div>
       </div>
     );
@@ -177,7 +211,7 @@ export default function TemplatesSettings() {
 
   return (
     <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
-      <Sidebar currentPath={location.pathname} />
+      <Sidebar currentPath={location.pathname} user={user} />
 
       <div className="flex-1 overflow-auto bg-slate-950">
         {/* HEADER with buttons */}
