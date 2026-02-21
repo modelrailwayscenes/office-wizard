@@ -732,9 +732,9 @@ export default function ConversationsIndex() {
                       <p className="text-slate-400 text-center py-8">No messages found</p>
                     )}
 
-                    {!fetchingMessages && messagesData && messagesData.length > 0 && (
+                    {!fetchingMessages && messagesData && (messagesData as any[]).length > 0 && (
                       <div className="space-y-4">
-                        {messagesData.map((message, index) => (
+                        {(messagesData as any[]).map((message: any, index: number) => (
                           <div
                             key={message.id}
                             className="p-4 bg-slate-900/50 border border-slate-700 rounded-lg space-y-2"
@@ -775,7 +775,7 @@ export default function ConversationsIndex() {
                               <p className="text-sm text-slate-400 italic">{message.bodyPreview}</p>
                             )}
 
-                            {index < messagesData.length - 1 && (
+                            {index < (messagesData as any[]).length - 1 && (
                               <Separator className="bg-slate-700 mt-4" />
                             )}
                           </div>

@@ -225,7 +225,7 @@ function AdvancedSettings() {
       <div className="flex-1 overflow-auto bg-slate-950">
 
         <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-          <h1 className="text-2xl font-semibold text-white">Admin Only</h1>
+          <h1 className="text-2xl font-semibold text-white">Advanced</h1>
           <p className="text-sm text-slate-400 mt-1">Localisation, backups, performance, and developer options</p>
         </div>
 
