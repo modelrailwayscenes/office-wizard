@@ -4,6 +4,13 @@ import { run as runSyncEmails } from "./syncEmailsViaGraphAPI";
 export const run: ActionRun = async ({ logger, api }) => {
   logger.info("Starting mailbox polling");
 
+  const config = await api.appConfiguration.findFirst({
+    select: { autoTriageEnabled: true, workflowBatchProcessing: true } as any,
+  });
+  const allowBatchTriage =
+    Boolean((config as any)?.autoTriageEnabled ?? true) &&
+    Boolean((config as any)?.workflowBatchProcessing ?? true);
+
   const syncResult = await runSyncEmails({
     logger,
     api,
@@ -15,9 +22,11 @@ export const run: ActionRun = async ({ logger, api }) => {
 
   const messagesCreated = (syncResult as any)?.messagesCreated ?? 0;
 
-  if (messagesCreated > 0) {
+  if (messagesCreated > 0 && allowBatchTriage) {
     logger.info({ messagesCreated }, "Found new messages, triggering triage");
     await api.triageAllPending();
+  } else if (messagesCreated > 0) {
+    logger.info({ messagesCreated }, "New messages found but auto-triage is disabled");
   } else {
     logger.info("No new messages found");
   }

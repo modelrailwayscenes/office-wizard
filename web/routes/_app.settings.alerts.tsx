@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router";
-import { useFindFirst, useAction, useUser } from "@gadgetinc/react";
+import { useFindFirst, useFindMany, useAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -27,7 +27,7 @@ const tabs = [
 const adminTabs = [
   { id: "integrations", label: "Integrations",          icon: LinkIcon,     path: "/settings/integrations" },
   { id: "alerts",       label: "Alerts & Notifications",icon: Bell,         path: "/settings/alerts" },
-  { id: "advanced",     label: "Admin Only",              icon: SettingsIcon, path: "/settings/advanced" },
+  { id: "advanced",     label: "Advanced Settings",     icon: SettingsIcon, path: "/settings/advanced" },
 ];
 
 function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
@@ -139,6 +139,22 @@ export default function AlertsSettings() {
   const [{ data: configData, fetching, error }] = useFindFirst(api.appConfiguration);
   const config = configData as any;
   const [{ fetching: updating }, updateConfig] = useAction(api.appConfiguration.update);
+  const [{ data: alertLogs, fetching: alertFetching }] = useFindMany(api.actionLog, {
+    first: 20,
+    sort: { performedAt: "Descending" },
+    filter: {
+      action: { in: ["email_fetched", "escalated", "email_sent", "bulk_action"] },
+    } as any,
+    select: {
+      id: true,
+      action: true,
+      actionDescription: true,
+      performedAt: true,
+      success: true,
+      errorMessage: true,
+      conversation: { id: true, subject: true },
+    } as any,
+  });
 
   const [settings, setSettings] = useState({
     notifyOnP0: true,
@@ -269,6 +285,43 @@ export default function AlertsSettings() {
                 disabled={updating}
               />
             </SettingRow>
+          </Section>
+
+          {/* Recent Alerts */}
+          <Section
+            icon={Bell}
+            title="Recent Alerts"
+            description="Latest alert events captured by the system"
+          >
+            {alertFetching ? (
+              <div className="px-6 py-4 text-sm text-slate-400">Loading alerts...</div>
+            ) : (alertLogs && alertLogs.length > 0) ? (
+              <div className="divide-y divide-slate-700/60">
+                {alertLogs.map((log: any) => (
+                  <div key={log.id} className="px-6 py-4 flex items-start justify-between gap-6">
+                    <div>
+                      <div className="text-sm font-medium text-white">{log.actionDescription}</div>
+                      {log.conversation?.subject && (
+                        <div className="text-xs text-slate-400 mt-0.5">
+                          {log.conversation.subject}
+                        </div>
+                      )}
+                      {log.errorMessage && (
+                        <div className="text-xs text-red-400 mt-1">{log.errorMessage}</div>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-400 whitespace-nowrap">
+                      {log.performedAt ? new Date(log.performedAt).toLocaleString("en-GB") : "—"}
+                      {log.success === false && (
+                        <span className="ml-2 text-red-400">Failed</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-6 py-4 text-sm text-slate-400">No alerts yet.</div>
+            )}
           </Section>
 
           {/* Email Notifications */}

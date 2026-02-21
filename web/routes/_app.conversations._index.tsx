@@ -429,7 +429,7 @@ export default function ConversationsIndex() {
                   header: "Sentiment",
                   render: ({ record }) => (
                     <div className="py-1">
-                      <SentimentBadge sentiment={record.sentiment} />
+                      <SentimentBadge sentiment={(record as any).sentiment} />
                     </div>
                   ),
                 },
@@ -437,20 +437,20 @@ export default function ConversationsIndex() {
                   header: "Subject",
                   render: ({ record }) => (
                     <span className="truncate max-w-sm text-slate-100 text-sm font-medium">
-                      {record.subject || "—"}
+                      {(record as any).subject || "—"}
                     </span>
                   ),
                 },
                 {
                   header: "Customer",
                   render: ({ record }) => (
-                    <span className="text-slate-300 text-sm">{record.primaryCustomerEmail || "—"}</span>
+                    <span className="text-slate-300 text-sm">{(record as any).primaryCustomerEmail || "—"}</span>
                   ),
                 },
                 {
                   header: "Classification",
                   render: ({ record }) => {
-                    const node = record.classifications?.edges?.[0]?.node;
+                    const node = (record as any).classifications?.edges?.[0]?.node;
                     return (
                       <UnifiedBadge 
                         type={node?.intentCategory} 
@@ -463,18 +463,18 @@ export default function ConversationsIndex() {
                   header: "Priority",
                   render: ({ record }) => (
                     <UnifiedBadge 
-                      type={record.currentPriorityBand} 
-                      label={getPriorityLabel(record.currentPriorityBand)} 
+                      type={(record as any).currentPriorityBand} 
+                      label={getPriorityLabel((record as any).currentPriorityBand)} 
                     />
                   ),
                 },
                 {
                   header: "Status",
                   render: ({ record }) => {
-                    const s = getStatusBadge(record.status);
+                    const s = getStatusBadge((record as any).status);
                     return (
                       <UnifiedBadge 
-                        type={record.status} 
+                        type={(record as any).status} 
                         label={s.label} 
                       />
                     );
@@ -483,15 +483,15 @@ export default function ConversationsIndex() {
                 {
                   header: "Messages",
                   render: ({ record }) => (
-                    <span className="text-slate-400 text-sm">{record.messageCount ?? "—"}</span>
+                    <span className="text-slate-400 text-sm">{(record as any).messageCount ?? "—"}</span>
                   ),
                 },
                 {
                   header: "Last Activity",
                   render: ({ record }) => (
                     <span className="text-slate-400 text-sm">
-                      {record.latestMessageAt
-                        ? new Date(record.latestMessageAt).toLocaleDateString("en-GB", {
+                      {(record as any).latestMessageAt
+                        ? new Date((record as any).latestMessageAt).toLocaleDateString("en-GB", {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
@@ -502,7 +502,6 @@ export default function ConversationsIndex() {
                 },
               ]}
               filter={buildFilter()}
-              initialSort={{ currentPriorityScore: "Descending" }}
               onClick={handleRowClick}
               select={{
                 id: true,
@@ -539,8 +538,8 @@ export default function ConversationsIndex() {
                   <SheetTitle className="text-xl font-semibold text-white">
                     Conversation Details
                   </SheetTitle>
-                  {conversationData?.subject && (
-                    <p className="text-sm text-slate-400 mt-1 line-clamp-1 pr-8">{conversationData.subject}</p>
+                  {(conversationData as any)?.subject && (
+                    <p className="text-sm text-slate-400 mt-1 line-clamp-1 pr-8">{(conversationData as any).subject}</p>
                   )}
                 </div>
                 <Button
@@ -583,21 +582,21 @@ export default function ConversationsIndex() {
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Status</p>
                         <UnifiedBadge
-                          type={conversationData.status}
-                          label={titleCaseEnum(conversationData.status)}
+                          type={(conversationData as any).status}
+                          label={titleCaseEnum((conversationData as any).status)}
                         />
                       </div>
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Sentiment</p>
                         <SentimentBadge
-                          sentiment={conversationData.sentiment}
+                          sentiment={(conversationData as any).sentiment}
                         />
                       </div>
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Priority</p>
                         <UnifiedBadge
-                          type={conversationData.currentPriorityBand}
-                          label={titleCaseEnum(conversationData.currentPriorityBand)}
+                          type={(conversationData as any).currentPriorityBand}
+                          label={titleCaseEnum((conversationData as any).currentPriorityBand)}
                         />
                       </div>
                     </div>
@@ -607,10 +606,10 @@ export default function ConversationsIndex() {
                     <div>
                       <p className="text-xs text-slate-400 mb-1">Customer</p>
                       <p className="text-slate-200">
-                        {conversationData.primaryCustomerName || conversationData.primaryCustomerEmail || "—"}
+                        {(conversationData as any).primaryCustomerName || (conversationData as any).primaryCustomerEmail || "—"}
                       </p>
-                      {conversationData.primaryCustomerName && conversationData.primaryCustomerEmail && (
-                        <p className="text-sm text-slate-400">{conversationData.primaryCustomerEmail}</p>
+                      {(conversationData as any).primaryCustomerName && (conversationData as any).primaryCustomerEmail && (
+                        <p className="text-sm text-slate-400">{(conversationData as any).primaryCustomerEmail}</p>
                       )}
                     </div>
 
@@ -619,20 +618,20 @@ export default function ConversationsIndex() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-slate-400 mb-1">First Message</p>
-                        <p className="text-sm text-slate-300">{formatDateTime(conversationData.firstMessageAt)}</p>
+                        <p className="text-sm text-slate-300">{formatDateTime((conversationData as any).firstMessageAt)}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Last Activity</p>
-                        <p className="text-sm text-slate-300">{formatDateTime(conversationData.latestMessageAt)}</p>
+                        <p className="text-sm text-slate-300">{formatDateTime((conversationData as any).latestMessageAt)}</p>
                       </div>
                     </div>
 
-                    {conversationData.resolvedAt && (
+                    {(conversationData as any).resolvedAt && (
                       <>
                         <Separator className="bg-slate-700" />
                         <div>
                           <p className="text-xs text-slate-400 mb-1">Resolved At</p>
-                          <p className="text-sm text-slate-300">{formatDateTime(conversationData.resolvedAt)}</p>
+                          <p className="text-sm text-slate-300">{formatDateTime((conversationData as any).resolvedAt)}</p>
                         </div>
                       </>
                     )}
@@ -641,15 +640,15 @@ export default function ConversationsIndex() {
 
                     <div>
                       <p className="text-xs text-slate-400 mb-1">Message Count</p>
-                      <p className="text-slate-200">{conversationData.messageCount ?? 0}</p>
+                      <p className="text-slate-200">{(conversationData as any).messageCount ?? 0}</p>
                     </div>
 
-                    {conversationData.currentPriorityScore && (
+                    {(conversationData as any).currentPriorityScore && (
                       <>
                         <Separator className="bg-slate-700" />
                         <div>
                           <p className="text-xs text-slate-400 mb-1">Priority Score</p>
-                          <p className="text-slate-200">{conversationData.currentPriorityScore.toFixed(2)}</p>
+                          <p className="text-slate-200">{(conversationData as any).currentPriorityScore.toFixed(2)}</p>
                         </div>
                       </>
                     )}
@@ -657,7 +656,7 @@ export default function ConversationsIndex() {
                 </Card>
 
                 {/* Classification */}
-                {conversationData.classifications?.edges?.[0]?.node && (
+                {(conversationData as any).classifications?.edges?.[0]?.node && (
                   <Card className="bg-slate-800/50 border-slate-700">
                     <CardHeader>
                       <CardTitle className="text-lg text-white">Classification</CardTitle>
@@ -666,8 +665,8 @@ export default function ConversationsIndex() {
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Intent Category</p>
                         <UnifiedBadge
-                          type={conversationData.classifications.edges[0].node.intentCategory}
-                          label={titleCaseEnum(conversationData.classifications.edges[0].node.intentCategory)}
+                          type={(conversationData as any).classifications.edges[0].node.intentCategory}
+                          label={titleCaseEnum((conversationData as any).classifications.edges[0].node.intentCategory)}
                         />
                       </div>
 
@@ -675,16 +674,16 @@ export default function ConversationsIndex() {
 
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Sentiment</p>
-                        <SentimentBadge sentiment={conversationData.classifications.edges[0].node.sentimentLabel} />
+                        <SentimentBadge sentiment={(conversationData as any).classifications.edges[0].node.sentimentLabel} />
                       </div>
 
-                      {conversationData.classifications.edges[0].node.automationTag && (
+                      {(conversationData as any).classifications.edges[0].node.automationTag && (
                         <>
                           <Separator className="bg-slate-700" />
                           <div>
                             <p className="text-xs text-slate-400 mb-1">Automation Tag</p>
                             <p className="text-slate-200">
-                              {titleCaseEnum(conversationData.classifications.edges[0].node.automationTag)}
+                              {titleCaseEnum((conversationData as any).classifications.edges[0].node.automationTag)}
                             </p>
                           </div>
                         </>
@@ -695,7 +694,7 @@ export default function ConversationsIndex() {
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Classified At</p>
                         <p className="text-sm text-slate-300">
-                          {formatDateTime(conversationData.classifications.edges[0].node.createdAt)}
+                          {formatDateTime((conversationData as any).classifications.edges[0].node.createdAt)}
                         </p>
                       </div>
                     </CardContent>
@@ -703,13 +702,13 @@ export default function ConversationsIndex() {
                 )}
 
                 {/* Internal Notes */}
-                {conversationData.internalNotes && (
+                {(conversationData as any).internalNotes && (
                   <Card className="bg-slate-800/50 border-slate-700">
                     <CardHeader>
                       <CardTitle className="text-lg text-white">Internal Notes</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-slate-300 whitespace-pre-wrap">{conversationData.internalNotes}</p>
+                      <p className="text-slate-300 whitespace-pre-wrap">{(conversationData as any).internalNotes}</p>
                     </CardContent>
                   </Card>
                 )}

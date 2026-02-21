@@ -11,7 +11,27 @@ import type { ActionOptions } from "gadget-server";
 
 export const run: ActionRun = async ({ logger, api, params }) => {
   const syncParams = params as any;
-  const batchSize = Math.min(Number(syncParams.batchSize) || 50, 100);
+  const config = await api.appConfiguration.findFirst({
+    select: {
+      batchSize: true,
+      maxEmailsPerTriage: true,
+      bulkActionsEnabled: true,
+      workflowBatchProcessing: true,
+    } as any,
+  });
+  const bulkActionsEnabled = (config as any)?.bulkActionsEnabled ?? true;
+  const workflowBatchProcessing = (config as any)?.workflowBatchProcessing ?? true;
+  if (!bulkActionsEnabled || !workflowBatchProcessing) {
+    logger.info(
+      { bulkActionsEnabled, workflowBatchProcessing },
+      "Bulk triage skipped because batch processing is disabled"
+    );
+    return { success: false, processed: 0, skipped: 0, errors: 0 };
+  }
+
+  const configBatchSize = Number((config as any)?.batchSize) || 50;
+  const maxEmailsPerTriage = Number((config as any)?.maxEmailsPerTriage) || 500;
+  const batchSize = Math.min(Number(syncParams.batchSize) || configBatchSize, maxEmailsPerTriage, 100);
   const forceRetriage = Boolean(syncParams.forceRetriage); // re-triage even if already done
 
   logger.info({ batchSize, forceRetriage }, "Starting bulk triage");

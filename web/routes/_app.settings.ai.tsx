@@ -32,7 +32,7 @@ const tabs = [
 const adminTabs = [
   { id: "integrations", label: "Integrations",        icon: LinkIcon,     path: "/settings/integrations" },
   { id: "alerts",     label: "Alerts & Notifications", icon: Bell,        path: "/settings/alerts" },
-  { id: "advanced",   label: "Admin Only",               icon: SettingsIcon, path: "/settings/advanced" },
+  { id: "advanced",   label: "Advanced Settings",      icon: SettingsIcon, path: "/settings/advanced" },
 ];
 
 // ── Shared sidebar ─────────────────────────────────────────────────────────────
@@ -160,6 +160,7 @@ export default function AIAutomationSettings() {
     if (!config) return;
     setClassificationProvider(config.classificationProvider ?? "openai");
     setOpenaiModel(config.openaiModel ?? "gpt-4");
+    setTemperature([config.temperature ?? 0.7]);
     setAutoSendGlobalEnabled(config.autoSendGlobalEnabled ?? false);
     setAutoSendConfidenceThreshold([config.autoSendConfidenceThreshold ?? 0.85]);
     setAutoSendProductInstructions(config.autoSendProductInstructions ?? false);
@@ -178,6 +179,7 @@ export default function AIAutomationSettings() {
         id: config.id,
         classificationProvider,
         openaiModel,
+        temperature: temperature[0],
         autoSendGlobalEnabled,
         autoSendConfidenceThreshold: autoSendConfidenceThreshold[0],
         autoSendProductInstructions,

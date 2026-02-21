@@ -64,6 +64,29 @@ interface EmailOptions {
   importance?: "low" | "normal" | "high";
 }
 
+function parseTimeToMinutes(value: string): number | null {
+  const [hours, minutes] = value.split(":").map((part) => Number(part));
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  return hours * 60 + minutes;
+}
+
+function isWithinBusinessHours(now: Date, from: string, to: string): boolean {
+  const fromMinutes = parseTimeToMinutes(from);
+  const toMinutes = parseTimeToMinutes(to);
+  if (fromMinutes === null || toMinutes === null) return true;
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  if (fromMinutes === toMinutes) return true;
+
+  // Same-day window
+  if (fromMinutes < toMinutes) {
+    return currentMinutes >= fromMinutes && currentMinutes <= toMinutes;
+  }
+
+  // Overnight window (e.g., 22:00 -> 06:00)
+  return currentMinutes >= fromMinutes || currentMinutes <= toMinutes;
+}
+
 /**
  * Extract all variable placeholders from text
  * Finds all {variable_name} patterns
@@ -407,6 +430,16 @@ export function canAutoSendTemplate(
     failedChecks.push("Global auto-send is disabled");
   }
   
+  // Check 1b: Opening hours (if enabled)
+  if (config.autoSendOpeningHours) {
+    checksPerformed.push("Within business hours");
+    const from = config.businessHoursFrom || "09:00";
+    const to = config.businessHoursTo || "17:00";
+    if (!isWithinBusinessHours(new Date(), from, to)) {
+      failedChecks.push("Outside configured business hours");
+    }
+  }
+
   // Check 2: Template auto-send enabled
   checksPerformed.push("Template auto-send enabled");
   if (!template.autoSendEnabled) {

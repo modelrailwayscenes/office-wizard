@@ -44,7 +44,7 @@ const tabs = [
 const adminTabs = [
   { id: "integrations", label: "Integrations", icon: LinkIcon, path: "/settings/integrations" },
   { id: "alerts", label: "Alerts & Notifications", icon: Bell, path: "/settings/alerts" },
-  { id: "advanced", label: "Advanced", icon: Settings, path: "/settings/advanced" },
+  { id: "advanced", label: "Advanced Settings", icon: Settings, path: "/settings/advanced" },
 ];
 
 function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {

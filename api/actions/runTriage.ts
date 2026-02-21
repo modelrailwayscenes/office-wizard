@@ -170,12 +170,20 @@ function calculateSentiment(text: string): Sentiment {
   return "neutral";
 }
 
-function ruleBasedScore(text: string, unread: number, msgCount: number) {
+function ruleBasedScore(
+  text: string,
+  unread: number,
+  msgCount: number,
+  options?: { riskScoring?: boolean; timeSensitivity?: boolean; sentimentAnalysis?: boolean }
+) {
   const lower = text.toLowerCase();
   let score = 0;
   let requiresHumanReview = false;
   let matchedRiskKeyword: string | null = null;
   const tags: string[] = [];
+  const riskScoring = options?.riskScoring ?? true;
+  const timeSensitivity = options?.timeSensitivity ?? true;
+  const sentimentAnalysis = options?.sentimentAnalysis ?? true;
 
   // Order number found
   if (ORDER_NUMBER_PATTERN.test(text)) {
@@ -183,41 +191,47 @@ function ruleBasedScore(text: string, unread: number, msgCount: number) {
     tags.push("has_order_number");
   }
 
-  // Risk keywords - CRITICAL
-  for (const kw of RISK_KEYWORDS) {
-    if (lower.includes(kw)) {
-      score += 30;
-      requiresHumanReview = true;
-      matchedRiskKeyword = kw;
-      tags.push(`risk_keyword:${kw}`);
-      break;
+  if (riskScoring) {
+    // Risk keywords - CRITICAL
+    for (const kw of RISK_KEYWORDS) {
+      if (lower.includes(kw)) {
+        score += 30;
+        requiresHumanReview = true;
+        matchedRiskKeyword = kw;
+        tags.push(`risk_keyword:${kw}`);
+        break;
+      }
+    }
+
+    // CRITICAL: ALL REFUND REQUESTS require human review
+    for (const kw of REFUND_KEYWORDS) {
+      if (lower.includes(kw)) {
+        requiresHumanReview = true;
+        tags.push("refund_request");
+        score += 20;
+        break;
+      }
     }
   }
 
-  // CRITICAL: ALL REFUND REQUESTS require human review
-  for (const kw of REFUND_KEYWORDS) {
-    if (lower.includes(kw)) {
-      requiresHumanReview = true;
-      tags.push("refund_request");
-      score += 20;
-      break;
+  if (timeSensitivity) {
+    // High priority phrases
+    for (const phrase of HIGH_PRIORITY_PHRASES) {
+      if (lower.includes(phrase)) {
+        score += 10;
+        tags.push("high_priority_phrase");
+        break;
+      }
     }
   }
 
-  // High priority phrases
-  for (const phrase of HIGH_PRIORITY_PHRASES) {
-    if (lower.includes(phrase)) {
-      score += 10;
-      tags.push("high_priority_phrase");
-      break;
+  if (sentimentAnalysis) {
+    // Negative sentiment words
+    const negCount = NEGATIVE_WORDS.filter((s) => lower.includes(s)).length;
+    if (negCount > 0) {
+      score += Math.min(negCount * 5, 15);
+      tags.push(`negative_words:${negCount}`);
     }
-  }
-
-  // Negative sentiment words
-  const negCount = NEGATIVE_WORDS.filter((s) => lower.includes(s)).length;
-  if (negCount > 0) {
-    score += Math.min(negCount * 5, 15);
-    tags.push(`negative_words:${negCount}`);
   }
 
   // Unread messages
@@ -249,7 +263,7 @@ function ruleBasedScore(text: string, unread: number, msgCount: number) {
   }
 
   // Calculate sentiment (5 levels)
-  const sentiment = calculateSentiment(text);
+  const sentiment = sentimentAnalysis ? calculateSentiment(text) : "neutral";
 
   return {
     score: Math.min(score, 100),
@@ -331,6 +345,35 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
 
   logger.info({ conversationId }, "Starting triage with Shopify integration");
 
+  const config = await api.appConfiguration.findFirst({
+    select: {
+      riskScoring: true,
+      timeSensitivity: true,
+      sentimentAnalysis: true,
+      customerValueScoring: true,
+      ageWeightPointsPerDay: true,
+      manualReviewQueue: true,
+      autoResolveSimple: true,
+      autoSuggestResponses: true,
+      notifyOnP0: true,
+      notifyOnP1: true,
+      notifyOnHighPriority: true,
+    } as any,
+  });
+  const scoringConfig = {
+    riskScoring: (config as any)?.riskScoring ?? true,
+    timeSensitivity: (config as any)?.timeSensitivity ?? true,
+    sentimentAnalysis: (config as any)?.sentimentAnalysis ?? true,
+  };
+  const customerValueScoring = (config as any)?.customerValueScoring ?? true;
+  const ageWeightPointsPerDay = Number((config as any)?.ageWeightPointsPerDay ?? 0);
+  const manualReviewQueue = (config as any)?.manualReviewQueue ?? true;
+  const autoResolveSimple = (config as any)?.autoResolveSimple ?? false;
+  const autoSuggestResponses = (config as any)?.autoSuggestResponses ?? true;
+  const notifyOnP0 = (config as any)?.notifyOnP0 ?? false;
+  const notifyOnP1 = (config as any)?.notifyOnP1 ?? false;
+  const notifyOnHighPriority = (config as any)?.notifyOnHighPriority ?? false;
+
   // Load conversation
   const convRecords = await api.conversation.findMany({
     filter: { id: { equals: conversationId } } as any,
@@ -341,6 +384,7 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
       messageCount: true,
       unreadCount: true,
       status: true,
+      firstMessageAt: true,
     },
     first: 1,
   });
@@ -357,7 +401,7 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
   let shopifyOrderNumbers: string[] = [];
   let customerConfidenceScore = 50; // Default: medium confidence
 
-  if (customerEmail) {
+  if (customerEmail && customerValueScoring) {
     try {
       logger.info({ email: customerEmail }, "Looking up customer in Shopify");
       shopifyData = await (api as any).shopifyLookupDirectAPI({ email: customerEmail });
@@ -398,15 +442,30 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
   // ==========================================================================
   // PHASE 1: RULE-BASED SCORING
   // ==========================================================================
-  const ruleResult = ruleBasedScore(allText, (conv as any).unreadCount || 0, (conv as any).messageCount || 1);
+  const ruleResult = ruleBasedScore(
+    allText,
+    (conv as any).unreadCount || 0,
+    (conv as any).messageCount || 1,
+    scoringConfig
+  );
   logger.info({ conversationId, score: ruleResult.score, category: ruleResult.category }, "Rule-based scoring done");
 
   // Boost score if verified customer
   let finalScore = ruleResult.score;
-  if (isVerifiedCustomer) {
+  if (isVerifiedCustomer && customerValueScoring) {
     finalScore += 30; // Significant boost for verified customers
     ruleResult.tags.push("verified_customer");
     logger.info({ conversationId }, "Score boosted: verified Shopify customer");
+  }
+
+  if (ageWeightPointsPerDay > 0 && (conv as any).firstMessageAt) {
+    const firstMessageAt = new Date((conv as any).firstMessageAt);
+    const ageInDays = (Date.now() - firstMessageAt.getTime()) / (1000 * 60 * 60 * 24);
+    const agePoints = Math.min(30, Math.floor(ageInDays * ageWeightPointsPerDay));
+    if (agePoints > 0) {
+      finalScore += agePoints;
+      ruleResult.tags.push(`age_weight:${agePoints}`);
+    }
   }
 
   // ==========================================================================
@@ -451,8 +510,39 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
     }
   }
 
+  if (!scoringConfig.sentimentAnalysis) {
+    finalSentiment = "neutral";
+  }
+
+  if (!manualReviewQueue) {
+    finalRequiresHumanReview = false;
+  }
+
   const finalBand = scoreToBand(Math.min(finalScore, 100));
-  const automationTag = ruleResult.matchedRiskKeyword ? `risk_keyword:${ruleResult.matchedRiskKeyword}` : ruleResult.tags[0] || null;
+  const automationTag = !autoSuggestResponses
+    ? null
+    : ruleResult.matchedRiskKeyword
+      ? `risk_keyword:${ruleResult.matchedRiskKeyword}`
+      : ruleResult.tags[0] || null;
+
+  const shouldAlert =
+    (finalBand === "urgent" && (notifyOnP0 || notifyOnHighPriority)) ||
+    (finalBand === "high" && (notifyOnP1 || notifyOnHighPriority));
+
+  if (shouldAlert) {
+    await api.actionLog.create({
+      action: "escalated",
+      actionDescription: `Priority ${finalBand.toUpperCase()} conversation flagged`,
+      performedAt: new Date(),
+      performedBy: "system",
+      performedVia: "auto_triage",
+      conversation: { _link: conversationId },
+      metadata: {
+        priorityBand: finalBand,
+        score: Math.min(finalScore, 100),
+      },
+    } as any);
+  }
 
   // ==========================================================================
   // PHASE 4: WRITE RESULTS TO DATABASE
@@ -471,6 +561,11 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
     isVerifiedCustomer,
     customerConfidenceScore,
   };
+
+  if (autoResolveSimple && !finalRequiresHumanReview && finalScore <= 20) {
+    updateData.status = "resolved";
+    updateData.resolvedAt = new Date();
+  }
 
   // Only add Shopify fields if they exist in schema
   if (shopifyData?.customer) {

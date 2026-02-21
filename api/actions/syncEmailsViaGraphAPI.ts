@@ -26,6 +26,8 @@ export const run: ActionRun = async ({ logger, api, params }) => {
       microsoftTokenExpiresAt: true,
       lastSyncAt: true,
       ignoreLastSyncAt: true,
+      notifyOnNewConversation: true,
+      notifyOnCustomerReply: true,
     },
   });
 
@@ -53,6 +55,8 @@ export const run: ActionRun = async ({ logger, api, params }) => {
         microsoftTokenExpiresAt: true,
         lastSyncAt: true,
         ignoreLastSyncAt: true,
+        notifyOnNewConversation: true,
+        notifyOnCustomerReply: true,
       },
     });
   }
@@ -180,6 +184,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
 
         let conversation = existingConversations?.[0] ?? null;
 
+        const wasNewConversation = !conversation;
         if (!conversation) {
           conversation = await api.conversation.create({
             conversationId: graphConversationId,
@@ -255,6 +260,34 @@ export const run: ActionRun = async ({ logger, api, params }) => {
         } as any);
 
         messagesCreated++;
+
+        if (wasNewConversation && (config as any)?.notifyOnNewConversation) {
+          await api.actionLog.create({
+            action: "email_fetched",
+            actionDescription: `New conversation created from ${fromAddress}`,
+            performedAt: new Date(),
+            performedBy: "system",
+            performedVia: "api",
+            conversation: { _link: conversation.id },
+            metadata: {
+              kind: "new_conversation",
+              subject: msg.subject || "(No subject)",
+            },
+          } as any);
+        } else if (!wasNewConversation && (config as any)?.notifyOnCustomerReply) {
+          await api.actionLog.create({
+            action: "email_fetched",
+            actionDescription: `Customer reply received from ${fromAddress}`,
+            performedAt: new Date(),
+            performedBy: "system",
+            performedVia: "api",
+            conversation: { _link: conversation.id },
+            metadata: {
+              kind: "customer_reply",
+              subject: msg.subject || "(No subject)",
+            },
+          } as any);
+        }
       } catch (err: any) {
         logger.error(
           {

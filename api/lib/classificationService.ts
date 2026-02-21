@@ -103,7 +103,9 @@ async function getAppConfiguration(): Promise<any> {
         neverAutoSendCategories: ["refund_cancellation", "complaint"],
         autoSendConfidenceThreshold: 0.85,
         riskKeywords: ["legal", "lawyer", "chargeback", "court", "lawsuit"],
-        openaiModel: "gpt-4"
+        openaiModel: "gpt-4",
+        classificationProvider: "openai",
+        temperature: 0.7
       };
     }
     return appConfig;
@@ -116,7 +118,9 @@ async function getAppConfiguration(): Promise<any> {
       neverAutoSendCategories: ["refund_cancellation", "complaint"],
       autoSendConfidenceThreshold: 0.85,
       riskKeywords: ["legal", "lawyer", "chargeback", "court", "lawsuit"],
-      openaiModel: "gpt-4"
+      openaiModel: "gpt-4",
+      classificationProvider: "openai",
+      temperature: 0.7
     };
   }
 }
@@ -252,6 +256,8 @@ export function extractEntities(emailText: string): ExtractedEntities {
  */
 export async function analyzeSentiment(emailText: string): Promise<SentimentAnalysis> {
   const client = await getOpenAIClient();
+  const config = await getAppConfiguration();
+  const temperature = typeof config.temperature === "number" ? config.temperature : 0.3;
 
   if (client) {
     try {
@@ -275,7 +281,7 @@ Be accurate and nuanced in your assessment.`
           }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.3
+        temperature
       });
 
       const result = JSON.parse(completion.choices[0].message.content || "{}");
@@ -355,7 +361,14 @@ export async function determineAutomationSuitability(
   config?: any
 ): Promise<{ automationTag: 'auto_reply' | 'auto_resolve' | 'human_required' | 'escalate'; automationConfidence: number; automationReason: string }> {
   const appConfig = config || await getAppConfiguration();
-  const neverAutoSend = appConfig.neverAutoSendCategories || ['refund_cancellation', 'complaint'];
+  const neverAutoSend = Array.isArray(appConfig.neverAutoSendCategories)
+    ? appConfig.neverAutoSendCategories
+    : ['refund_cancellation', 'complaint'];
+  const blockedByToggle: string[] = [];
+  if (appConfig.autoSendProductInstructions === false) blockedByToggle.push('technical_product_help');
+  if (appConfig.autoSendTrackingRequests === false) blockedByToggle.push('delivery_deadline');
+  if (appConfig.autoSendGeneralFAQ === false) blockedByToggle.push('general_question');
+  const blockedCategories = new Set([...neverAutoSend, ...blockedByToggle]);
   const confidenceThreshold = appConfig.autoSendConfidenceThreshold || 0.85;
 
   // Check for risk flags - highest priority
@@ -384,7 +397,7 @@ export async function determineAutomationSuitability(
   }
 
   // Check for categories that should never be auto-sent
-  if (neverAutoSend.includes(classification.intentCategory)) {
+  if (blockedCategories.has(classification.intentCategory)) {
     return {
       automationTag: 'human_required',
       automationConfidence: 1.0,
@@ -453,6 +466,7 @@ async function classifyWithOpenAI(
 
   const appConfig = await getAppConfiguration();
   const model = appConfig.openaiModel || "gpt-4";
+  const temperature = typeof appConfig.temperature === "number" ? appConfig.temperature : 0.2;
 
   const systemPrompt = `You are an expert email classification system for customer support. Analyze emails and classify them accurately.
 
@@ -500,7 +514,7 @@ Be conservative with confidence scores. Only use high confidence (>0.85) when in
         { role: "user", content: emailText }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.2
+      temperature
     });
 
     const result = JSON.parse(completion.choices[0].message.content || "{}");
@@ -574,14 +588,21 @@ export async function classifyEmail(
   try {
     logger.info({ subject: emailContent.subject, from: emailContent.fromAddress }, "Starting email classification");
 
-    // Try OpenAI classification first
+    const config = await getAppConfiguration();
+    const provider = config.classificationProvider || "openai";
+
+    // Try OpenAI classification first (unless rules-based selected)
     let classification: Partial<ClassificationResult>;
     
-    try {
-      classification = await classifyWithOpenAI(emailContent, context);
-    } catch (error) {
-      logger.warn({ error }, "OpenAI classification failed, using rules-based fallback");
+    if (provider === "rules_based") {
       classification = classifyWithRules(emailContent);
+    } else {
+      try {
+        classification = await classifyWithOpenAI(emailContent, context);
+      } catch (error) {
+        logger.warn({ error }, "OpenAI classification failed, using rules-based fallback");
+        classification = classifyWithRules(emailContent);
+      }
     }
 
     // Identify sender type
@@ -616,7 +637,8 @@ export async function classifyEmail(
     // Determine automation suitability
     const automation = await determineAutomationSuitability(
       { ...classification, ...sentiment },
-      riskFlags
+      riskFlags,
+      config
     );
 
     const result: ClassificationResult = {

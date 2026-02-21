@@ -17,14 +17,17 @@ import { run as runSyncEmails } from "./syncEmailsViaGraphAPI";
 export const run: ActionRun = async ({ params, logger, api }) => {
   // Parse parameters with defaults - using type assertion to avoid TS errors during build
   const fetchParams = params as any;
-  const runTriage = fetchParams.runTriage !== false; // Default true
   const unreadOnly = fetchParams.unreadOnly !== undefined ? Boolean(fetchParams.unreadOnly) : true;
   const maxEmails = Math.min(Number(fetchParams.maxEmails) || 100, 100);
   const maxPages = Math.min(Number(fetchParams.maxPages) || 10, 50);
 
   const config = await api.appConfiguration.findFirst({
-    select: { ignoreLastSyncAt: true } as any,
+    select: { ignoreLastSyncAt: true, autoTriageEnabled: true } as any,
   });
+  const runTriage =
+    fetchParams.runTriage !== undefined
+      ? Boolean(fetchParams.runTriage)
+      : Boolean((config as any)?.autoTriageEnabled ?? true);
   const ignoreLastSyncAt =
     fetchParams.ignoreLastSyncAt !== undefined
       ? Boolean(fetchParams.ignoreLastSyncAt)
@@ -44,6 +47,8 @@ export const run: ActionRun = async ({ params, logger, api }) => {
       params: {
         top: maxEmails,
         unreadOnly,
+        maxPages,
+        ignoreLastSyncAt,
       },
     } as any);
 

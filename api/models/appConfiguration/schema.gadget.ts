@@ -9,6 +9,12 @@ export const schema: GadgetModel = {
   comment:
     "Stores system-wide configuration and settings for Email Wizard, including Microsoft Graph connection, default folders, triage settings, scoring configuration, and more.",
   fields: {
+    ageWeightPointsPerDay: {
+      type: "number",
+      default: 2,
+      decimals: 0,
+      storageKey: "ageWeightPointsPerDay",
+    },
     aiModelVersion: {
       type: "string",
       validations: { required: true },
@@ -26,6 +32,12 @@ export const schema: GadgetModel = {
     anthropicApiKey: {
       type: "encryptedString",
       storageKey: "AIWyq2WYvtt2",
+    },
+    apiRateLimitPerMinute: {
+      type: "number",
+      default: 60,
+      decimals: 0,
+      storageKey: "apiRateLimitPerMinute",
     },
     archivedFolder: {
       type: "string",
@@ -49,6 +61,11 @@ export const schema: GadgetModel = {
       storageKey: "F54dYyUt3Nsj",
       filterIndex: false,
       searchIndex: false,
+    },
+    autoResolveSimple: {
+      type: "boolean",
+      default: false,
+      storageKey: "autoResolveSimple",
     },
     autoSendConfidenceThreshold: {
       type: "number",
@@ -113,6 +130,11 @@ export const schema: GadgetModel = {
       validations: { required: true },
       storageKey: "yjc6-YHBCe53",
     },
+    autoSuggestResponses: {
+      type: "boolean",
+      default: true,
+      storageKey: "autoSuggestResponses",
+    },
     autoTriageEnabled: {
       type: "boolean",
       default: false,
@@ -120,6 +142,17 @@ export const schema: GadgetModel = {
       storageKey: "4rl3jBitpcXN",
       filterIndex: false,
       searchIndex: false,
+    },
+    backupRetentionDays: {
+      type: "number",
+      default: 30,
+      decimals: 0,
+      storageKey: "backupRetentionDays",
+    },
+    backupSchedule: {
+      type: "string",
+      default: "daily",
+      storageKey: "backupSchedule",
     },
     batchSize: {
       type: "number",
@@ -137,6 +170,22 @@ export const schema: GadgetModel = {
       storageKey: "4sOPPnLJtQAX",
       filterIndex: false,
       searchIndex: false,
+    },
+    businessHoursFrom: {
+      type: "string",
+      default: "09:00",
+      storageKey: "businessHoursFrom",
+    },
+    businessHoursTo: {
+      type: "string",
+      default: "17:00",
+      storageKey: "businessHoursTo",
+    },
+    cacheDurationMinutes: {
+      type: "number",
+      default: 15,
+      decimals: 0,
+      storageKey: "cacheDurationMinutes",
     },
     categoryBaseScores: {
       type: "json",
@@ -178,6 +227,11 @@ export const schema: GadgetModel = {
       storageKey: "wuAf09_b18ve",
       searchIndex: false,
     },
+    currency: {
+      type: "string",
+      default: "gbp",
+      storageKey: "currency",
+    },
     customerDomains: {
       type: "json",
       storageKey: "6Q97tp5gsc0h",
@@ -189,6 +243,11 @@ export const schema: GadgetModel = {
       storageKey: "7h4rgt8NnBE2",
       filterIndex: false,
       searchIndex: false,
+    },
+    customerValueScoring: {
+      type: "boolean",
+      default: true,
+      storageKey: "customerValueScoring",
     },
     dailyDigestEnabled: {
       type: "boolean",
@@ -202,6 +261,16 @@ export const schema: GadgetModel = {
       storageKey: "a2pDwnf2X7JZ",
       filterIndex: false,
       searchIndex: false,
+    },
+    dateFormat: {
+      type: "string",
+      default: "dmy",
+      storageKey: "dateFormat",
+    },
+    debugModeEnabled: {
+      type: "boolean",
+      default: false,
+      storageKey: "debugModeEnabled",
     },
     defaultDateRangeDays: {
       type: "number",
@@ -301,11 +370,36 @@ export const schema: GadgetModel = {
       filterIndex: false,
       searchIndex: false,
     },
+    language: {
+      type: "string",
+      default: "en",
+      storageKey: "language",
+    },
+    lastBackupAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "lastBackupAt",
+    },
+    lastDailyDigestAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "lastDailyDigestAt",
+    },
     lastSyncAt: {
       type: "dateTime",
       includeTime: true,
       storageKey: "CrozLJ3Z-0z2",
       searchIndex: false,
+    },
+    lazyLoadImages: {
+      type: "boolean",
+      default: true,
+      storageKey: "lazyLoadImages",
+    },
+    manualReviewQueue: {
+      type: "boolean",
+      default: true,
+      storageKey: "manualReviewQueue",
     },
     maxEmailsPerTriage: {
       type: "number",
@@ -435,6 +529,11 @@ export const schema: GadgetModel = {
       storageKey: "vZXtNCbEmIoY",
       searchIndex: false,
     },
+    prefetchLinks: {
+      type: "boolean",
+      default: true,
+      storageKey: "prefetchLinks",
+    },
     priorityBandThresholds: {
       type: "json",
       default: '{"P0": 25, "P1": 18, "P2": 10, "P3": 0}',
@@ -483,6 +582,11 @@ export const schema: GadgetModel = {
       storageKey: "97oiVQKaB2Lc",
       filterIndex: false,
       searchIndex: false,
+    },
+    realTimeUpdatesEnabled: {
+      type: "boolean",
+      default: true,
+      storageKey: "realTimeUpdatesEnabled",
     },
     redactAddresses: {
       type: "boolean",
@@ -553,6 +657,11 @@ export const schema: GadgetModel = {
       storageKey: "fZITEx7DB5Pq",
       filterIndex: false,
       searchIndex: false,
+    },
+    sentimentAnalysis: {
+      type: "boolean",
+      default: true,
+      storageKey: "sentimentAnalysis",
     },
     sessionTimeoutMinutes: {
       type: "number",
@@ -687,11 +796,32 @@ export const schema: GadgetModel = {
       filterIndex: false,
       searchIndex: false,
     },
+    temperature: {
+      type: "number",
+      default: 0.7,
+      decimals: 2,
+      storageKey: "temperature",
+    },
+    timeSensitivity: {
+      type: "boolean",
+      default: true,
+      storageKey: "timeSensitivity",
+    },
+    timezone: {
+      type: "string",
+      default: "gmt",
+      storageKey: "timezone",
+    },
     triageSchedule: {
       type: "string",
       storageKey: "0qKMelUhIgjD",
       filterIndex: false,
       searchIndex: false,
+    },
+    workflowBatchProcessing: {
+      type: "boolean",
+      default: true,
+      storageKey: "workflowBatchProcessing",
     },
   },
 };

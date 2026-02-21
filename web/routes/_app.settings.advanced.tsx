@@ -15,9 +15,9 @@ import {
 import { toast } from "sonner";
         {/* UPDATEDC*/}
 const tabs = [
-  { id: "summary",      label: "Summary",                icon: User2,        path: "/settings/summary" },
+  { id: "summary",      label: "Summary",               icon: User2,        path: "/settings/summary" },
   { id: "profile",      label: "Profile",               icon: User2,        path: "/settings/profile" },
-  { id: "users",         label: "Users",                 icon: UsersIcon,    path: "/settings/users" },
+  { id: "users",        label: "Users",                 icon: UsersIcon,    path: "/settings/users" },
   { id: "triage",       label: "Triage & Workflow",     icon: Layers,       path: "/settings/triage" },
   { id: "ai",           label: "AI & Automation",       icon: Sparkles,     path: "/settings/ai" },
   { id: "templates",    label: "Templates & Batching",  icon: FileText,     path: "/settings/templates" },
@@ -27,7 +27,7 @@ const tabs = [
 const adminTabs = [
   { id: "integrations", label: "Integrations",          icon: LinkIcon,     path: "/settings/integrations" },
   { id: "alerts",       label: "Alerts & Notifications",icon: Bell,         path: "/settings/alerts" },
-  { id: "advanced",     label: "Admin Only",              icon: SettingsIcon, path: "/settings/advanced" },
+  { id: "advanced",     label: "Advanced Settings",     icon: SettingsIcon, path: "/settings/advanced" },
 ];
 
 function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
@@ -63,7 +63,7 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
           <>
             <div className="my-4 border-t border-slate-700" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Advanced</p>
             </div>
             {adminTabs.map(({ id, label, icon: Icon, path }) => (
               <RouterLink

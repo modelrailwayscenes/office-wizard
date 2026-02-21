@@ -210,6 +210,25 @@ export const run: ActionRun = async ({ params, logger, api }) => {
     };
   } catch (error) {
     logger.error({ error, conversationId }, "Error sending email");
+    try {
+      const config = await api.appConfiguration.findFirst({
+        select: { notifyOnAutoSendFailure: true } as any,
+      });
+      if ((config as any)?.notifyOnAutoSendFailure) {
+        await api.actionLog.create({
+          action: "email_sent",
+          actionDescription: `Email send failed for conversation ${conversationId}`,
+          performedAt: new Date(),
+          performedBy: approvedBy || "system",
+          performedVia: "api",
+          conversation: conversationId ? { _link: conversationId } : undefined,
+          success: false,
+          errorMessage: (error as any)?.message || String(error),
+        } as any);
+      }
+    } catch (logError) {
+      logger.warn({ logError }, "Failed to record email failure action log");
+    }
     throw error;
   }
 };
