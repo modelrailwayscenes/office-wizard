@@ -215,7 +215,7 @@ export default function TriageQueuePage() {
     let freshData: any[] | undefined;
     try {
       const result = await refresh();
-      freshData = result?.data as any[] | undefined;
+      freshData = (result as any)?.data as any[] | undefined;
 
       // Prune selected email IDs that no longer exist in the refreshed data
       if (freshData) {

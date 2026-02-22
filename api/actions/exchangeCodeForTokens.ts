@@ -22,7 +22,12 @@ function normalizeBaseUrl(currentAppUrl: string): string {
 
 async function requireConfig(api: any) {
   const config = await api.appConfiguration.maybeFindFirst({
-    select: { id: true },
+    select: {
+      id: true,
+      microsoftTenantId: true,
+      microsoftClientId: true,
+      microsoftClientSecret: true,
+    },
   });
   if (!config) throw new Error("Missing appConfiguration record");
   return config;
@@ -43,12 +48,16 @@ export const run: ActionRun = async ({ logger, api, params, session, context }) 
   const currentAppUrl = context?.currentAppUrl;
   if (!currentAppUrl) return { success: false, error: "Missing currentAppUrl in context" };
 
-  const tenantId = process.env.MICROSOFT_TENANT_ID;
-  const clientId = process.env.MICROSOFT_CLIENT_ID;
-  const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
+  const config = await requireConfig(api);
+  const tenantId = (config as any)?.microsoftTenantId || process.env.MICROSOFT_TENANT_ID;
+  const clientId = (config as any)?.microsoftClientId || process.env.MICROSOFT_CLIENT_ID;
+  const clientSecret = (config as any)?.microsoftClientSecret || process.env.MICROSOFT_CLIENT_SECRET;
 
   if (!tenantId || !clientId || !clientSecret) {
-    return { success: false, error: "Missing Microsoft OAuth environment variables" };
+    return {
+      success: false,
+      error: "Missing Microsoft OAuth settings. Configure Tenant ID, Client ID, and Client Secret in Settings > Integrations.",
+    };
   }
 
   const redirectUri = `${normalizeBaseUrl(currentAppUrl)}/authorize`;
@@ -95,8 +104,6 @@ export const run: ActionRun = async ({ logger, api, params, session, context }) 
   }
 
   const expiresAt = new Date(Date.now() + expiresInSec * 1000);
-
-  const config = await requireConfig(api);
 
   await api.appConfiguration.update(config.id, {
     microsoftAccessToken: accessToken,

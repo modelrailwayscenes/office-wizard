@@ -177,6 +177,9 @@ export default function IntegrationsSettings() {
       id: true,
       // Microsoft
       connectedMailbox: true,
+      microsoftTenantId: true,
+      microsoftClientId: true,
+      microsoftClientSecret: true,
       microsoftAccessToken: true,
       microsoftRefreshToken: true,
       microsoftTokenExpiresAt: true,
@@ -211,6 +214,12 @@ export default function IntegrationsSettings() {
   const [{ fetching: verifyingMonday }, verifyMondayConnection] = useGlobalAction(api.verifyMondayConnection);
   const [{ fetching: disconnectingMonday }, disconnectMonday] = useGlobalAction(api.disconnectMonday);
 
+  // ── Microsoft 365 form state ───────────────────────────────────────────────
+  const [msTenantId, setMsTenantId] = useState("");
+  const [msClientId, setMsClientId] = useState("");
+  const [msClientSecret, setMsClientSecret] = useState("");
+  const [msDirty, setMsDirty] = useState(false);
+
   // ── Shopify form state ─────────────────────────────────────────────────────
   const [shopifyDomain, setShopifyDomain] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
@@ -223,6 +232,9 @@ export default function IntegrationsSettings() {
   // ── Seed form state from config ────────────────────────────────────────────
   useEffect(() => {
     if (!config) return;
+    setMsTenantId(config.microsoftTenantId || "");
+    setMsClientId(config.microsoftClientId || "");
+    setMsClientSecret(config.microsoftClientSecret ? "••••••••••••••••" : "");
     setShopifyDomain(config.shopifyStoreDomain || "");
     setShopifyToken(config.shopifyAccessToken ? "••••••••••••••••" : "");
     setMondayToken(config.mondayApiToken ? "••••••••••••••••" : "");
@@ -270,6 +282,24 @@ export default function IntegrationsSettings() {
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Verification failed");
+    }
+  };
+
+  const handleMsSave = async () => {
+    if (!config?.id) return;
+    try {
+      const fields: any = {
+        microsoftTenantId: msTenantId.trim(),
+        microsoftClientId: msClientId.trim(),
+      };
+      if (msClientSecret && !msClientSecret.startsWith("••")) {
+        fields.microsoftClientSecret = msClientSecret.trim();
+      }
+      await (updateConfig as any)({ id: config.id, ...fields });
+      setMsDirty(false);
+      toast.success("Microsoft 365 credentials saved");
+    } catch {
+      toast.error("Failed to save credentials");
     }
   };
 
@@ -465,6 +495,52 @@ export default function IntegrationsSettings() {
                     {connectingFetching ? "Connecting..." : "Connect"}
                   </Button>
                 )}
+              </div>
+            </div>
+
+            {/* Microsoft 365 config form */}
+            <div className="border-t border-slate-700 pt-5 mt-6 space-y-4">
+              <div className="grid gap-4 max-w-xl">
+                <div>
+                  <Label className="text-sm font-medium text-slate-300 mb-1.5 block">Tenant ID</Label>
+                  <Input
+                    value={msTenantId}
+                    onChange={(e) => { setMsTenantId(e.target.value); setMsDirty(true); }}
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    className="bg-slate-800 border-slate-700 text-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-slate-300 mb-1.5 block">Client ID</Label>
+                  <Input
+                    value={msClientId}
+                    onChange={(e) => { setMsClientId(e.target.value); setMsDirty(true); }}
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    className="bg-slate-800 border-slate-700 text-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-slate-300 mb-1.5 block">Client Secret</Label>
+                  <SecretInput
+                    value={msClientSecret}
+                    onChange={(v) => { setMsClientSecret(v); setMsDirty(true); }}
+                    placeholder="••••••••••••••••"
+                  />
+                </div>
+                <div className="text-xs text-slate-500">
+                  Redirect URI: {typeof window !== "undefined" ? `${window.location.origin}/authorize` : "/authorize"}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleMsSave}
+                  disabled={!msDirty || updatingConfig}
+                  className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {updatingConfig ? "Saving..." : "Save Credentials"}
+                </Button>
               </div>
             </div>
           </div>

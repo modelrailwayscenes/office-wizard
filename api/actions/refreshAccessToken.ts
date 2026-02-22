@@ -6,6 +6,9 @@ async function requireConfig(api: any) {
     select: {
       id: true,
       microsoftRefreshToken: true,
+      microsoftTenantId: true,
+      microsoftClientId: true,
+      microsoftClientSecret: true,
     },
   });
 
@@ -23,12 +26,15 @@ export const run: ActionRun = async ({ logger, api }) => {
     };
   }
 
-  const tenantId = process.env.MICROSOFT_TENANT_ID;
-  const clientId = process.env.MICROSOFT_CLIENT_ID;
-  const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
+  const tenantId = (config as any)?.microsoftTenantId || process.env.MICROSOFT_TENANT_ID;
+  const clientId = (config as any)?.microsoftClientId || process.env.MICROSOFT_CLIENT_ID;
+  const clientSecret = (config as any)?.microsoftClientSecret || process.env.MICROSOFT_CLIENT_SECRET;
 
   if (!tenantId || !clientId || !clientSecret) {
-    return { success: false, error: "Missing Microsoft OAuth environment variables" };
+    return {
+      success: false,
+      error: "Missing Microsoft OAuth settings. Configure Tenant ID, Client ID, and Client Secret in Settings > Integrations.",
+    };
   }
 
   const tokenUrl = `https://login.microsoftonline.com/${encodeURIComponent(

@@ -2,11 +2,18 @@ import { randomBytes } from "crypto";
 import type { ActionOptions } from "gadget-server";
 
 export const run: ActionRun = async ({ params, logger, api, config }) => {
-  const clientId = config.MICROSOFT_CLIENT_ID;
-  const tenantId = config.MICROSOFT_TENANT_ID;
+  const appConfig = await api.appConfiguration.findFirst({
+    select: { microsoftClientId: true, microsoftTenantId: true } as any,
+  });
+  const clientId =
+    (appConfig as any)?.microsoftClientId || config.MICROSOFT_CLIENT_ID;
+  const tenantId =
+    (appConfig as any)?.microsoftTenantId || config.MICROSOFT_TENANT_ID;
   
   if (!clientId || !tenantId) {
-    throw new Error("Microsoft OAuth credentials not configured. Please set MICROSOFT_CLIENT_ID and MICROSOFT_TENANT_ID environment variables.");
+    throw new Error(
+      "Microsoft OAuth credentials not configured. Set Tenant ID and Client ID in Settings > Integrations."
+    );
   }
 
   // Generate CSRF state token

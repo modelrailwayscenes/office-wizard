@@ -110,7 +110,7 @@ export default function ThreadsPage() {
     setTelemetry({ ...event, at: new Date().toISOString() });
   };
 
-  const [{ data: conversationsData, fetching }, refresh] = useFindMany(api.conversation, {
+  const [{ data: rawConversationsData, fetching }, refresh] = useFindMany(api.conversation, {
     select: {
       id: true,
       subject: true,
@@ -149,6 +149,7 @@ export default function ThreadsPage() {
     pause: !isAdmin,
   });
 
+  const conversationsData = rawConversationsData as any[] | undefined;
   const conversations = conversationsData || [];
 
   const handleRunTriage = async () => {

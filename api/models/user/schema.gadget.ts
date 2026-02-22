@@ -61,6 +61,12 @@ export const schema: GadgetModel = {
       storageKey: "vBeEMSUmzn40",
       searchIndex: false,
     },
+    logicallyDeleted: {
+      type: "boolean",
+      default: false,
+      storageKey: "MNKylVLBvEog",
+      searchIndex: false,
+    },
     password: {
       type: "password",
       validations: { required: true, strongPassword: true },

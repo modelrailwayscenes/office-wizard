@@ -58,12 +58,13 @@ export default function ConversationDetail() {
   const params = useParams<{ id: string }>();
   const conversationId = params.id;
 
-  const [{ data: conversation, fetching, error }] = useFindOne(api.conversation, conversationId!, {
+  const [{ data: rawConversation, fetching, error }] = useFindOne(api.conversation, conversationId!, {
     pause: !conversationId,
     select: conversationSelect,
   });
+  const conversation = rawConversation as any;
 
-  const [{ data: messages, fetching: fetchingMessages }] = useFindMany(api.emailMessage, {
+  const [{ data: rawMessages, fetching: fetchingMessages }] = useFindMany(api.emailMessage, {
     pause: !conversationId,
     filter: {
       conversationId: { equals: conversationId }
@@ -73,6 +74,7 @@ export default function ConversationDetail() {
     },
     select: messageSelect,
   });
+  const messages = rawMessages as any[] | undefined;
 
   if (!conversationId) {
     return <Navigate to="/conversations" replace />;

@@ -417,6 +417,14 @@ export const schema: GadgetModel = {
       type: "encryptedString",
       storageKey: "fhSVKRv4L2wP",
     },
+    microsoftClientId: {
+      type: "string",
+      storageKey: "microsoftClientId",
+    },
+    microsoftClientSecret: {
+      type: "encryptedString",
+      storageKey: "microsoftClientSecret",
+    },
     microsoftConnectionStatus: {
       type: "string",
       default: "disconnected",
@@ -438,6 +446,10 @@ export const schema: GadgetModel = {
     microsoftRefreshToken: {
       type: "encryptedString",
       storageKey: "kyYI2LTonh3-",
+    },
+    microsoftTenantId: {
+      type: "string",
+      storageKey: "microsoftTenantId",
     },
     microsoftTokenExpiresAt: {
       type: "dateTime",

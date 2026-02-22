@@ -9,17 +9,23 @@ function normalizeBaseUrl(currentAppUrl: string): string {
   return currentAppUrl.replace(/\/+$/, "");
 }
 
-export const run: ActionRun = async ({ logger, session, context }) => {
+export const run: ActionRun = async ({ logger, session, context, api }) => {
   const currentAppUrl = context?.currentAppUrl;
   if (!currentAppUrl) {
     return { success: false, error: "Missing currentAppUrl in context" };
   }
 
-  const tenantId = process.env.MICROSOFT_TENANT_ID;
-  const clientId = process.env.MICROSOFT_CLIENT_ID;
+  const config = await api.appConfiguration.findFirst({
+    select: { microsoftTenantId: true, microsoftClientId: true } as any,
+  });
+  const tenantId = (config as any)?.microsoftTenantId || process.env.MICROSOFT_TENANT_ID;
+  const clientId = (config as any)?.microsoftClientId || process.env.MICROSOFT_CLIENT_ID;
 
   if (!tenantId || !clientId) {
-    return { success: false, error: "Missing MICROSOFT_TENANT_ID or MICROSOFT_CLIENT_ID env vars" };
+    return {
+      success: false,
+      error: "Missing Microsoft OAuth settings. Configure Tenant ID and Client ID in Settings > Integrations.",
+    };
   }
 
   const baseUrl = normalizeBaseUrl(currentAppUrl);
