@@ -31,6 +31,9 @@ import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { format } from "date-fns";
 import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
 import { StatusBar } from "@/components/StatusBar";
+import { PageHeader } from "@/shared/ui/PageHeader";
+import { SecondaryButton, PrimaryButton } from "@/shared/ui/Buttons";
+import { EmptyState } from "@/shared/ui/EmptyState";
 
 // ── Customer Sidebar (same as dashboard) ────────────────────────────
 const customerTabs = [
@@ -337,36 +340,25 @@ export default function ConversationsIndex() {
       <CustomerSidebar currentPath={location.pathname} />
 
       <div className="flex-1 overflow-auto bg-slate-950">
-        {/* Header */}
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-white">Conversations</h1>
-              <p className="text-sm text-slate-400 mt-1">
-                View and manage all email conversations
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button
+        <PageHeader
+          title="Conversations"
+          subtitle="View and manage all email conversations"
+          actions={
+            <>
+              <SecondaryButton
                 onClick={handleRebuildConversations}
                 disabled={rebuildingConversations}
-                variant="outline"
-                className="border-slate-700 hover:bg-slate-800"
               >
                 <RefreshCw className={`mr-2 h-4 w-4 ${rebuildingConversations ? "animate-spin" : ""}`} />
                 {rebuildingConversations ? "Rebuilding..." : "Rebuild Conversations"}
-              </Button>
-              <Button
-                onClick={handleFetchEmails}
-                disabled={fetchingEmails}
-                className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
-              >
+              </SecondaryButton>
+              <PrimaryButton onClick={handleFetchEmails} disabled={fetchingEmails}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${fetchingEmails ? "animate-spin" : ""}`} />
                 {fetchingEmails ? "Fetching..." : "Fetch New Emails"}
-              </Button>
-            </div>
-          </div>
-        </div>
+              </PrimaryButton>
+            </>
+          }
+        />
 
         {telemetryEnabled && telemetry && (
           <div className="px-8 pt-4">
@@ -425,11 +417,19 @@ export default function ConversationsIndex() {
           </div>
 
           {/* Conversations Table */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
-            <AutoTable
-              model={api.conversation}
-              searchable={false}
-              columns={[
+          {conversationListData?.length === 0 ? (
+            <EmptyState
+              title="No conversations found"
+              description="Try fetching new emails or adjust filters."
+              actionLabel="Fetch New Emails"
+              onAction={handleFetchEmails}
+            />
+          ) : (
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+              <AutoTable
+                model={api.conversation}
+                searchable={false}
+                columns={[
                 {
                   header: "Sentiment",
                   render: ({ record }) => (
@@ -508,29 +508,30 @@ export default function ConversationsIndex() {
               ]}
               filter={buildFilter()}
               onClick={handleRowClick}
-              select={{
-                id: true,
-                subject: true,
-                primaryCustomerEmail: true,
-                currentPriorityBand: true,
-                currentPriorityScore: true,
-                status: true,
-                messageCount: true,
-                latestMessageAt: true,
-                sentiment: true,
-                classifications: {
-                  edges: {
-                    node: {
-                      id: true,
-                      intentCategory: true,
-                      sentimentLabel: true,
-                      createdAt: true,
+                select={{
+                  id: true,
+                  subject: true,
+                  primaryCustomerEmail: true,
+                  currentPriorityBand: true,
+                  currentPriorityScore: true,
+                  status: true,
+                  messageCount: true,
+                  latestMessageAt: true,
+                  sentiment: true,
+                  classifications: {
+                    edges: {
+                      node: {
+                        id: true,
+                        intentCategory: true,
+                        sentimentLabel: true,
+                        createdAt: true,
+                      },
                     },
                   },
-                },
-              }}
-            />
-          </div>
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Conversation Details Drawer */}

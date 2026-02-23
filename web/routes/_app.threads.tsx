@@ -10,6 +10,9 @@ import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
 import { StatusBar } from "@/components/StatusBar";
+import { PageHeader } from "@/shared/ui/PageHeader";
+import { SecondaryButton } from "@/shared/ui/Buttons";
+import { EmptyState } from "@/shared/ui/EmptyState";
 import {
   Search, RefreshCw, Mail, Calendar, User, MessageSquare, Clock, Tag, AlertTriangle,
   LayoutDashboard, Layers, FileText, PenLine, Settings,
@@ -289,42 +292,31 @@ export default function ThreadsPage() {
       <CustomerSidebar currentPath={location.pathname} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-white">Threads</h1>
-              <p className="text-sm text-slate-400 mt-1">
-                View conversation data and metadata for debugging
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
+        <PageHeader
+          title="Threads"
+          subtitle="View conversation data and metadata for debugging"
+          actions={
+            <>
               {isAdmin && (
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Operations</span>
-                  <Button
+                  <SecondaryButton
                     onClick={handleRunTriage}
                     disabled={triaging || fetching}
-                    variant="outline"
                     className="border-teal-600 text-teal-400 hover:bg-teal-600/10"
                   >
                     <Layers className={`mr-2 h-4 w-4 ${triaging ? "animate-pulse" : ""}`} />
                     {triaging ? "Running Triage..." : "Run Triage"}
-                  </Button>
+                  </SecondaryButton>
                 </div>
               )}
-              <Button
-                onClick={handleRefresh}
-                disabled={fetching}
-                variant="outline"
-                className="border-slate-700 hover:bg-slate-800"
-              >
+              <SecondaryButton onClick={handleRefresh} disabled={fetching}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${fetching ? "animate-spin" : ""}`} />
                 {fetching ? "Refreshing..." : "Refresh"}
-              </Button>
-            </div>
-          </div>
-        </div>
+              </SecondaryButton>
+            </>
+          }
+        />
 
         {telemetryEnabled && telemetry && (
           <div className="px-8 pt-4">
@@ -354,9 +346,12 @@ export default function ThreadsPage() {
             {/* Scrollable list */}
             <div className="flex-1 overflow-y-auto">
               {filteredConversations.length === 0 ? (
-                <div className="p-8 text-center text-slate-500">
-                  {fetching ? "Loading conversations..." : "No conversations found"}
-                </div>
+                <EmptyState
+                  title={fetching ? "Loading conversations..." : "No conversations found"}
+                  description={fetching ? undefined : "Try adjusting the search or refresh the list."}
+                  actionLabel={fetching ? undefined : "Refresh"}
+                  onAction={fetching ? undefined : handleRefresh}
+                />
               ) : (
                 <div className="divide-y divide-slate-800">
                   {threadRows.map(({ conv, parentMessage, childMessages }) => {

@@ -14,6 +14,9 @@ import { SentimentBadge } from "@/components/SentimentBadge";
 import BatchReviewModal from "@/components/BatchReviewModal";
 import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
 import { StatusBar } from "@/components/StatusBar";
+import { PageHeader } from "@/shared/ui/PageHeader";
+import { SecondaryButton } from "@/shared/ui/Buttons";
+import { EmptyState } from "@/shared/ui/EmptyState";
 import {
   Mail,
   Clock,
@@ -383,22 +386,18 @@ export default function TriageQueuePage() {
       <CustomerSidebar currentPath={location.pathname} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-white">Triage Queue</h1>
-              <p className="text-sm text-slate-400 mt-1">Browse and search all emails with a flexible approach to triage</p>
-            </div>
-
-            <div className="flex items-center gap-3">
+        <PageHeader
+          title="Triage Queue"
+          subtitle="Browse and search all emails with a flexible approach to triage"
+          actions={
+            <>
               <Badge variant="outline" className="text-teal-400 border-teal-500/30 bg-teal-500/10">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 {draftsPendingCount} DRAFTS PENDING
               </Badge>
 
               {selectedEmailIds.length > 0 && (
-                <Button
+                <SecondaryButton
                   onClick={() => {
                     const validEmails = batchForModal.emails.length;
                     if (validEmails === 0) {
@@ -407,26 +406,19 @@ export default function TriageQueuePage() {
                     }
                     setBatchModalOpen(true);
                   }}
-                  variant="outline"
-                  className="border-slate-700 hover:bg-slate-800"
                 >
                   <CheckSquare className="h-4 w-4 mr-2" />
                   Batch Actions ({selectedEmailIds.length})
-                </Button>
+                </SecondaryButton>
               )}
 
-              <Button
-                onClick={handleRefresh}
-                disabled={isRefreshing || fetching}
-                variant="outline"
-                className="border-slate-700 hover:bg-slate-800"
-              >
+              <SecondaryButton onClick={handleRefresh} disabled={isRefreshing || fetching}>
                 <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing || fetching ? "animate-spin" : ""}`} />
                 {isRefreshing || fetching ? "Refreshing..." : "Refresh"}
-              </Button>
-            </div>
-          </div>
-        </div>
+              </SecondaryButton>
+            </>
+          }
+        />
 
         {telemetryEnabled && telemetry && (
           <div className="px-8 pt-4">
@@ -483,7 +475,12 @@ export default function TriageQueuePage() {
             {/* Conversation List */}
             <div className="divide-y divide-slate-800">
               {filteredConversations.length === 0 && (
-                <div className="p-8 text-center text-slate-500">No conversations to triage</div>
+                <EmptyState
+                  title="No conversations to triage"
+                  description="Try adjusting the filters or refresh the queue."
+                  actionLabel="Refresh"
+                  onAction={handleRefresh}
+                />
               )}
 
               {filteredConversations.map((conv: any) => {
