@@ -22,6 +22,7 @@ export default function TemplatesIndex() {
     sort: { updatedAt: "Descending" },
   });
   const [{ fetching: importing }, importTemplates] = useGlobalAction(api.importTemplates);
+  const [{ fetching: seeding }, seedTemplates] = useGlobalAction(api.seedCustomerTemplates);
 
   const handleExport = async (format: "json" | "csv") => {
     try {
