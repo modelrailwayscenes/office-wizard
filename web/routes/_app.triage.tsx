@@ -13,6 +13,7 @@ import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import BatchReviewModal from "@/components/BatchReviewModal";
 import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
+import { StatusBar } from "@/components/StatusBar";
 import {
   Mail,
   Clock,
@@ -235,6 +236,7 @@ export default function TriageQueuePage() {
         severity: "info",
         durationMs: Date.now() - start,
       });
+      toast.success(`Refreshed list (${freshData?.length ?? conversations?.length ?? 0} items)`);
     } catch (err: any) {
       toast.error(`Refresh failed: ${err?.message || String(err)}`);
       setTelemetryEvent({
@@ -431,6 +433,8 @@ export default function TriageQueuePage() {
             <TelemetryBanner telemetry={telemetry} onDismiss={() => setTelemetry(null)} />
           </div>
         )}
+
+        <StatusBar />
 
         {/* Search Bar */}
         <div className="px-8 py-4 border-b border-slate-800 flex-shrink-0">

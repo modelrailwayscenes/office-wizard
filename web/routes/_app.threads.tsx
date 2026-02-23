@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
+import { StatusBar } from "@/components/StatusBar";
 import {
   Search, RefreshCw, Mail, Calendar, User, MessageSquare, Clock, Tag, AlertTriangle,
   LayoutDashboard, Layers, FileText, PenLine, Settings,
@@ -330,6 +331,8 @@ export default function ThreadsPage() {
             <TelemetryBanner telemetry={telemetry} onDismiss={() => setTelemetry(null)} />
           </div>
         )}
+
+        <StatusBar />
 
         {/* Main content area */}
         <div className="flex-1 overflow-hidden flex">

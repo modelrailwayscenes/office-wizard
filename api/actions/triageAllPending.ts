@@ -9,8 +9,13 @@ import type { ActionOptions } from "gadget-server";
 // Safe to run multiple times — already-triaged conversations are skipped.
 // ---------------------------------------------------------------------------
 
-export const run: ActionRun = async ({ logger, api, params }) => {
+export const run: ActionRun = async ({ logger, api, params, session }) => {
   const syncParams = params as any;
+  const userRef = session?.get("user");
+  const triggeredBy =
+    typeof userRef === "string"
+      ? userRef
+      : userRef?._link || userRef?.id || "system";
   const config = await api.appConfiguration.findFirst({
     select: {
       batchSize: true,
@@ -51,6 +56,22 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   logger.info({ count: conversations.length }, "Found conversations to triage");
 
   if (conversations.length === 0) {
+    await api.actionLog.create({
+      action: "bulk_action",
+      actionDescription: "Triage run completed (no conversations)",
+      performedAt: new Date(),
+      performedBy: triggeredBy,
+      performedVia: session ? "web_ui" : "api",
+      bulkActionCount: 0,
+      metadata: {
+        kind: "triage_run",
+        processed: 0,
+        skipped: 0,
+        errors: 0,
+        batchSize,
+        forceRetriage,
+      },
+    } as any);
     return { success: true, processed: 0, skipped: 0, errors: 0 };
   }
 
@@ -86,6 +107,23 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   };
 
   logger.info(summary, "Bulk triage complete");
+  await api.actionLog.create({
+    action: "bulk_action",
+    actionDescription: `Triage run completed: processed ${processed}, skipped ${skipped}, errors ${errors}`,
+    performedAt: new Date(),
+    performedBy: triggeredBy,
+    performedVia: session ? "web_ui" : "api",
+    bulkActionCount: processed,
+    metadata: {
+      kind: "triage_run",
+      processed,
+      skipped,
+      errors,
+      batchSize,
+      forceRetriage,
+      errorDetails: errorDetails.length > 0 ? errorDetails : undefined,
+    },
+  } as any);
   return summary;
 };
 
