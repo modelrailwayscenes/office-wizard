@@ -489,11 +489,13 @@ export default function ConversationsIndex() {
                 {
                   header: "Classification",
                   render: ({ record }) => {
-                    const node = (record as any).classifications?.edges?.[0]?.node;
+                    const r = record as any;
+                    const node = r.classifications?.edges?.[0]?.node;
+                    const category = node?.intentCategory ?? r.currentCategory ?? null;
                     return (
                       <UnifiedBadge 
-                        type={node?.intentCategory} 
-                        label={formatClassification(node?.intentCategory)} 
+                        type={category} 
+                        label={formatClassification(category)} 
                       />
                     );
                   },
@@ -546,6 +548,7 @@ export default function ConversationsIndex() {
                   id: true,
                   subject: true,
                   primaryCustomerEmail: true,
+                  currentCategory: true,
                   currentPriorityBand: true,
                   currentPriorityScore: true,
                   status: true,
