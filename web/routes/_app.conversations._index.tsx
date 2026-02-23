@@ -25,7 +25,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useGlobalAction, useFindOne, useFindMany, useFindFirst } from "@gadgetinc/react";
 import { toast } from "sonner";
-import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard } from "lucide-react";
+import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard, ShieldAlert } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { format } from "date-fns";
@@ -34,6 +34,8 @@ import { StatusBar } from "@/components/StatusBar";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SecondaryButton, PrimaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
+import { getAiCommentStyle } from "@/components/aiCommentUtils";
+import { timeAgo } from "@/components/healthStatus";
 
 // ── Customer Sidebar (same as dashboard) ────────────────────────────
 const customerTabs = [
@@ -41,6 +43,7 @@ const customerTabs = [
   { id: "conversations", label: "Conversations", icon: MessageSquare,   path: "/conversations" },
   { id: "threads",       label: "Threads",       icon: MessageSquare,   path: "/threads" },
   { id: "triage",        label: "Triage",        icon: Layers,          path: "/triage" },
+  { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: "/quarantine" },
   { id: "templates",     label: "Templates",     icon: FileText,        path: "/templates",
     children: [
       { id: "templates-list", label: "Templates",  icon: FileText, path: "/templates" },
@@ -204,6 +207,25 @@ export default function ConversationsIndex() {
     }
   );
   const messagesData = rawMessagesData as any[] | undefined;
+  const [{ data: aiCommentData, fetching: fetchingAiComments }] = useFindMany(api.aiComment, {
+    pause: !selectedConversationId,
+    filter: {
+      conversationId: { equals: selectedConversationId ?? "" },
+    },
+    sort: { createdAt: "Descending" },
+    first: 1,
+    select: {
+      id: true,
+      kind: true,
+      source: true,
+      content: true,
+      createdAt: true,
+      model: true,
+      batchOperation: { id: true },
+      user: { id: true, email: true },
+    },
+  });
+  const latestAiComment = (aiCommentData as any[] | undefined)?.[0];
 
   const formatDateTime = (date: string | Date | null | undefined) => {
     if (!date) return "—";
@@ -718,6 +740,63 @@ export default function ConversationsIndex() {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Latest Activity */}
+                <Card className="bg-slate-800/50 border-slate-700">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-white">Latest Activity</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {fetchingAiComments ? (
+                      <div className="text-sm text-slate-400">Loading activity...</div>
+                    ) : latestAiComment ? (
+                      <div className="rounded-lg border border-slate-700/40 bg-slate-900/60 p-4">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {(() => {
+                              const style = getAiCommentStyle(latestAiComment.kind);
+                              return (
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${style.className}`}
+                                >
+                                  <style.Icon className="h-3 w-3" />
+                                  {style.label}
+                                </span>
+                              );
+                            })()}
+                            {latestAiComment.batchOperation?.id && (
+                              <RouterLink
+                                to={`/triage/history?batch=${latestAiComment.batchOperation.id}`}
+                                className="text-[11px] text-teal-400 hover:text-teal-300"
+                              >
+                                Batch {latestAiComment.batchOperation.id}
+                              </RouterLink>
+                            )}
+                          </div>
+                          <span
+                            className="text-[11px] text-slate-500"
+                            title={
+                              latestAiComment.createdAt
+                                ? new Date(latestAiComment.createdAt).toLocaleString()
+                                : "Unknown"
+                            }
+                          >
+                            {timeAgo(latestAiComment.createdAt)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-300 whitespace-pre-wrap">
+                          {latestAiComment.content}
+                        </div>
+                        <div className="mt-2 text-[11px] text-slate-500">
+                          Source: {latestAiComment.source || "system"}
+                          {latestAiComment.user?.email ? ` · ${latestAiComment.user.email}` : ""}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-400">No activity recorded yet.</div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Messages */}
                 <Card className="bg-slate-800/50 border-slate-700">

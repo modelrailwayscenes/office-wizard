@@ -8,6 +8,8 @@ import { api } from "../api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { getAiCommentStyle } from "@/components/aiCommentUtils";
+import { timeAgo } from "@/components/healthStatus";
 
 function formatDateTime(value: string | Date | null | undefined, fmt = "PPp") {
   if (!value) return "—";
@@ -75,6 +77,25 @@ export default function ConversationDetail() {
     select: messageSelect,
   });
   const messages = rawMessages as any[] | undefined;
+  const [{ data: rawAiComments, fetching: fetchingAiComments }] = useFindMany(api.aiComment, {
+    pause: !conversationId,
+    filter: {
+      conversationId: { equals: conversationId }
+    },
+    sort: { createdAt: "Descending" },
+    first: 10,
+    select: {
+      id: true,
+      kind: true,
+      source: true,
+      content: true,
+      createdAt: true,
+      model: true,
+      batchOperation: { id: true },
+      user: { id: true, email: true },
+    },
+  });
+  const aiComments = rawAiComments as any[] | undefined;
 
   if (!conversationId) {
     return <Navigate to="/conversations" replace />;
@@ -243,6 +264,56 @@ export default function ConversationDetail() {
                 <div className="text-sm text-zinc-200 whitespace-pre-wrap">{String(conversation.internalNotes)}</div>
               </div>
             )}
+
+            <div className="rounded-md border border-zinc-800 bg-zinc-900/20 p-3">
+              <div className="text-xs text-zinc-500 mb-2">Activity Timeline</div>
+              {fetchingAiComments ? (
+                <div className="text-sm text-zinc-400">Loading activity...</div>
+              ) : aiComments && aiComments.length > 0 ? (
+                <div className="space-y-3">
+                  {aiComments.map((comment) => {
+                    const style = getAiCommentStyle(comment.kind);
+                    const createdAtLabel = comment.createdAt
+                      ? new Date(comment.createdAt).toLocaleString()
+                      : "Unknown";
+                    return (
+                      <div key={comment.id} className="rounded-md border border-zinc-800 bg-zinc-950/40 p-3">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${style.className}`}
+                            >
+                              <style.Icon className="h-3 w-3" />
+                              {style.label}
+                            </span>
+                            {comment.batchOperation?.id && (
+                              <Link
+                                to={`/triage/history?batch=${comment.batchOperation.id}`}
+                                className="text-[11px] text-teal-400 hover:text-teal-300"
+                              >
+                                Batch {comment.batchOperation.id}
+                              </Link>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-zinc-500" title={createdAtLabel}>
+                            {timeAgo(comment.createdAt)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-zinc-300 whitespace-pre-wrap">
+                          {comment.content}
+                        </div>
+                        <div className="mt-2 text-[11px] text-zinc-500">
+                          Source: {comment.source || "system"}
+                          {comment.user?.email ? ` · ${comment.user.email}` : ""}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-sm text-zinc-400">No activity recorded yet.</div>
+              )}
+            </div>
           </CardContent>
         </Card>
 

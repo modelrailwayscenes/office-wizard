@@ -18,6 +18,7 @@ import {
   MessageSquare,
   PenLine,
   LayoutDashboard,
+  ShieldAlert,
 } from "lucide-react";
 
 // ── Customer Sidebar ────────────────────────────────────────
@@ -29,6 +30,7 @@ const customerTabs = [
   { id: "conversations", label: "Conversations", icon: MessageSquare,   path: "/conversations" },
   { id: "threads",       label: "Threads",       icon: MessageSquare,   path: "/threads" },
   { id: "triage",        label: "Triage",        icon: Layers,          path: "/triage" },
+  { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: "/quarantine" },
   { id: "templates",     label: "Templates",     icon: FileText,        path: "/templates",
     children: [
       { id: "templates-list", label: "Templates",  icon: FileText, path: "/templates" },

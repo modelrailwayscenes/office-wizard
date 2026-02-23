@@ -6,6 +6,7 @@ import {
   FileText,
   PenLine,
   Settings,
+  ShieldAlert,
 } from "lucide-react";
 
 const customerTabs = [
@@ -13,6 +14,7 @@ const customerTabs = [
   { id: "conversations", label: "Conversations", icon: MessageSquare,   path: "/conversations" },
   { id: "threads",       label: "Threads",       icon: MessageSquare,   path: "/threads" },
   { id: "triage",        label: "Triage",        icon: Layers,          path: "/triage" },
+  { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: "/quarantine" },
   { id: "templates",     label: "Templates",     icon: FileText,        path: "/templates",
     children: [
       { id: "templates-list", label: "Templates",  icon: FileText, path: "/templates" },

@@ -10,14 +10,14 @@ import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
 import { StatusBar } from "@/components/StatusBar";
-import { getAiCommentStyle } from "@/components/aiCommentUtils";
+import { getAiCommentStyle, normalizeAiCommentKind } from "@/components/aiCommentUtils";
 import { timeAgo } from "@/components/healthStatus";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SecondaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import {
   Search, RefreshCw, Mail, Calendar, User, MessageSquare, Clock, Tag, AlertTriangle,
-  LayoutDashboard, Layers, FileText, PenLine, Settings,
+  LayoutDashboard, Layers, FileText, PenLine, Settings, ShieldAlert,
 } from "lucide-react";
 
 // ── Customer Sidebar ────────────────────────────────────────────────
@@ -26,6 +26,7 @@ const customerTabs = [
   { id: "conversations", label: "Conversations", icon: MessageSquare,   path: "/conversations" },
   { id: "threads",       label: "Threads",       icon: MessageSquare,   path: "/threads" },
   { id: "triage",        label: "Triage",        icon: Layers,          path: "/triage" },
+  { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: "/quarantine" },
   { id: "templates",     label: "Templates",     icon: FileText,        path: "/templates",
     children: [
       { id: "templates-list", label: "Templates",  icon: FileText, path: "/templates" },
@@ -163,7 +164,7 @@ export default function ThreadsPage() {
       conversationId: { equals: selectedConvId ?? "" },
     },
     sort: { createdAt: "Descending" },
-    first: 1,
+    first: 50,
     select: {
       id: true,
       kind: true,
@@ -176,6 +177,16 @@ export default function ThreadsPage() {
     },
   });
   const latestAiComment = (aiCommentData as any[] | undefined)?.[0];
+  const latestSummary = useMemo(() => {
+    const comments = (aiCommentData as any[] | undefined) || [];
+    if (comments.length === 0) return null;
+    const counts: Record<string, number> = {};
+    for (const comment of comments) {
+      const key = normalizeAiCommentKind(comment.kind);
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
+  }, [aiCommentData]);
 
   const handleRunTriage = async () => {
     const start = Date.now();
@@ -534,7 +545,16 @@ export default function ThreadsPage() {
 
                   {/* Latest activity */}
                   <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Latest Activity</h3>
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <h3 className="text-lg font-semibold text-white">Latest Activity</h3>
+                      {latestSummary && (
+                        <div className="text-[11px] text-slate-500">
+                          {Object.entries(latestSummary)
+                            .map(([key, value]) => `${key.replace("_", " ")}: ${value}`)
+                            .join(" · ")}
+                        </div>
+                      )}
+                    </div>
                     {aiCommentFetching ? (
                       <div className="text-sm text-slate-500">Loading activity...</div>
                     ) : latestAiComment ? (
