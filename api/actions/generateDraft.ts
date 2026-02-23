@@ -11,9 +11,14 @@ import Anthropic from "@anthropic-ai/sdk";
 // Also writes an aiComment audit trail record (aiComment model).
 // ---------------------------------------------------------------------------
 
-export const run: ActionRun = async ({ logger, api, params, connections }) => {
+export const run: ActionRun = async ({ logger, api, params, connections, session }) => {
   const { conversationId, regenerate } = params as any;
   if (!conversationId) throw new Error("conversationId is required");
+
+  const userRef = session?.get("user");
+  const actorUserId =
+    typeof userRef === "string" ? userRef : userRef?._link || userRef?.id || null;
+  const auditSource = session ? "admin_ui" : "system";
 
   logger.info({ conversationId, regenerate }, "Starting draft generation");
 
@@ -240,10 +245,11 @@ Start directly with the email content.`;
     try {
       await api.internal.aiComment.create({
         conversation: { _link: conversationId },
-        kind: "draft_generated",
-        source: "draft",
+        kind: "error",
+        source: auditSource,
         content: `Draft generation failed: ${err?.message || "Unknown error"}`,
         model: usedModel,
+        user: actorUserId ? { _link: actorUserId } : undefined,
         metaJson: JSON.stringify({
           regenerate: Boolean(regenerate),
           category,
@@ -272,16 +278,15 @@ Start directly with the email content.`;
 
   // Write aiComment audit trail (best-effort)
   try {
-    const kind = regenerate ? "draft_regenerated" : "draft_generated";
-
     await api.internal.aiComment.create({
       conversation: { _link: conversationId },
-      kind,
-      source: "draft",
+      kind: "draft_generated",
+      source: auditSource,
       content: regenerate
         ? "AI draft regenerated using Claude, based on the latest conversation context."
         : "AI draft generated using Claude, based on the latest conversation context.",
       model: usedModel,
+      user: actorUserId ? { _link: actorUserId } : undefined,
       metaJson: JSON.stringify({
         regenerate: Boolean(regenerate),
         category,

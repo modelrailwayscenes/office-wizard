@@ -339,9 +339,14 @@ Respond with exactly:
 // ---------------------------------------------------------------------------
 // Main action
 // ---------------------------------------------------------------------------
-export const run: ActionRun = async ({ logger, api, params, connections }) => {
+export const run: ActionRun = async ({ logger, api, params, connections, session }) => {
   const { conversationId } = params as any;
   if (!conversationId) throw new Error("conversationId is required");
+
+  const userRef = session?.get("user");
+  const actorUserId =
+    typeof userRef === "string" ? userRef : userRef?._link || userRef?.id || null;
+  const auditSource = session ? "admin_ui" : "system";
 
   logger.info({ conversationId }, "Starting triage with Shopify integration");
 
@@ -595,12 +600,14 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
 
     await api.internal.aiComment.create({
       conversation: { _link: conversationId },
-      kind: "triage_rationale",
-      source: usedAI ? "triage_ai" : "triage_rules",
+      kind: "triage_run",
+      source: auditSource,
       content: contentLines.join("\n"),
       model: usedAI ? aiModelUsed : null,
+      user: actorUserId ? { _link: actorUserId } : undefined,
       metaJson: JSON.stringify({
         usedAI,
+        triageEngine: usedAI ? "ai" : "rules",
         aiConfidence,
         aiModelUsed,
         ruleScore: ruleResult.score,
@@ -619,6 +626,7 @@ export const run: ActionRun = async ({ logger, api, params, connections }) => {
         customerConfidenceScore,
         shopifyOrderNumbers,
         quarantinedForUnverified,
+        performedBy: actorUserId,
       }),
     });
   } catch (err: any) {

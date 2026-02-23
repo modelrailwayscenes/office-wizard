@@ -16,6 +16,9 @@ export const run: ActionRun = async ({ logger, api, params, session }) => {
     typeof userRef === "string"
       ? userRef
       : userRef?._link || userRef?.id || "system";
+  const actorUserId =
+    typeof userRef === "string" ? userRef : userRef?._link || userRef?.id || null;
+  const auditSource = session ? "admin_ui" : "system";
   const config = await api.appConfiguration.findFirst({
     select: {
       batchSize: true,
@@ -40,6 +43,26 @@ export const run: ActionRun = async ({ logger, api, params, session }) => {
   const forceRetriage = Boolean(syncParams.forceRetriage); // re-triage even if already done
 
   logger.info({ batchSize, forceRetriage }, "Starting bulk triage");
+
+  const writeErrorComment = async (conversationId: string, error: string) => {
+    try {
+      await api.internal.aiComment.create({
+        conversation: { _link: conversationId },
+        kind: "error",
+        source: auditSource,
+        content: `Bulk triage failed for this conversation: ${error}`,
+        model: null,
+        user: actorUserId ? { _link: actorUserId } : undefined,
+        metaJson: JSON.stringify({
+          batchSize,
+          forceRetriage,
+          performedBy: triggeredBy,
+        }),
+      });
+    } catch (err: any) {
+      logger.warn({ conversationId, error: err?.message }, "Failed to write aiComment error record");
+    }
+  };
 
   // Find pending conversations
   const filter = forceRetriage
@@ -95,6 +118,7 @@ export const run: ActionRun = async ({ logger, api, params, session }) => {
       logger.error({ conversationId: conv.id, error: err.message }, "Triage failed");
       errors++;
       errorDetails.push({ conversationId: conv.id, error: err.message });
+      await writeErrorComment(conv.id, err?.message || "Unknown error");
     }
   }
 

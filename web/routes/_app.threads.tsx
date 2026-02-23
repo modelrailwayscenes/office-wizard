@@ -10,6 +10,8 @@ import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
 import { StatusBar } from "@/components/StatusBar";
+import { getAiCommentStyle } from "@/components/aiCommentUtils";
+import { timeAgo } from "@/components/healthStatus";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SecondaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -155,6 +157,25 @@ export default function ThreadsPage() {
 
   const conversationsData = rawConversationsData as any[] | undefined;
   const conversations = conversationsData || [];
+  const [{ data: aiCommentData, fetching: aiCommentFetching }] = useFindMany(api.aiComment, {
+    pause: !selectedConvId,
+    filter: {
+      conversationId: { equals: selectedConvId ?? "" },
+    },
+    sort: { createdAt: "Descending" },
+    first: 1,
+    select: {
+      id: true,
+      kind: true,
+      source: true,
+      content: true,
+      createdAt: true,
+      model: true,
+      batchOperation: { id: true },
+      user: { id: true, email: true },
+    },
+  });
+  const latestAiComment = (aiCommentData as any[] | undefined)?.[0];
 
   const handleRunTriage = async () => {
     const start = Date.now();
@@ -509,6 +530,59 @@ export default function ThreadsPage() {
                       label="Latest Message At"
                       value={formatDate(selectedConversation.latestMessageAt)}
                     />
+                  </div>
+
+                  {/* Latest activity */}
+                  <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Latest Activity</h3>
+                    {aiCommentFetching ? (
+                      <div className="text-sm text-slate-500">Loading activity...</div>
+                    ) : latestAiComment ? (
+                      <div className="rounded-lg border border-slate-700/40 bg-slate-900/60 p-4">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {(() => {
+                              const style = getAiCommentStyle(latestAiComment.kind);
+                              return (
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${style.className}`}
+                                >
+                                  <style.Icon className="h-3 w-3" />
+                                  {style.label}
+                                </span>
+                              );
+                            })()}
+                            {latestAiComment.batchOperation?.id && (
+                              <RouterLink
+                                to={`/triage/history?batch=${latestAiComment.batchOperation.id}`}
+                                className="text-[11px] text-teal-400 hover:text-teal-300"
+                              >
+                                Batch {latestAiComment.batchOperation.id}
+                              </RouterLink>
+                            )}
+                          </div>
+                          <span
+                            className="text-[11px] text-slate-500"
+                            title={
+                              latestAiComment.createdAt
+                                ? new Date(latestAiComment.createdAt).toLocaleString()
+                                : "Unknown"
+                            }
+                          >
+                            {timeAgo(latestAiComment.createdAt)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-300 whitespace-pre-wrap">
+                          {latestAiComment.content}
+                        </div>
+                        <div className="mt-2 text-[11px] text-slate-500">
+                          Source: {latestAiComment.source || "system"}
+                          {latestAiComment.user?.email ? ` · ${latestAiComment.user.email}` : ""}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500">No activity recorded yet.</div>
+                    )}
                   </div>
 
                   {/* Classifications */}

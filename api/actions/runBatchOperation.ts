@@ -74,7 +74,7 @@ const parseDraftsMap = (raw: unknown): Record<string, string> => {
 };
 
 export const run = async (context: any) => {
-  const { params, api, logger } = context;
+  const { params, api, logger, session } = context;
 
   const batchId: string | undefined = params.batchId;
   const action: string | undefined = params.action;
@@ -86,6 +86,12 @@ export const run = async (context: any) => {
   const estimatedTimeSaved: number = typeof params.estimatedTimeSaved === "number" ? params.estimatedTimeSaved : 0;
   const userId: string | undefined = params.userId;
   const templateUsed: string | undefined = params.templateUsed;
+
+  const userRef = session?.get("user");
+  const actorUserId =
+    typeof userRef === "string" ? userRef : userRef?._link || userRef?.id || null;
+  const auditSource = session ? "admin_ui" : "system";
+  const auditUserId = actorUserId || userId || null;
 
   const conversationIds = parseStringArrayParam(params.conversationIds, "conversationIds");
   const emailIds = parseStringArrayParam(params.emailIds, "emailIds");
@@ -131,10 +137,11 @@ export const run = async (context: any) => {
       await api.internal.aiComment.create({
         conversation: { _link: opts.conversationId },
         batchOperation: { _link: opts.batchOperationId },
-        kind: "batch_result",
-        source: "batch",
+        kind: "batch_action",
+        source: auditSource,
         content: opts.content,
         model: null,
+        user: auditUserId ? { _link: auditUserId } : undefined,
         metaJson: JSON.stringify({
           action,
           type,

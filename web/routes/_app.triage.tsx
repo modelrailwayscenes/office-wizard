@@ -14,6 +14,8 @@ import { SentimentBadge } from "@/components/SentimentBadge";
 import BatchReviewModal from "@/components/BatchReviewModal";
 import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
 import { StatusBar } from "@/components/StatusBar";
+import { getAiCommentStyle } from "@/components/aiCommentUtils";
+import { timeAgo } from "@/components/healthStatus";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SecondaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -181,6 +183,25 @@ export default function TriageQueuePage() {
   const [, generateDraft] = useGlobalAction(api.generateDraft);
   const [{ data: configData }] = useFindFirst(api.appConfiguration);
   const telemetryEnabled = (configData as any)?.telemetryBannersEnabled ?? true;
+  const [{ data: aiCommentData, fetching: aiCommentFetching }] = useFindMany(api.aiComment, {
+    pause: !selectedConvId,
+    filter: {
+      conversationId: { equals: selectedConvId ?? "" },
+    },
+    sort: { createdAt: "Descending" },
+    first: 10,
+    select: {
+      id: true,
+      kind: true,
+      source: true,
+      content: true,
+      createdAt: true,
+      model: true,
+      batchOperation: { id: true },
+      user: { id: true, email: true },
+    },
+  });
+  const aiComments = aiCommentData as any[] | undefined;
 
   const setTelemetryEvent = (event: Omit<PageTelemetry, "at">) => {
     if (!telemetryEnabled) return;
@@ -640,6 +661,69 @@ export default function TriageQueuePage() {
                         </>
                       )}
                     </Button>
+                  )}
+                </Card>
+
+                {/* Activity Timeline */}
+                <Card className="bg-slate-900/50 border-slate-800 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-slate-300">ACTIVITY TIMELINE</h3>
+                    <span className="text-xs text-slate-500">
+                      {aiCommentFetching ? "Loading..." : `${aiComments?.length ?? 0} entries`}
+                    </span>
+                  </div>
+
+                  {aiCommentFetching ? (
+                    <div className="text-sm text-slate-500">Loading activity...</div>
+                  ) : aiComments && aiComments.length > 0 ? (
+                    <div className="space-y-3">
+                      {aiComments.map((comment) => {
+                        const style = getAiCommentStyle(comment.kind);
+                        const createdAtLabel = comment.createdAt
+                          ? new Date(comment.createdAt).toLocaleString()
+                          : "Unknown";
+                        const batchId = comment.batchOperation?.id;
+                        const sourceLabel = comment.source || "system";
+                        const userLabel = comment.user?.email;
+                        return (
+                          <div
+                            key={comment.id}
+                            className="rounded-lg border border-slate-800 bg-slate-950/40 p-3"
+                          >
+                            <div className="flex items-center justify-between gap-3 mb-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${style.className}`}
+                                >
+                                  <style.Icon className="h-3 w-3" />
+                                  {style.label}
+                                </span>
+                                {batchId && (
+                                  <RouterLink
+                                    to={`/triage/history?batch=${batchId}`}
+                                    className="text-[11px] text-teal-400 hover:text-teal-300"
+                                  >
+                                    Batch {batchId}
+                                  </RouterLink>
+                                )}
+                              </div>
+                              <span className="text-[11px] text-slate-500" title={createdAtLabel}>
+                                {timeAgo(comment.createdAt)}
+                              </span>
+                            </div>
+                            <div className="text-xs text-slate-300 whitespace-pre-wrap">
+                              {comment.content}
+                            </div>
+                            <div className="mt-2 text-[11px] text-slate-500">
+                              Source: {sourceLabel}
+                              {userLabel ? ` · ${userLabel}` : ""}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-slate-500">No activity logged yet.</div>
                   )}
                 </Card>
               </div>

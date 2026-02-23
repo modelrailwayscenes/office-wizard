@@ -54,7 +54,7 @@ const parseDraftMapParam = (raw: unknown, fieldName: string): Record<string, str
 };
 
 export const run = async (context: any) => {
-  const { params, api, logger } = context;
+  const { params, api, logger, session } = context;
 
   const emailIds = parseStringArrayParam(params.emailIds, "emailIds");
   const draftsByEmailId = parseDraftMapParam(params.draftsByEmailId, "draftsByEmailId");
@@ -73,6 +73,10 @@ export const run = async (context: any) => {
   });
 
   const nowIso = new Date().toISOString();
+  const userRef = session?.get("user");
+  const actorUserId =
+    typeof userRef === "string" ? userRef : userRef?._link || userRef?.id || null;
+  const auditSource = session ? "admin_ui" : "system";
 
   let updated = 0;
   const skipped: Array<{ emailId: string; reason: string }> = [];
@@ -99,6 +103,23 @@ export const run = async (context: any) => {
       // Keep it in the human review bucket until user sends/resolves/rejects.
       requiresHumanReview: true,
     });
+
+    try {
+      await api.internal.aiComment.create({
+        conversation: { _link: convId },
+        kind: "note",
+        source: auditSource,
+        content: "Draft edits saved for this conversation.",
+        model: null,
+        user: actorUserId ? { _link: actorUserId } : undefined,
+        metaJson: JSON.stringify({
+          emailId,
+          draftLength: draft.length,
+        }),
+      });
+    } catch (err: any) {
+      logger.warn({ conversationId: convId, error: err?.message }, "Failed to write aiComment draft edit record");
+    }
 
     updated++;
   }
