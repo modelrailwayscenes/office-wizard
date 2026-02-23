@@ -30,6 +30,7 @@ import { SentimentBadge } from "@/components/SentimentBadge";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { format } from "date-fns";
 import TelemetryBanner, { type PageTelemetry } from "@/components/TelemetryBanner";
+import { StatusBar } from "@/components/StatusBar";
 
 // ── Customer Sidebar (same as dashboard) ────────────────────────────
 const customerTabs = [
@@ -372,6 +373,8 @@ export default function ConversationsIndex() {
             <TelemetryBanner telemetry={telemetry} onDismiss={() => setTelemetry(null)} />
           </div>
         )}
+
+        <StatusBar />
 
         {/* Content */}
         <div className="px-8 pb-8">
