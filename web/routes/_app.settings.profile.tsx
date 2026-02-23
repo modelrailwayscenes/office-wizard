@@ -42,6 +42,7 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
         .filter((role: string | undefined): role is string => Boolean(role))
     : [];
   const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
+  const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
   
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
@@ -50,7 +51,7 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
         <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
       </div>
       <nav className="space-y-1">
-        {tabs.map(({ id, label, icon: Icon, path }) => (
+        {visibleTabs.map(({ id, label, icon: Icon, path }) => (
           <RouterLink
             key={id}
             to={path}
