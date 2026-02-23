@@ -101,7 +101,7 @@ function SettingsBlock({
   const tone = healthTone || "healthy";
   const toneStyle = HEALTH_TONE_STYLES[tone];
   const BadgeIcon = toneStyle.Icon;
-  const badgeLabel = statusLabel || toneStyle.label;
+  const badgeLabel = (statusLabel || toneStyle.label).toUpperCase();
 
   return (
     <div className={`bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition-all group ${toneStyle.borderClass}`}>
