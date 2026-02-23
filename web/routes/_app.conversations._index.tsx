@@ -54,6 +54,13 @@ const customerTabs = [
 ];
 
 function CustomerSidebar({ currentPath }: { currentPath: string }) {
+  const [{ data: quarantineData }] = useFindMany(api.emailQuarantine, {
+    filter: { status: { equals: "pending_review" } },
+    select: { id: true },
+    first: 200,
+  });
+  const quarantineCount = (quarantineData as any[] | undefined)?.length ?? 0;
+
   const isActive = (path: string, children?: { path: string }[]) => {
     if (path === "/") return currentPath === "/";
     if (children) {
@@ -80,6 +87,11 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
               <span className="text-sm">{label}</span>
+              {id === "quarantine" && quarantineCount > 0 && (
+                <span className="ml-auto rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 text-[10px] font-semibold">
+                  {quarantineCount}
+                </span>
+              )}
             </RouterLink>
             {children && (
               <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-3">

@@ -41,6 +41,13 @@ const customerTabs = [
 ];
 
 function CustomerSidebar({ currentPath }: { currentPath: string }) {
+  const [{ data: quarantineData }] = useFindMany(api.emailQuarantine, {
+    filter: { status: { equals: "pending_review" } },
+    select: { id: true },
+    first: 200,
+  });
+  const quarantineCount = (quarantineData as any[] | undefined)?.length ?? 0;
+
   const isActive = (path: string, children?: { path: string }[]) => {
     if (path === "/") return currentPath === "/";
     if (children) {
@@ -67,6 +74,11 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
               <span className="text-sm">{label}</span>
+              {id === "quarantine" && quarantineCount > 0 && (
+                <span className="ml-auto rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 text-[10px] font-semibold">
+                  {quarantineCount}
+                </span>
+              )}
             </RouterLink>
             {children && (
               <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-3">
@@ -146,9 +158,15 @@ export default function Dashboard() {
       autoTriageEnabled: true,
     },
   });
+  const [{ data: quarantineData, fetching: quarantineFetching }] = useFindMany(api.emailQuarantine, {
+    filter: { status: { equals: "pending_review" } },
+    select: { id: true },
+    first: 200,
+  });
 
   const conversations = (conversationsRaw || []) as any[];
   const config = configData as any;
+  const quarantineCount = (quarantineData as any[] | undefined)?.length ?? 0;
 
   const {
     total,
@@ -327,6 +345,19 @@ export default function Dashboard() {
               tone="bg-sky-500/10 text-sky-300"
               subLabel={`${triageRatio}% triaged`}
             />
+            <KpiCard
+              label="Quarantine"
+              value={quarantineCount}
+              Icon={ShieldAlert}
+              tone="bg-amber-500/10 text-amber-300"
+              subLabel={
+                quarantineFetching
+                  ? "Loading..."
+                  : quarantineCount > 0
+                  ? "Pending review"
+                  : "Clear"
+              }
+            />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -454,49 +485,6 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Coming Soon Section */}
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4">More Modules Coming Soon</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-              <Card className="bg-slate-900/30 border-slate-800/50 p-6 opacity-60">
-                <h3 className="text-md font-semibold text-slate-400 mb-2">
-                  Finance Module
-                </h3>
-                <p className="text-sm text-slate-500">
-                  Invoice processing, expense tracking, and financial automation
-                </p>
-                <div className="mt-4">
-                  <span className="text-xs text-slate-600">Coming Q2 2026</span>
-                </div>
-              </Card>
-
-              <Card className="bg-slate-900/30 border-slate-800/50 p-6 opacity-60">
-                <h3 className="text-md font-semibold text-slate-400 mb-2">
-                  Sales Module
-                </h3>
-                <p className="text-sm text-slate-500">
-                  Lead scoring, pipeline automation, and CRM integration
-                </p>
-                <div className="mt-4">
-                  <span className="text-xs text-slate-600">Coming Q3 2026</span>
-                </div>
-              </Card>
-
-              <Card className="bg-slate-900/30 border-slate-800/50 p-6 opacity-60">
-                <h3 className="text-md font-semibold text-slate-400 mb-2">
-                  Marketing Module
-                </h3>
-                <p className="text-sm text-slate-500">
-                  Campaign management, content generation, and analytics
-                </p>
-                <div className="mt-4">
-                  <span className="text-xs text-slate-600">Coming Q4 2026</span>
-                </div>
-              </Card>
-
-            </div>
-          </div>
         </div>
       </div>
     </div>

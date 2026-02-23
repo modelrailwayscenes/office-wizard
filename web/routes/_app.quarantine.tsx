@@ -1,11 +1,22 @@
 import { useMemo, useState } from "react";
 import { useFindMany, useGlobalAction } from "@gadgetinc/react";
 import { Link as RouterLink, useLocation } from "react-router";
+import { toast } from "sonner";
 import { api } from "../api";
 import { PageHeader } from "@/shared/ui/PageHeader";
-import { SecondaryButton, PrimaryButton } from "@/shared/ui/Buttons";
+import { SecondaryButton, PrimaryButton, DangerButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { timeAgo } from "@/components/healthStatus";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -43,6 +54,13 @@ const customerTabs = [
 ];
 
 function CustomerSidebar({ currentPath }: { currentPath: string }) {
+  const [{ data: quarantineData }] = useFindMany(api.emailQuarantine, {
+    filter: { status: { equals: "pending_review" } },
+    select: { id: true },
+    first: 200,
+  });
+  const quarantineCount = (quarantineData as any[] | undefined)?.length ?? 0;
+
   const isActive = (path: string, children?: { path: string }[]) => {
     if (path === "/") return currentPath === "/";
     if (children) {
@@ -69,6 +87,11 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
               <span className="text-sm">{label}</span>
+              {id === "quarantine" && quarantineCount > 0 && (
+                <span className="ml-auto rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 text-[10px] font-semibold">
+                  {quarantineCount}
+                </span>
+              )}
             </RouterLink>
             {children && (
               <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-3">
@@ -112,6 +135,8 @@ export default function QuarantinePage() {
   const location = useLocation();
   const [statusFilter, setStatusFilter] = useState<"pending_review" | "approved" | "rejected" | "all">("pending_review");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   const [{ data: rawQuarantine, fetching }, refresh] = useFindMany(api.emailQuarantine, {
     sort: { receivedAt: "Descending" },
@@ -132,6 +157,7 @@ export default function QuarantinePage() {
   });
 
   const [{ fetching: approving }, approveQuarantinedEmail] = useGlobalAction(api.approveQuarantinedEmail);
+  const [{ fetching: rejecting }, rejectQuarantinedEmail] = useGlobalAction(api.rejectQuarantinedEmail);
 
   const quarantineItems = (rawQuarantine as any[]) || [];
   const filteredItems = useMemo(() => {
@@ -142,8 +168,38 @@ export default function QuarantinePage() {
   const selectedItem = filteredItems.find((item) => item.id === selectedId) || null;
 
   const handleApprove = async (itemId: string) => {
-    await approveQuarantinedEmail({ quarantineId: itemId, addSenderToAllowlist: false });
-    await refresh();
+    try {
+      await approveQuarantinedEmail({ quarantineId: itemId, addSenderToAllowlist: false });
+      toast.success("Email approved");
+      await refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Approve failed");
+    }
+  };
+
+  const handleReject = async (itemId: string, reason?: string) => {
+    try {
+      await rejectQuarantinedEmail({
+        quarantineId: itemId,
+        reason: (reason || rejectReason || "manually rejected").trim() || "manually rejected",
+      });
+      toast.success("Email rejected");
+      setRejectDialogOpen(false);
+      setRejectReason("");
+      await refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Reject failed");
+    }
+  };
+
+  const openRejectDialog = () => {
+    setRejectReason("");
+    setRejectDialogOpen(true);
+  };
+
+  const closeRejectDialog = () => {
+    setRejectDialogOpen(false);
+    setRejectReason("");
   };
 
   return (
@@ -307,9 +363,13 @@ export default function QuarantinePage() {
                         <CheckCircle2 className="h-4 w-4 mr-2" />
                         {selectedItem.status === "approved" ? "Approved" : "Approve"}
                       </PrimaryButton>
-                      <SecondaryButton disabled>
+                      <SecondaryButton
+                        onClick={openRejectDialog}
+                        disabled={rejecting || selectedItem.status === "rejected" || selectedItem.status === "approved"}
+                        className="border-red-500/30 text-red-300 hover:bg-red-500/10"
+                      >
                         <XCircle className="h-4 w-4 mr-2" />
-                        Reject (next)
+                        {selectedItem.status === "rejected" ? "Rejected" : "Reject"}
                       </SecondaryButton>
                     </div>
                   </div>
@@ -330,6 +390,42 @@ export default function QuarantinePage() {
           </div>
         </div>
       </div>
+
+      {/* Reject confirmation dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={(open) => !open && closeRejectDialog()}>
+        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reject quarantined email?</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              This email will be marked as rejected and will not be imported. You can optionally add a reason below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-4">
+            <Label htmlFor="reject-reason" className="text-slate-300">
+              Reason (optional)
+            </Label>
+            <Textarea
+              id="reject-reason"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="e.g. Spam, wrong address, duplicate"
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 min-h-[80px]"
+              disabled={rejecting}
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <SecondaryButton onClick={closeRejectDialog} disabled={rejecting}>
+              Cancel
+            </SecondaryButton>
+            <DangerButton
+              onClick={() => selectedItem && handleReject(selectedItem.id)}
+              disabled={rejecting || !selectedItem}
+            >
+              {rejecting ? "Rejecting..." : "Reject"}
+            </DangerButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
