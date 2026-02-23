@@ -145,6 +145,12 @@ export default function ProfilePage() {
       },
     },
   });
+  const roleKeys = Array.isArray(loggedInUser?.roleList)
+    ? loggedInUser.roleList
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
   
   // Always use loggedInUser for display to avoid hydration mismatch
   // Only fall back to contextUser for non-display operations
@@ -216,10 +222,12 @@ export default function ProfilePage() {
         email: editEmail,
       });
       
-      // Update role using internal API
-      await api.internal.user.update(user.id, {
-        roleList: [editRole],
-      });
+      if (isAdmin) {
+        // Update role using internal API
+        await api.internal.user.update(user.id, {
+          roleList: [editRole],
+        });
+      }
       
       toast.success("Profile updated successfully");
       setIsEditing(false);
@@ -420,27 +428,29 @@ export default function ProfilePage() {
                   placeholder="your.email@example.com"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-sm font-medium text-slate-200">
-                  Account Role
-                </Label>
-                <Select value={editRole} onValueChange={setEditRole}>
-                  <SelectTrigger id="role" className="h-10 bg-slate-800/50 border-slate-700 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="signed-in" className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                      Standard User
-                    </SelectItem>
-                    <SelectItem value="system-admin" className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                      Administrator (system-admin)
-                    </SelectItem>
-                    <SelectItem value="sysadmin" className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                      Administrator (sysadmin)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {isAdmin && (
+                <div className="space-y-2">
+                  <Label htmlFor="role" className="text-sm font-medium text-slate-200">
+                    Account Role
+                  </Label>
+                  <Select value={editRole} onValueChange={setEditRole}>
+                    <SelectTrigger id="role" className="h-10 bg-slate-800/50 border-slate-700 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-700">
+                      <SelectItem value="signed-in" className="text-white hover:bg-slate-700 focus:bg-slate-700">
+                        Standard User
+                      </SelectItem>
+                      <SelectItem value="system-admin" className="text-white hover:bg-slate-700 focus:bg-slate-700">
+                        Administrator (system-admin)
+                      </SelectItem>
+                      <SelectItem value="sysadmin" className="text-white hover:bg-slate-700 focus:bg-slate-700">
+                        Administrator (sysadmin)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
               <Button 

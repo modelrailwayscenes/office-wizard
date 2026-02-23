@@ -4,6 +4,9 @@ import { applyParams, save, ActionOptions } from "gadget-server";
 
 export const run: ActionRun = async ({ params, record, logger, api, session }) => {
   applyParams(params, record);
+  if (!record.emailVerified) {
+    throw new Error("Email not verified. Please verify your email to sign in.");
+  }
   record.lastSignedIn = new Date();
   await save(record);
   // Assigns the signed-in user to the active session

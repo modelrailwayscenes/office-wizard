@@ -1,6 +1,17 @@
 import { ActionOptions, assert } from "gadget-server";
 
-export const run: ActionRun = async ({ params, logger, api }) => {
+export const run: ActionRun = async ({ params, logger, api, session }) => {
+  const roleKeys = Array.isArray(session?.roles)
+    ? session.roles
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
+
+  if (!isAdmin) {
+    throw new Error("Only admins can grant admin access.");
+  }
+
   const userId = assert(params.userId, "userId is required");
   
   // Update the user's roleList using the internal API to bypass permissions

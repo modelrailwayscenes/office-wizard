@@ -104,6 +104,15 @@ export const run = async (context: any) => {
     throw new Error(`Unsupported action: ${action}`);
   }
 
+  if (action === "assign" && assignToUserId) {
+    const assignee = await api.user.findOne(assignToUserId, {
+      select: { id: true, emailVerified: true } as any,
+    });
+    if (!assignee?.emailVerified) {
+      throw new Error("Cannot assign work to an unverified user.");
+    }
+  }
+
   logger.info(
     { action, type, conversationCount: conversationIds.length, emailCount: emailIds.length },
     "Starting batch operation"

@@ -2,14 +2,12 @@ import { useState } from "react";
 import { useFindMany, useAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { Link as RouterLink, useLocation, useSearchParams, useNavigate } from "react-router";
-import { User2, Users as UsersIcon, Link as LinkIcon, Layers, Sparkles, FileText, Bell, Shield, Settings as SettingsIcon, Plus, Edit as EditIcon, Trash2, RotateCcw, AlertCircle } from "lucide-react";
+import { User2, Users as UsersIcon, Link as LinkIcon, Layers, Sparkles, FileText, Bell, Shield, Settings as SettingsIcon, Plus, Edit as EditIcon, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { toast } from "sonner";
 
@@ -111,9 +109,7 @@ export default function TeamPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const user = useUser(api, { select: { roleList: { key: true } } });
-
   const [showDeleted, setShowDeleted] = useState(false);
-  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const [{ data: usersRaw, fetching, error }, refetch] = useFindMany(api.user, {
     select: {
@@ -123,8 +119,8 @@ export default function TeamPage() {
       lastName: true,
       emailVerified: true,
       lastSignedIn: true,
-      logicallyDeleted: true,
       roleList: { key: true, name: true },
+      logicallyDeleted: true,
     },
     filter: {
       logicallyDeleted: { equals: showDeleted },
@@ -213,37 +209,6 @@ export default function TeamPage() {
     }
   };
 
-  const handleDeleteUser = async () => {
-    if (!deletingUserId) return;
-    
-    try {
-      await api.internal.user.update(deletingUserId, {
-        logicallyDeleted: true,
-      });
-      
-      toast.success("User deleted successfully");
-      setDeletingUserId(null);
-      void refetch();
-    } catch (err: any) {
-      toast.error("Failed to delete user: " + (err.message || err));
-      console.error("Error deleting user:", err);
-    }
-  };
-
-  const handleRestoreUser = async (userId: string) => {
-    try {
-      await api.internal.user.update(userId, {
-        logicallyDeleted: false,
-      });
-      
-      toast.success("User restored successfully");
-      void refetch();
-    } catch (err: any) {
-      toast.error("Failed to restore user: " + (err.message || err));
-      console.error("Error restoring user:", err);
-    }
-  };
-
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case "system-admin":
@@ -258,8 +223,8 @@ export default function TeamPage() {
     switch (role) {
       case "system-admin":
       case "sysadmin":
-        return "ADMIN";
-      case "signed-in":    return "STANDARD USER";
+        return "Admin";
+      case "signed-in":    return "Standard user";
       default:             return role;
     }
   };
@@ -289,16 +254,14 @@ export default function TeamPage() {
                 {showDeleted ? "Manage deleted users and restore them if needed" : "Manage users and their roles"}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <Label className="text-sm text-slate-300">Active</Label>
-                <Switch
-                  checked={showDeleted}
-                  onCheckedChange={setShowDeleted}
-                  className="data-[state=checked]:bg-teal-500"
-                />
-                <Label className="text-sm text-slate-300">Logically Deleted</Label>
-              </div>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => setShowDeleted(!showDeleted)}
+                variant="outline"
+                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                {showDeleted ? "Show Active Users" : "Show Deleted Users"}
+              </Button>
               <Button
                 onClick={() => navigate("/settings/team?addMember=1")}
                 className="bg-teal-500 text-white hover:bg-teal-600"
@@ -321,51 +284,67 @@ export default function TeamPage() {
                   key={user.id}
                   className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition-colors"
                 >
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
-                        {user.firstName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "?"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h3 className="text-lg font-semibold text-white truncate">
-                            {user.firstName} {user.lastName}
-                          </h3>
-                          <UnifiedBadge 
-                            type={getPrimaryRoleKey(user.roleList) || "signed-in"} 
-                            label={getRoleDisplayName(getPrimaryRoleKey(user.roleList) || "")} 
-                          />
-                        </div>
-                        <p className="text-slate-400 text-sm truncate">{user.email}</p>
-                      </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                      {user.firstName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "?"}
                     </div>
-                    <div className="flex flex-col gap-2 text-sm text-slate-500">
-                      <span>
-                        {user.emailVerified ? (
-                          <span className="text-teal-400">✓ Verified</span>
-                        ) : (
-                          <span className="text-slate-500">Not verified</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-semibold text-white">
+                          {user.firstName} {user.lastName}
+                        </h3>
+                        <UnifiedBadge 
+                          type={getPrimaryRoleKey(user.roleList) || "signed-in"} 
+                          label={getRoleDisplayName(getPrimaryRoleKey(user.roleList) || "")} 
+                        />
+                      </div>
+                      <p className="text-slate-400 mb-2">{user.email}</p>
+                      <div className="flex gap-4 text-sm text-slate-500">
+                        <span>
+                          {user.emailVerified ? (
+                            <span className="text-teal-400">✓ Verified</span>
+                          ) : (
+                            <span className="text-slate-500">Not verified</span>
+                          )}
+                        </span>
+                        {user.lastSignedIn && (
+                          <span>Last signed in: {formatDate(user.lastSignedIn)}</span>
                         )}
-                      </span>
-                      {user.lastSignedIn && (
-                        <span>Last signed in: {formatDate(user.lastSignedIn)}</span>
-                      )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 justify-end">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {!showDeleted ? (
                         <Button
-                          onClick={() => setDeletingUserId(user.id)}
+                          onClick={async () => {
+                            try {
+                              await api.internal.user.update(user.id, { logicallyDeleted: true });
+                              toast.success("User deleted successfully");
+                              void refetch();
+                            } catch (err: any) {
+                              toast.error("Failed to delete user: " + (err.message || err));
+                              console.error("Error deleting user:", err);
+                            }
+                          }}
                           variant="ghost"
-                          className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-700/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="text-sm font-medium">Delete</span>
                         </Button>
                       ) : (
                         <Button
-                          onClick={() => handleRestoreUser(user.id)}
+                          onClick={async () => {
+                            try {
+                              await api.internal.user.update(user.id, { logicallyDeleted: false });
+                              toast.success("User restored successfully");
+                              void refetch();
+                            } catch (err: any) {
+                              toast.error("Failed to restore user: " + (err.message || err));
+                              console.error("Error restoring user:", err);
+                            }
+                          }}
                           variant="ghost"
-                          className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-700/50 text-green-400 hover:bg-green-900/20 hover:text-green-300 transition-colors"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-green-400 hover:bg-green-900/20 hover:text-green-300 transition-colors"
                         >
                           <RotateCcw className="h-4 w-4" />
                           <span className="text-sm font-medium">Restore</span>
@@ -374,7 +353,7 @@ export default function TeamPage() {
                       <Button
                         onClick={() => handleEdit(user)}
                         variant="ghost"
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-700/50 text-teal-400 hover:bg-slate-700 hover:text-teal-300 transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-teal-400 hover:bg-slate-700 hover:text-teal-300 transition-colors"
                       >
                         <EditIcon className="h-4 w-4" />
                         <span className="text-sm font-medium">Edit</span>
@@ -436,32 +415,6 @@ export default function TeamPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={!!deletingUserId} onOpenChange={(open) => !open && setDeletingUserId(null)}>
-          <AlertDialogContent className="bg-slate-900 border-slate-800 text-white">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-2xl">
-                <AlertCircle className="h-6 w-6 text-red-400" />
-                Confirm Deletion
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-300">
-                Are you sure you want to delete this user? This action can be undone by restoring the user from the deleted users list.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteUser}
-                className="bg-red-600 text-white hover:bg-red-700"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
 
         {/* Add User Dialog */}
         <Dialog open={isAddMemberOpen} onOpenChange={(open) => !open && navigate("/settings/team")}>

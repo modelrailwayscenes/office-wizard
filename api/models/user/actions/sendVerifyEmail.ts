@@ -2,8 +2,17 @@ import { ActionOptions, save } from "gadget-server";
 import { preventCrossUserDataAccess } from "gadget-server/auth";
 import { randomBytes, createHash } from "crypto";
 
-export const run: ActionRun = async ({ params, record, logger, api, emails, currentAppUrl }) => {
-  await preventCrossUserDataAccess(params, record);
+export const run: ActionRun = async ({ params, record, logger, api, emails, currentAppUrl, session }) => {
+  const roleKeys = Array.isArray(session?.roles)
+    ? session.roles
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
+
+  if (!isAdmin) {
+    await preventCrossUserDataAccess(params, record);
+  }
   
   // Generate a random verification code
   const code = randomBytes(32).toString('hex');
