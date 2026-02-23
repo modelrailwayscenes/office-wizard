@@ -136,6 +136,25 @@ export default function TemplatesIndex() {
             <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-pulse" : ""}`} />
             {importing ? "Importing…" : "Import"}
           </Button>
+          {!isEmpty && (
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const r = await seedTemplates({});
+                  const res = r as { created?: number; skipped?: number } | undefined;
+                  toast.success(`Seeded ${res?.created ?? 0} templates (${res?.skipped ?? 0} already existed)`);
+                  void refetch({ requestPolicy: "network-only" });
+                } catch (e) {
+                  toast.error(`Seed failed: ${e instanceof Error ? e.message : "Unknown error"}`);
+                }
+              }}
+              disabled={seeding}
+              className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+            >
+              {seeding ? "Seeding…" : "Seed Samples"}
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -175,13 +194,32 @@ export default function TemplatesIndex() {
           <p className="text-slate-400 mb-8 text-center max-w-md">
             Create your first template to automate email responses and save time
           </p>
-          <Button 
-            onClick={() => navigate("/templates/new")}
-            className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Create Your First Template
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              onClick={async () => {
+                try {
+                  const r = await seedTemplates({});
+                  const res = r as { created?: number; skipped?: number } | undefined;
+                  toast.success(`Seeded ${res?.created ?? 0} templates (${res?.skipped ?? 0} already existed)`);
+                  void refetch({ requestPolicy: "network-only" });
+                } catch (e) {
+                  toast.error(`Seed failed: ${e instanceof Error ? e.message : "Unknown error"}`);
+                }
+              }}
+              disabled={seeding}
+              variant="outline"
+              className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+            >
+              {seeding ? "Seeding…" : "Seed Sample Templates"}
+            </Button>
+            <Button
+              onClick={() => navigate("/templates/new")}
+              className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Your First Template
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="bg-slate-900/50 rounded-lg border border-slate-800">
