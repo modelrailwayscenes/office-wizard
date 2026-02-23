@@ -1,17 +1,73 @@
+import { useRef } from "react";
 import { useNavigate } from "react-router";
-import { useFindMany } from "@gadgetinc/react";
+import { useFindMany, useGlobalAction } from "@gadgetinc/react";
 import { AutoTable } from "@/components/auto";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FileText, Plus, Download, Upload, ChevronDown } from "lucide-react";
 import { api } from "../api";
+import { toast } from "sonner";
 
 export default function TemplatesIndex() {
   const navigate = useNavigate();
-  const [{ data: templates, fetching, error }] = useFindMany(api.template, {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [{ data: templates, fetching, error }, refetch] = useFindMany(api.template, {
     first: 100,
     sort: { updatedAt: "Descending" },
   });
+  const [{ fetching: importing }, importTemplates] = useGlobalAction(api.importTemplates);
+
+  const handleExport = async (format: "json" | "csv") => {
+    try {
+      const base = typeof window !== "undefined" ? window.location.origin : "";
+      const url = `${base}/export/templates?format=${format}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error(res.statusText);
+      const blob = await res.blob();
+      const ext = format === "json" ? "json" : "csv";
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `templates-export.${ext}`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast.success(`Exported as ${ext.toUpperCase()}`);
+    } catch (e) {
+      toast.error(`Export failed: ${e instanceof Error ? e.message : "Unknown error"}`);
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const format = ext === "csv" ? "csv" : ext === "json" ? "json" : null;
+    if (!format) {
+      toast.error("Please select a .json or .csv file");
+      return;
+    }
+    try {
+      const content = await file.text();
+      const result = await importTemplates({ format, content });
+      const { created, updated, errors } = result ?? {};
+      const msg = `Imported: ${created ?? 0} created, ${updated ?? 0} updated`;
+      if (errors?.length) {
+        toast.warning(`${msg}. ${errors.length} error(s): ${errors.slice(0, 2).join("; ")}${errors.length > 2 ? "…" : ""}`);
+      } else {
+        toast.success(msg);
+      }
+      void refetch({ requestPolicy: "network-only" });
+    } catch (e) {
+      toast.error(`Import failed: ${e instanceof Error ? e.message : "Unknown error"}`);
+    } finally {
+      e.target.value = "";
+    }
+  };
 
   const formatCategory = (category: string): string => {
     return category
@@ -62,15 +118,52 @@ export default function TemplatesIndex() {
       </div>
       
       <div className="px-8 pb-8">
-        <div className="flex justify-end mb-6">
-        <Button 
-          onClick={() => navigate("/templates/new")}
-          className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          New Template
-        </Button>
-      </div>
+        <div className="flex justify-end gap-2 mb-6">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.csv"
+            className="hidden"
+            onChange={handleImport}
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing || isEmpty}
+            className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+          >
+            <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-pulse" : ""}`} />
+            {importing ? "Importing…" : "Import"}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={isEmpty}
+                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-slate-900 border-slate-700">
+              <DropdownMenuItem onClick={() => handleExport("json")} className="text-slate-200 focus:bg-slate-800 focus:text-white">
+                Export as JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("csv")} className="text-slate-200 focus:bg-slate-800 focus:text-white">
+                Export as CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            onClick={() => navigate("/templates/new")}
+            className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            New Template
+          </Button>
+        </div>
 
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center py-24 bg-slate-900/50 rounded-lg border border-slate-800">
