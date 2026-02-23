@@ -16,6 +16,7 @@ import {
   Sparkles, FileText, Bell, Shield, Settings as SettingsIcon,
   UserCircle, Lock, Accessibility,
 } from "lucide-react";
+import { SettingsCloseButton } from "@/components/SettingsCloseButton";
 
 const tabs = [
   { id: "summary",      label: "Summary",                icon: User2,        path: "/settings/summary" },
@@ -44,8 +45,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-white px-3">Settings</h2>
+      <div className="mb-6 flex items-center justify-between px-3">
+        <h2 className="text-lg font-semibold text-white">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
       </div>
       <nav className="space-y-1">
         {tabs.map(({ id, label, icon: Icon, path }) => (
@@ -267,11 +269,14 @@ export default function ProfilePage() {
       <div className="flex-1 overflow-auto bg-slate-950">
         {/* HEADER */}
         <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-white">Profile</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Manage your profile and personal preferences
-            </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">Profile</h1>
+              <p className="text-sm text-slate-400 mt-1">
+                Manage your profile and personal preferences
+              </p>
+            </div>
+            <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
           </div>
         </div>
 

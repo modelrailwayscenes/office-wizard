@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
+import { SettingsCloseButton } from "@/components/SettingsCloseButton";
 import {
   User2,
   Users,
@@ -57,8 +58,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-white px-3">Settings</h2>
+      <div className="mb-6 flex items-center justify-between px-3">
+        <h2 className="text-lg font-semibold text-white">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
       </div>
       <nav className="space-y-1">
         {tabs.map((tab) => {
@@ -420,8 +422,13 @@ export default function IntegrationsSettings() {
       <div className="flex-1 overflow-auto bg-slate-950">
         {/* Header band */}
         <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-          <h1 className="text-2xl font-semibold text-white">Integrations</h1>
-          <p className="text-sm text-slate-400 mt-1">Connect your email and third-party services</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">Integrations</h1>
+              <p className="text-sm text-slate-400 mt-1">Connect your email and third-party services</p>
+            </div>
+            <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+          </div>
         </div>
 
         {/* Content */}

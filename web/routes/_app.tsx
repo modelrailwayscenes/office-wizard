@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, Outlet, redirect, useLocation, Form } from "react-router";
 import { Route } from "./+types/_app";
 import { Button } from "@/components/ui/button";
@@ -41,18 +42,25 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
   }
   
   // Fetch full user record with roles
-  const user = await api.user.findOne(userId, {
-    select: {
-      id: true,
-      email: true,
-      firstName: true,
-      lastName: true,
-      roleList: {
-        key: true,
-        name: true
+  let user;
+  try {
+    user = await api.user.findOne(userId, {
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        roleList: {
+          key: true,
+          name: true
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    // User not found or deleted - redirect to sign in
+    console.error('Failed to load user:', error);
+    throw redirect("/sign-in");
+  }
   
   if (!user) throw redirect("/sign-in");
   
@@ -77,12 +85,21 @@ const modules = [
   { id: "it",        label: "IT",        path: "/it",        activePaths: ["/it"] },
   { id: "sales",     label: "SHOPIFY",     path: "/sales",     activePaths: ["/sales"] },
   { id: "marketing", label: "MARKETING", path: "/marketing", activePaths: ["/marketing"] },
+  { id: "production", label: "PRODUCTION", path: "/production", activePaths: ["/production"] },
 ];
 
 export default function AppLayout({ loaderData }: Route.ComponentProps) {
   const { session } = loaderData;
   const location = useLocation();
   const user = session.user;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!location.pathname.startsWith("/settings")) {
+      const path = `${location.pathname}${location.search}${location.hash}`;
+      window.sessionStorage.setItem("ow:lastNonSettingsPath", path);
+    }
+  }, [location.pathname, location.search, location.hash]);
 
   const getUserInitials = () => {
     if (user?.firstName && user?.lastName) {

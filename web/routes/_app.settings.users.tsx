@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { toast } from "sonner";
+import { SettingsCloseButton } from "@/components/SettingsCloseButton";
 
 // FIX 2: locale-safe date formatter — avoids SSR/client hydration mismatch
 function formatDate(date: string | Date) {
@@ -46,8 +47,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-white px-3">Settings</h2>
+      <div className="mb-6 flex items-center justify-between px-3">
+        <h2 className="text-lg font-semibold text-white">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
       </div>
       <nav className="space-y-1">
         {tabs.map((tab) => {
@@ -122,9 +124,14 @@ export default function TeamPage() {
       roleList: { key: true, name: true },
       logicallyDeleted: true,
     },
-    filter: {
-      logicallyDeleted: { equals: showDeleted },
-    },
+    filter: showDeleted
+      ? { logicallyDeleted: { equals: true } }
+      : {
+          OR: [
+            { logicallyDeleted: { equals: false } },
+            { logicallyDeleted: { isSet: false } }
+          ]
+        },
   });
 
   // FIX 1: cast as any[] — resolves all "Property X does not exist on type 'never'" errors
@@ -200,7 +207,7 @@ export default function TeamPage() {
       }
 
       toast.success("User added successfully");
-      navigate("/settings/team");
+      navigate("/settings/users");
       setNewUserForm({ email: "", firstName: "", lastName: "", role: "signed-in", password: "" });
       void refetch();
     } catch (err) {
@@ -229,6 +236,21 @@ export default function TeamPage() {
     }
   };
 
+  const isUserAdmin = (checkUser: any) => {
+    const roleKeys = Array.isArray(checkUser?.roleList)
+      ? checkUser.roleList.map((role: any) => (typeof role === "string" ? role : role?.key))
+      : [];
+    return roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
+  };
+
+  const canModifyUser = (targetUser: any) => {
+    // Current user must be admin
+    if (!isUserAdmin(user)) return false;
+    // Can't modify yourself through this interface
+    if (targetUser.id === user.id) return false;
+    return true;
+  };
+
   if (error) {
     return (
       <div className="flex-1 overflow-auto bg-slate-950 p-8">
@@ -247,7 +269,7 @@ export default function TeamPage() {
       <div className="flex-1 overflow-auto bg-slate-950">
         {/* HEADER with buttons */}
         <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold text-white">Users</h1>
               <p className="text-sm text-slate-400 mt-1">
@@ -263,12 +285,13 @@ export default function TeamPage() {
                 {showDeleted ? "Show Active Users" : "Show Deleted Users"}
               </Button>
               <Button
-                onClick={() => navigate("/settings/team?addMember=1")}
+                onClick={() => navigate("/settings/users?addMember=1")}
                 className="bg-teal-500 text-white hover:bg-teal-600"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add User
               </Button>
+              <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
             </div>
           </div>
         </div>
@@ -282,24 +305,28 @@ export default function TeamPage() {
               {users?.map((user) => (
                 <div
                   key={user.id}
-                  className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition-colors"
+                  className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 hover:border-slate-600 transition-colors"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
-                      {user.firstName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "?"}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-white">
-                          {user.firstName} {user.lastName}
-                        </h3>
-                        <UnifiedBadge 
-                          type={getPrimaryRoleKey(user.roleList) || "signed-in"} 
-                          label={getRoleDisplayName(getPrimaryRoleKey(user.roleList) || "")} 
-                        />
+                  <div className="flex flex-col justify-between h-full min-h-[160px]">
+                    <div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                          {user.firstName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "?"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="text-lg font-semibold text-white truncate">
+                              {user.firstName} {user.lastName}
+                            </h3>
+                            <UnifiedBadge 
+                              type={getPrimaryRoleKey(user.roleList) || "signed-in"} 
+                              label={getRoleDisplayName(getPrimaryRoleKey(user.roleList) || "")} 
+                            />
+                          </div>
+                          <p className="text-slate-400 text-sm truncate">{user.email}</p>
+                        </div>
                       </div>
-                      <p className="text-slate-400 mb-2">{user.email}</p>
-                      <div className="flex gap-4 text-sm text-slate-500">
+                      <div className="flex flex-col gap-2 text-sm text-slate-500 mt-3 min-h-[36px]">
                         <span>
                           {user.emailVerified ? (
                             <span className="text-teal-400">✓ Verified</span>
@@ -312,10 +339,14 @@ export default function TeamPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 justify-end">
                       {!showDeleted ? (
                         <Button
                           onClick={async () => {
+                            if (!canModifyUser(user)) {
+                              toast.error("You don't have permission to delete this user");
+                              return;
+                            }
                             try {
                               await api.internal.user.update(user.id, { logicallyDeleted: true });
                               toast.success("User deleted successfully");
@@ -326,7 +357,8 @@ export default function TeamPage() {
                             }
                           }}
                           variant="ghost"
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
+                          disabled={!canModifyUser(user)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="text-sm font-medium">Delete</span>
@@ -334,6 +366,10 @@ export default function TeamPage() {
                       ) : (
                         <Button
                           onClick={async () => {
+                            if (!canModifyUser(user)) {
+                              toast.error("You don't have permission to restore this user");
+                              return;
+                            }
                             try {
                               await api.internal.user.update(user.id, { logicallyDeleted: false });
                               toast.success("User restored successfully");
@@ -344,16 +380,24 @@ export default function TeamPage() {
                             }
                           }}
                           variant="ghost"
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-green-400 hover:bg-green-900/20 hover:text-green-300 transition-colors"
+                          disabled={!canModifyUser(user)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-green-400 hover:bg-green-900/20 hover:text-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <RotateCcw className="h-4 w-4" />
                           <span className="text-sm font-medium">Restore</span>
                         </Button>
                       )}
                       <Button
-                        onClick={() => handleEdit(user)}
+                        onClick={() => {
+                          if (!canModifyUser(user)) {
+                            toast.error("You don't have permission to edit this user");
+                            return;
+                          }
+                          handleEdit(user);
+                        }}
                         variant="ghost"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-teal-400 hover:bg-slate-700 hover:text-teal-300 transition-colors"
+                        disabled={!canModifyUser(user)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-teal-400 hover:bg-slate-700 hover:text-teal-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <EditIcon className="h-4 w-4" />
                         <span className="text-sm font-medium">Edit</span>
@@ -417,7 +461,7 @@ export default function TeamPage() {
         </Dialog>
 
         {/* Add User Dialog */}
-        <Dialog open={isAddMemberOpen} onOpenChange={(open) => !open && navigate("/settings/team")}>
+        <Dialog open={isAddMemberOpen} onOpenChange={(open) => !open && navigate("/settings/users")}>
           <DialogContent className="bg-slate-900 border-slate-800 text-white">
             <DialogHeader>
               <DialogTitle className="text-2xl">Add New User</DialogTitle>
@@ -460,7 +504,7 @@ export default function TeamPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => navigate("/settings/team")}
+              <Button variant="outline" onClick={() => navigate("/settings/users")}
                 className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">
                 Cancel
               </Button>
