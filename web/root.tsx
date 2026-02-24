@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Provider as GadgetProvider } from "@gadgetinc/react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import { Suspense } from "react";
@@ -5,10 +6,13 @@ import api from "./api";
 import "./app.css";
 import { ProductionErrorBoundary, DevelopmentErrorBoundary } from "gadget-server/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { Toaster as RadixToaster } from "@/components/ui/toaster";
 import type { GadgetConfig } from "gadget-server";
 import type { Route } from "./+types/root";
 
 const isProduction = process.env.NODE_ENV === "production";
+
+const queryClient = new QueryClient();
 
 export const links = () => [];
 
@@ -42,10 +46,13 @@ export default function App({ loaderData }: Route.ComponentProps) {
       </head>
       <body>
         <Suspense>
+          <QueryClientProvider client={queryClient}>
           <GadgetProvider api={api}>
             <Outlet context={{ gadgetConfig }} />
             <Toaster richColors />
+            <RadixToaster />
           </GadgetProvider>
+          </QueryClientProvider>
         </Suspense>
         <ScrollRestoration />
         <Scripts />
