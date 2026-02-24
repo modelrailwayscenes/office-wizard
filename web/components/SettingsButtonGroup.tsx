@@ -27,7 +27,7 @@ export function SettingsButtonGroup({
       <Button
         onClick={onSave}
         disabled={saving || disabled}
-        className="bg-teal-500 text-white hover:bg-teal-600 font-medium"
+        className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
       >
         {saving ? "Saving..." : "Save"}
       </Button>

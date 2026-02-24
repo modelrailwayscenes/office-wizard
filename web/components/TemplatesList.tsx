@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useFindMany, useGlobalAction, useUser } from "@gadgetinc/react";
 import { AutoTable } from "@/components/auto";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { UnifiedBadge } from "@/components/UnifiedBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -121,7 +121,7 @@ export function TemplatesList() {
         <h1 className="text-2xl font-semibold text-white">Email Templates</h1>
         <p className="text-sm text-slate-400 mt-1">Create and manage email response templates</p>
       </div>
-      <div className="px-8 pb-8">
+      <div className="px-8 py-6">
         <div className="flex justify-end gap-2 mb-6">
           <input ref={fileInputRef} type="file" accept=".json,.csv" className="hidden" onChange={handleImport} />
           <Button
@@ -156,14 +156,14 @@ export function TemplatesList() {
           </DropdownMenu>
           <Button
             onClick={() => navigate("/customer/support/templates/new")}
-            className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
+            className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
           >
             <Plus className="mr-2 h-4 w-4" />
             New Template
           </Button>
         </div>
         {isEmpty ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-slate-900/50 rounded-lg border border-slate-800">
+          <div className="flex flex-col items-center justify-center py-24 bg-slate-800/50 rounded-xl border border-slate-700">
             <FileText className="h-20 w-20 text-slate-700 mb-6" />
             <h2 className="text-2xl font-semibold text-white mb-2">No email templates yet</h2>
             <p className="text-slate-400 mb-8 text-center max-w-md">
@@ -182,7 +182,7 @@ export function TemplatesList() {
               )}
               <Button
                 onClick={() => navigate("/customer/support/templates/new")}
-                className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
+                className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Template
@@ -190,7 +190,7 @@ export function TemplatesList() {
             </div>
           </div>
         ) : (
-          <div className="bg-slate-900/50 rounded-lg border border-slate-800">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
             <AutoTable
               model={api.template}
               columns={[
@@ -198,9 +198,10 @@ export function TemplatesList() {
                 {
                   header: "Category",
                   render: ({ record }: { record: any }) => (
-                    <Badge variant="secondary" className="bg-slate-800 text-slate-100 border-slate-700">
-                      {formatCategory(record.category)}
-                    </Badge>
+                    <UnifiedBadge
+                      type={record.category}
+                      label={formatCategory(record.category)}
+                    />
                   ),
                 },
                 { header: "Subject", field: "subject" },
