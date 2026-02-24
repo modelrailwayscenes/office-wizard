@@ -194,31 +194,31 @@ export default function BlockLibrary() {
   const previewDef = previewBlock ? BLOCK_LIBRARY.find(b => b.type === previewBlock) : null;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto animate-fade-in">
-      <h1 className="text-3xl font-bold mb-2">Block Library</h1>
-      <p className="text-muted-foreground mb-8">Modular content blocks for your newsletters</p>
+    <div className="p-8 max-w-6xl mx-auto bg-slate-950 min-h-full animate-fade-in">
+      <h1 className="text-3xl font-bold mb-2 text-white">Block Library</h1>
+      <p className="text-slate-400 mb-8">Modular content blocks for your newsletters</p>
 
       {BLOCK_CATEGORIES.map(cat => {
         const blocks = BLOCK_LIBRARY.filter(b => b.category === cat);
         return (
           <div key={cat} className="mb-8">
-            <h2 className="text-lg font-semibold mb-3">{cat}</h2>
+            <h2 className="text-lg font-semibold mb-3 text-white">{cat}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {blocks.map(block => (
-                <Card key={block.type} className="p-4 hover:shadow-card transition-shadow">
+                <Card key={block.type} className="bg-slate-800/50 border-slate-700 p-4 hover:border-slate-600 transition-shadow">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                    <div className="w-10 h-10 rounded-md bg-teal-500/10 flex items-center justify-center text-teal-400 flex-shrink-0">
                       {getIcon(block.icon)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-sm">{block.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{block.description}</p>
+                      <h3 className="font-semibold text-sm text-white">{block.name}</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">{block.description}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs">{block.category}</Badge>
+                        <Badge variant="outline" className="border-slate-600 text-slate-300 text-xs">{block.category}</Badge>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 gap-1 text-xs text-primary hover:text-primary"
+                          className="h-6 gap-1 text-xs text-teal-400 hover:text-teal-400"
                           onClick={() => setPreviewBlock(block.type)}
                         >
                           <Eye className="w-3 h-3" /> Preview
@@ -235,15 +235,15 @@ export default function BlockLibrary() {
 
       {/* Preview Dialog */}
       <Dialog open={!!previewBlock} onOpenChange={() => setPreviewBlock(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg bg-slate-900 border-slate-700">
           <DialogHeader>
-            <DialogTitle>{previewDef?.name || 'Block Preview'}</DialogTitle>
+            <DialogTitle className="text-white">{previewDef?.name || 'Block Preview'}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-4">{previewDef?.description}</p>
-          <div className="border rounded-lg p-4" style={{ backgroundColor: brand.colors.background, color: brand.colors.text }}>
+          <p className="text-sm text-slate-400 mb-4">{previewDef?.description}</p>
+          <div className="border border-slate-700 rounded-lg p-4" style={{ backgroundColor: brand.colors.background, color: brand.colors.text }}>
             {previewDef && renderBlockPreview(previewDef.type, previewDef.defaultContent, brand)}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Shown with "Classic MRS" brand profile</p>
+          <p className="text-xs text-slate-400 mt-2">Shown with "Classic MRS" brand profile</p>
         </DialogContent>
       </Dialog>
     </div>

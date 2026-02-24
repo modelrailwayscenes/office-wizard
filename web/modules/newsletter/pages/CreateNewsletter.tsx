@@ -73,7 +73,7 @@ export default function CreateNewsletter() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto animate-fade-in">
+    <div className="p-8 max-w-5xl mx-auto bg-slate-950 min-h-full animate-fade-in">
       {/* Progress */}
       <div className="mb-8">
         <div className="flex items-center gap-1 mb-6">
@@ -83,16 +83,16 @@ export default function CreateNewsletter() {
                 onClick={() => update({ step: i + 1 })}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   state.step === i + 1
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-teal-500 text-black'
                     : state.step > i + 1
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-muted text-muted-foreground'
+                    ? 'bg-teal-500/10 text-teal-400'
+                    : 'bg-slate-800 text-slate-400'
                 }`}
               >
                 {state.step > i + 1 ? <Check className="w-3 h-3" /> : <span>{i + 1}</span>}
                 <span className="hidden sm:inline">{step}</span>
               </button>
-              {i < STEPS.length - 1 && <div className="w-4 h-px bg-border mx-1" />}
+              {i < STEPS.length - 1 && <div className="w-4 h-px bg-slate-700 mx-1" />}
             </div>
           ))}
         </div>
@@ -103,28 +103,28 @@ export default function CreateNewsletter() {
         {state.step === 1 && (
           <div className="space-y-6 max-w-xl">
             <div>
-              <h2 className="text-2xl font-bold mb-1">Newsletter Details</h2>
-              <p className="text-sm text-muted-foreground">Set up the basic information</p>
+              <h2 className="text-2xl font-bold mb-1 text-white">Newsletter Details</h2>
+              <p className="text-sm text-slate-400">Set up the basic information</p>
             </div>
             <div className="space-y-4">
               <div>
-                <Label>Newsletter Title (internal)</Label>
-                <Input value={state.metadata.title} onChange={e => updateMeta({ title: e.target.value })} placeholder="February 2026 Newsletter" className="mt-1.5" />
+                <Label className="text-slate-300">Newsletter Title (internal)</Label>
+                <Input value={state.metadata.title} onChange={e => updateMeta({ title: e.target.value })} placeholder="February 2026 Newsletter" className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
               </div>
               <div>
-                <Label>Email Subject Line</Label>
-                <Input value={state.metadata.subject} onChange={e => updateMeta({ subject: e.target.value })} placeholder="New Scenic Details Just Landed 🚂" className="mt-1.5" />
+                <Label className="text-slate-300">Email Subject Line</Label>
+                <Input value={state.metadata.subject} onChange={e => updateMeta({ subject: e.target.value })} placeholder="New Scenic Details Just Landed 🚂" className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
               </div>
               <div>
-                <Label>Preview Text</Label>
-                <Input value={state.metadata.previewText} onChange={e => updateMeta({ previewText: e.target.value })} placeholder="Fresh arrivals, new textures, and more..." className="mt-1.5" />
+                <Label className="text-slate-300">Preview Text</Label>
+                <Input value={state.metadata.previewText} onChange={e => updateMeta({ previewText: e.target.value })} placeholder="Fresh arrivals, new textures, and more..." className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
               </div>
               <div>
-                <Label>Campaign Tag</Label>
-                <Input value={state.metadata.campaignTag} onChange={e => updateMeta({ campaignTag: e.target.value })} placeholder="feb-2026" className="mt-1.5" />
+                <Label className="text-slate-300">Campaign Tag</Label>
+                <Input value={state.metadata.campaignTag} onChange={e => updateMeta({ campaignTag: e.target.value })} placeholder="feb-2026" className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
               </div>
               <div>
-                <Label>Theme Focus</Label>
+                <Label className="text-slate-300">Theme Focus</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {THEME_OPTIONS.map(opt => (
                     <button
@@ -132,8 +132,8 @@ export default function CreateNewsletter() {
                       onClick={() => updateMeta({ themeFocus: opt.id })}
                       className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                         state.metadata.themeFocus === opt.id
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-card border-border hover:border-primary/40'
+                          ? 'bg-teal-500 text-black border-teal-500'
+                          : 'bg-slate-800/50 border-slate-700 hover:border-teal-500/40'
                       }`}
                     >
                       {opt.label}
@@ -147,8 +147,8 @@ export default function CreateNewsletter() {
 
         {state.step === 2 && (
           <div>
-            <h2 className="text-2xl font-bold mb-1">Choose a Template</h2>
-            <p className="text-sm text-muted-foreground mb-6">Select a starting layout for your newsletter</p>
+            <h2 className="text-2xl font-bold mb-1 text-white">Choose a Template</h2>
+            <p className="text-sm text-slate-400 mb-6">Select a starting layout for your newsletter</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {TEMPLATES.map(t => {
                 const brand = BRAND_PROFILES.find(b => b.id === t.recommendedBrand)!;
@@ -156,16 +156,16 @@ export default function CreateNewsletter() {
                 return (
                   <Card
                     key={t.id}
-                    className={`overflow-hidden cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary shadow-card' : 'hover:shadow-card'}`}
+                    className={`overflow-hidden cursor-pointer transition-all ${isSelected ? 'ring-2 ring-teal-500' : 'hover:border-slate-600'}`}
                     onClick={() => {
                       update({ templateId: t.id as TemplateId, selectedBlocks: t.defaultBlocks, brandStyleId: t.recommendedBrand, layoutDensity: t.defaultDensity });
                     }}
                   >
                     <div className="h-24" style={{ background: `linear-gradient(135deg, ${brand.colors.primary}, ${brand.colors.secondary})` }} />
                     <div className="p-4">
-                      <h3 className="font-semibold text-sm">{t.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">{t.description}</p>
-                      <Badge variant="outline" className="text-xs mt-2">{t.defaultBlocks.length} blocks</Badge>
+                      <h3 className="font-semibold text-sm text-white">{t.name}</h3>
+                      <p className="text-xs text-slate-400 mt-1">{t.description}</p>
+                      <Badge variant="outline" className="border-slate-600 text-slate-300 text-xs mt-2">{t.defaultBlocks.length} blocks</Badge>
                     </div>
                   </Card>
                 );
@@ -176,21 +176,21 @@ export default function CreateNewsletter() {
 
         {state.step === 3 && (
           <div>
-            <h2 className="text-2xl font-bold mb-1">Brand Style</h2>
-            <p className="text-sm text-muted-foreground mb-6">Choose the visual personality for this issue</p>
+            <h2 className="text-2xl font-bold mb-1 text-white">Brand Style</h2>
+            <p className="text-sm text-slate-400 mb-6">Choose the visual personality for this issue</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {BRAND_PROFILES.map(p => {
                 const isSelected = state.brandStyleId === p.id;
                 return (
                   <Card
                     key={p.id}
-                    className={`overflow-hidden cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary shadow-card' : 'hover:shadow-card'}`}
+                    className={`overflow-hidden cursor-pointer transition-all ${isSelected ? 'ring-2 ring-teal-500' : 'hover:border-slate-600'}`}
                     onClick={() => update({ brandStyleId: p.id as BrandStyleId })}
                   >
                     <div className="h-16" style={{ background: `linear-gradient(135deg, ${p.colors.primary}, ${p.colors.accent1})` }} />
                     <div className="p-4">
-                      <h3 className="font-semibold text-sm">{p.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">{p.description}</p>
+                      <h3 className="font-semibold text-sm text-white">{p.name}</h3>
+                      <p className="text-xs text-slate-400 mt-1">{p.description}</p>
                       <div className="flex gap-1.5 mt-3">
                         {Object.values(p.colors).slice(0, 5).map((c, i) => (
                           <div key={i} className="w-6 h-6 rounded border" style={{ backgroundColor: c }} />
@@ -207,33 +207,33 @@ export default function CreateNewsletter() {
         {state.step === 4 && (
           <div className="space-y-6 max-w-xl">
             <div>
-              <h2 className="text-2xl font-bold mb-1">Content</h2>
-              <p className="text-sm text-muted-foreground">Add your newsletter content</p>
+              <h2 className="text-2xl font-bold mb-1 text-white">Content</h2>
+              <p className="text-sm text-slate-400">Add your newsletter content</p>
             </div>
             <div className="space-y-4">
               <div>
-                <Label>Hero Headline</Label>
-                <Input value={state.content.headline} onChange={e => updateContent({ headline: e.target.value })} placeholder="Bring Your Layout to Life" className="mt-1.5" />
+                <Label className="text-slate-300">Hero Headline</Label>
+                <Input value={state.content.headline} onChange={e => updateContent({ headline: e.target.value })} placeholder="Bring Your Layout to Life" className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
               </div>
               <div>
-                <Label>Intro Paragraph</Label>
-                <Textarea value={state.content.introParagraph} onChange={e => updateContent({ introParagraph: e.target.value })} placeholder="This month we're excited to share..." className="mt-1.5" rows={3} />
+                <Label className="text-slate-300">Intro Paragraph</Label>
+                <Textarea value={state.content.introParagraph} onChange={e => updateContent({ introParagraph: e.target.value })} placeholder="This month we're excited to share..." className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" rows={3} />
               </div>
               <div>
-                <Label>Hero Image URL</Label>
-                <Input value={state.content.heroImage} onChange={e => updateContent({ heroImage: e.target.value })} placeholder="https://..." className="mt-1.5" />
+                <Label className="text-slate-300">Hero Image URL</Label>
+                <Input value={state.content.heroImage} onChange={e => updateContent({ heroImage: e.target.value })} placeholder="https://..." className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
               </div>
               <div>
-                <Label>Discount Code (optional)</Label>
-                <Input value={state.content.discountCode} onChange={e => updateContent({ discountCode: e.target.value })} placeholder="SCENERY20" className="mt-1.5" />
+                <Label className="text-slate-300">Discount Code (optional)</Label>
+                <Input value={state.content.discountCode} onChange={e => updateContent({ discountCode: e.target.value })} placeholder="SCENERY20" className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
               </div>
               <div>
-                <Label>Scene Story (optional)</Label>
-                <Textarea value={state.content.storyText} onChange={e => updateContent({ storyText: e.target.value })} placeholder="Tell a story about a scene..." className="mt-1.5" rows={3} />
+                <Label className="text-slate-300">Scene Story (optional)</Label>
+                <Textarea value={state.content.storyText} onChange={e => updateContent({ storyText: e.target.value })} placeholder="Tell a story about a scene..." className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" rows={3} />
               </div>
               <div>
-                <Label>Video / Tutorial URL (optional)</Label>
-                <Input value={state.content.videoUrl} onChange={e => updateContent({ videoUrl: e.target.value })} placeholder="https://youtube.com/..." className="mt-1.5" />
+                <Label className="text-slate-300">Video / Tutorial URL (optional)</Label>
+                <Input value={state.content.videoUrl} onChange={e => updateContent({ videoUrl: e.target.value })} placeholder="https://youtube.com/..." className="mt-1.5 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
               </div>
             </div>
           </div>
@@ -241,13 +241,13 @@ export default function CreateNewsletter() {
 
         {state.step === 5 && (
           <div>
-            <h2 className="text-2xl font-bold mb-1">Select Blocks</h2>
-            <p className="text-sm text-muted-foreground mb-6">Choose which content blocks to include</p>
+            <h2 className="text-2xl font-bold mb-1 text-white">Select Blocks</h2>
+            <p className="text-sm text-slate-400 mb-6">Choose which content blocks to include</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {BLOCK_LIBRARY.map(block => {
                 const isChecked = state.selectedBlocks.includes(block.type);
                 return (
-                  <label key={block.type} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isChecked ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}`}>
+                  <label key={block.type} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isChecked ? 'border-teal-500 bg-teal-500/5' : 'border-slate-700 hover:border-teal-500/30'}`}>
                     <Checkbox
                       checked={isChecked}
                       onCheckedChange={checked => {
@@ -259,8 +259,8 @@ export default function CreateNewsletter() {
                       }}
                     />
                     <div>
-                      <span className="text-sm font-medium">{block.name}</span>
-                      <span className="text-xs text-muted-foreground ml-2">{block.category}</span>
+                      <span className="text-sm font-medium text-white">{block.name}</span>
+                      <span className="text-xs text-slate-400 ml-2">{block.category}</span>
                     </div>
                   </label>
                 );
@@ -271,19 +271,19 @@ export default function CreateNewsletter() {
 
         {state.step === 6 && (
           <div>
-            <h2 className="text-2xl font-bold mb-1">Layout Density</h2>
-            <p className="text-sm text-muted-foreground mb-6">Control spacing and visual rhythm</p>
+            <h2 className="text-2xl font-bold mb-1 text-white">Layout Density</h2>
+            <p className="text-sm text-slate-400 mb-6">Control spacing and visual rhythm</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl">
               {DENSITY_OPTIONS.map(opt => {
                 const isSelected = state.layoutDensity === opt.id;
                 return (
                   <Card
                     key={opt.id}
-                    className={`p-5 cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary shadow-card' : 'hover:shadow-card'}`}
+                    className={`bg-slate-800/50 border-slate-700 p-5 cursor-pointer transition-all ${isSelected ? 'ring-2 ring-teal-500' : 'hover:border-slate-600'}`}
                     onClick={() => update({ layoutDensity: opt.id })}
                   >
-                    <h3 className="font-semibold text-sm">{opt.label}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{opt.desc}</p>
+                    <h3 className="font-semibold text-sm text-white">{opt.label}</h3>
+                    <p className="text-xs text-slate-400 mt-1">{opt.desc}</p>
                   </Card>
                 );
               })}
@@ -293,20 +293,20 @@ export default function CreateNewsletter() {
 
         {state.step === 7 && (
           <div>
-            <h2 className="text-2xl font-bold mb-1">Review & Generate</h2>
-            <p className="text-sm text-muted-foreground mb-6">Preview your newsletter before generating</p>
+            <h2 className="text-2xl font-bold mb-1 text-white">Review & Generate</h2>
+            <p className="text-sm text-slate-400 mb-6">Preview your newsletter before generating</p>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <Card className="p-4 space-y-2">
-                  <h3 className="font-semibold text-sm">Summary</h3>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p><span className="font-medium text-foreground">Title:</span> {state.metadata.title || 'Untitled'}</p>
-                    <p><span className="font-medium text-foreground">Subject:</span> {state.metadata.subject || '—'}</p>
-                    <p><span className="font-medium text-foreground">Template:</span> {selectedTemplate?.name || '—'}</p>
-                    <p><span className="font-medium text-foreground">Brand:</span> {BRAND_PROFILES.find(b => b.id === state.brandStyleId)?.name}</p>
-                    <p><span className="font-medium text-foreground">Density:</span> {state.layoutDensity}</p>
-                    <p><span className="font-medium text-foreground">Blocks:</span> {state.selectedBlocks.length}</p>
+                <Card className="bg-slate-800/50 border-slate-700 p-4 space-y-2">
+                  <h3 className="font-semibold text-sm text-white">Summary</h3>
+                  <div className="text-xs text-slate-400 space-y-1">
+                    <p><span className="font-medium text-white">Title:</span> {state.metadata.title || 'Untitled'}</p>
+                    <p><span className="font-medium text-white">Subject:</span> {state.metadata.subject || '—'}</p>
+                    <p><span className="font-medium text-white">Template:</span> {selectedTemplate?.name || '—'}</p>
+                    <p><span className="font-medium text-white">Brand:</span> {BRAND_PROFILES.find(b => b.id === state.brandStyleId)?.name}</p>
+                    <p><span className="font-medium text-white">Density:</span> {state.layoutDensity}</p>
+                    <p><span className="font-medium text-white">Blocks:</span> {state.selectedBlocks.length}</p>
                   </div>
                 </Card>
                 <div className="flex flex-wrap gap-2">
@@ -324,12 +324,12 @@ export default function CreateNewsletter() {
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between mt-10 pt-6 border-t">
+      <div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-700">
         <Button
           variant="outline"
           onClick={() => update({ step: Math.max(1, state.step - 1) })}
           disabled={state.step === 1}
-          className="gap-2"
+          className="border-slate-700 hover:bg-slate-800 gap-2"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </Button>
@@ -338,17 +338,17 @@ export default function CreateNewsletter() {
           <Button
             variant="ghost"
             onClick={() => navigate('/marketing/newsletter')}
-            className="gap-2 text-muted-foreground"
+            className="gap-2 text-slate-400"
           >
             <X className="w-4 h-4" /> Cancel
           </Button>
 
           {state.step < 7 ? (
-            <Button onClick={() => update({ step: state.step + 1 })} className="gap-2">
+            <Button onClick={() => update({ step: state.step + 1 })} className="bg-teal-500 hover:bg-teal-600 text-black font-medium gap-2">
               Next <ArrowRight className="w-4 h-4" />
             </Button>
           ) : (
-            <Button onClick={handleGenerate} className="gap-2">
+            <Button onClick={handleGenerate} className="bg-teal-500 hover:bg-teal-600 text-black font-medium gap-2">
               <Sparkles className="w-4 h-4" /> Generate Newsletter
             </Button>
           )}

@@ -38,10 +38,10 @@ export default function Analytics() {
   const newsletters = getNewsletters();
 
   return (
-    <div className="p-8 max-w-6xl mx-auto animate-fade-in">
+    <div className="p-8 max-w-6xl mx-auto bg-slate-950 min-h-full animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Analytics</h1>
-        <p className="text-muted-foreground mt-1">Track newsletter performance and revenue impact</p>
+        <h1 className="text-3xl font-bold text-white">Analytics</h1>
+        <p className="text-slate-400 mt-1">Track newsletter performance and revenue impact</p>
       </div>
 
       {/* KPI Cards */}
@@ -54,12 +54,12 @@ export default function Analytics() {
           { label: 'Subscribers', value: MOCK_STATS.subscribers.toLocaleString(), icon: Users, suffix: '' },
           { label: 'List Growth', value: MOCK_STATS.growth, icon: TrendingUp, suffix: '%' },
         ].map(stat => (
-          <Card key={stat.label} className="p-4">
+          <Card key={stat.label} className="bg-slate-800/50 border-slate-700 p-4">
             <div className="flex items-center gap-2 mb-2">
-              <stat.icon className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">{stat.label}</span>
+              <stat.icon className="w-4 h-4 text-slate-400" />
+              <span className="text-xs text-slate-400">{stat.label}</span>
             </div>
-            <p className="text-2xl font-bold">{stat.value}{stat.suffix}</p>
+            <p className="text-2xl font-bold text-white">{stat.value}{stat.suffix}</p>
           </Card>
         ))}
       </div>
@@ -67,8 +67,8 @@ export default function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Campaign Performance */}
         <div className="lg:col-span-2">
-          <Card className="p-5">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Card className="bg-slate-800/50 border-slate-700 p-5">
+            <h2 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
               <BarChart3 className="w-5 h-5" /> Campaign Performance
             </h2>
             <ChartContainer
@@ -76,37 +76,37 @@ export default function Analytics() {
               className="h-[280px] w-full"
             >
               <BarChart data={MOCK_CAMPAIGNS} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-slate-700" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="opens" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} name="Open %" />
-                <Bar dataKey="clicks" fill="hsl(var(--primary) / 0.6)" radius={[2, 2, 0, 0]} name="Click %" />
+                <Bar dataKey="opens" fill="#14b8a6" radius={[2, 2, 0, 0]} name="Open %" />
+                <Bar dataKey="clicks" fill="#14b8a699" radius={[2, 2, 0, 0]} name="Click %" />
               </BarChart>
             </ChartContainer>
           </Card>
         </div>
 
         {/* Top Products */}
-        <Card className="p-5">
-          <h2 className="text-lg font-semibold mb-4">Top Products from Emails</h2>
+        <Card className="bg-slate-800/50 border-slate-700 p-5">
+          <h2 className="text-lg font-semibold mb-4 text-white">Top Products from Emails</h2>
           <ChartContainer
             config={{ clicks: { label: "Clicks" }, conversions: { label: "Conversions" } }}
             className="h-[280px] w-full"
           >
             <BarChart data={TOP_PRODUCTS} layout="vertical" margin={{ top: 8, right: 8, bottom: 8, left: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis type="number" tick={{ fontSize: 10 }} />
-              <YAxis type="category" dataKey="name" width={50} tick={{ fontSize: 9 }} />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-slate-700" />
+              <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+              <YAxis type="category" dataKey="name" width={50} tick={{ fontSize: 9, fill: '#94a3b8' }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="clicks" fill="hsl(var(--primary))" radius={[0, 2, 2, 0]} name="Clicks" />
+              <Bar dataKey="clicks" fill="#14b8a6" radius={[0, 2, 2, 0]} name="Clicks" />
             </BarChart>
           </ChartContainer>
         </Card>
       </div>
 
-      <Card className="mt-6 p-6 border-dashed border-2 text-center">
-        <p className="text-sm text-muted-foreground">
+      <Card className="bg-slate-800/50 border-slate-700 mt-6 p-6 border-dashed border-2 text-center">
+        <p className="text-sm text-slate-400">
           📊 Connect Shopify to see real revenue attribution, product click data, and subscriber growth metrics.
         </p>
       </Card>
