@@ -230,7 +230,7 @@ export default function EditTemplate() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="bg-zinc-950/50 border-zinc-800">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -551,7 +551,6 @@ export default function EditTemplate() {
             </CardContent>
           </Card>
         </div>
-      </div>
 
       <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
         <AlertDialogContent className="bg-zinc-950 border-zinc-800">
