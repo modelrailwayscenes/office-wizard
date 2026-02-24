@@ -71,45 +71,37 @@ export default function Analytics() {
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" /> Campaign Performance
             </h2>
-            <div className="space-y-1">
-              <div className="grid grid-cols-5 text-xs font-medium text-muted-foreground px-3 py-2">
-                <span className="col-span-2">Campaign</span>
-                <span>Opens</span>
-                <span>Clicks</span>
-                <span>Revenue</span>
-              </div>
-              {MOCK_CAMPAIGNS.map(c => (
-                <div key={c.name} className="grid grid-cols-5 items-center text-sm px-3 py-3 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="col-span-2">
-                    <p className="font-medium text-sm">{c.name}</p>
-                    <p className="text-xs text-muted-foreground">{c.sent}</p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>{c.opens}%</span>
-                    {c.trend === 'up' ? <ArrowUpRight className="w-3 h-3 text-success" /> : <TrendingDown className="w-3 h-3 text-destructive" />}
-                  </div>
-                  <span>{c.clicks}%</span>
-                  <span className="font-semibold">£{c.revenue}</span>
-                </div>
-              ))}
-            </div>
+            <ChartContainer
+              config={{ opens: { label: "Open Rate %" }, clicks: { label: "Click Rate %" }, revenue: { label: "Revenue" } }}
+              className="h-[280px] w-full"
+            >
+              <BarChart data={MOCK_CAMPAIGNS} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="opens" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} name="Open %" />
+                <Bar dataKey="clicks" fill="hsl(var(--primary) / 0.6)" radius={[2, 2, 0, 0]} name="Click %" />
+              </BarChart>
+            </ChartContainer>
           </Card>
         </div>
 
         {/* Top Products */}
         <Card className="p-5">
           <h2 className="text-lg font-semibold mb-4">Top Products from Emails</h2>
-          <div className="space-y-3">
-            {TOP_PRODUCTS.map((p, i) => (
-              <div key={p.name} className="flex items-center gap-3">
-                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">{p.clicks} clicks · {p.conversions} sales</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ChartContainer
+            config={{ clicks: { label: "Clicks" }, conversions: { label: "Conversions" } }}
+            className="h-[280px] w-full"
+          >
+            <BarChart data={TOP_PRODUCTS} layout="vertical" margin={{ top: 8, right: 8, bottom: 8, left: 60 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis type="number" tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" width={50} tick={{ fontSize: 9 }} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="clicks" fill="hsl(var(--primary))" radius={[0, 2, 2, 0]} name="Clicks" />
+            </BarChart>
+          </ChartContainer>
         </Card>
       </div>
 
