@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFindMany, useAction, useUser } from "@gadgetinc/react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { api } from "../api";
 import { Link as RouterLink, useLocation, useSearchParams, useNavigate } from "react-router";
 import { User2, Users as UsersIcon, Link as LinkIcon, Layers, Sparkles, FileText, Bell, Shield, Settings as SettingsIcon, Plus, Edit as EditIcon, Trash2, RotateCcw } from "lucide-react";
@@ -8,8 +11,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { toast } from "sonner";
+
+const userSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  role: z.string().min(1, "Role is required"),
+});
+
+const newUserSchema = userSchema.extend({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+type UserFormValues = z.infer<typeof userSchema>;
+type NewUserFormValues = z.infer<typeof newUserSchema>;
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
 
 // FIX 2: locale-safe date formatter — avoids SSR/client hydration mismatch
