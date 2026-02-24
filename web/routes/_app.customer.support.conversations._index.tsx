@@ -37,7 +37,7 @@ import { Separator } from "@/components/ui/separator";
 import { useGlobalAction, useFindOne, useFindMany, useFindFirst } from "@gadgetinc/react";
 import { useConversationsListQuery, useInvalidateConversations } from "@/hooks/useConversationsQuery";
 import { toast } from "sonner";
-import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard, ShieldAlert, UserX } from "lucide-react";
+import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard, CircleHelp, ShieldAlert, UserX } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { format } from "date-fns";
@@ -86,7 +86,7 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
 
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-      <SidebarBrandHeader icon={LayoutDashboard} overline="CUSTOMER" title="SUPPORT" />
+      <SidebarBrandHeader icon={CircleHelp} overline="CUSTOMER" title="SUPPORT" />
       <nav className="space-y-1">
         {customerTabs.map(({ id, label, icon: Icon, path, children }) => (
           <div key={id}>

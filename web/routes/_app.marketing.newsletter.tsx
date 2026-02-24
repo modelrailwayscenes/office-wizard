@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Wand2,
   LayoutTemplate,
+  Send,
   Blocks,
   Palette,
   CalendarDays,
@@ -29,7 +30,7 @@ export default function MarketingNewsletterLayout() {
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-slate-950 text-white">
       {/* Sidebar */}
       <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-        <SidebarBrandHeader icon={LayoutTemplate} overline="MARKETING" title="NEWSLETTER" />
+        <SidebarBrandHeader icon={Send} overline="MARKETING" title="NEWSLETTER" />
         <nav className="space-y-1">
           {NAV_ITEMS.map((item) => {
             const isActive =
