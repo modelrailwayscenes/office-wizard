@@ -630,7 +630,7 @@ export default function ConversationsIndex() {
                       fetchingConversation={fetchingConversation}
                       fetchingMessages={fetchingMessages}
                       fetchingAiComments={fetchingAiComments}
-                      conversationError={conversationError}
+                      conversationError={conversationError || null}
                       markNotCustomerLoading={markNotCustomerLoading}
                       formatDateTime={formatDateTime}
                       titleCaseEnum={titleCaseEnum}
@@ -668,7 +668,7 @@ export default function ConversationsIndex() {
                   fetchingConversation={fetchingConversation}
                   fetchingMessages={fetchingMessages}
                   fetchingAiComments={fetchingAiComments}
-                  conversationError={conversationError}
+                  conversationError={conversationError || null}
                   markNotCustomerLoading={markNotCustomerLoading}
                   formatDateTime={formatDateTime}
                   titleCaseEnum={titleCaseEnum}
