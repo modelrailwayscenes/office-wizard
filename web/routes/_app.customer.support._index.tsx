@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSession, useFindMany, useFindFirst } from "@gadgetinc/react";
 import { Link as RouterLink, useLocation } from "react-router";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Pie, PieChart, Cell } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { api } from "../api";
 import { timeAgo } from "@/components/healthStatus";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
   Mail,
   CheckCircle2,
@@ -367,27 +369,38 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-white">Priority Mix</h2>
                 <span className="text-xs text-slate-500">{priorityTotal} conversations</span>
               </div>
-              <div className="mt-4 h-3 w-full rounded-full bg-slate-800 overflow-hidden flex">
-                {priorityOrder.map((band) => {
-                  const count = priorityCounts[band] || 0;
-                  const width = priorityTotal ? (count / priorityTotal) * 100 : 0;
-                  return (
-                    <div
-                      key={band}
-                      className={bandStyles[band]}
-                      style={{ width: `${width}%` }}
-                    />
-                  );
-                })}
-              </div>
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-                {priorityOrder.map((band) => (
-                  <div key={band} className="rounded-lg border border-slate-800 bg-slate-900/40 px-2 py-2">
-                    <div className="text-slate-400 uppercase">{band}</div>
-                    <div className="text-white font-semibold">{priorityCounts[band] || 0}</div>
-                  </div>
-                ))}
-              </div>
+              <ChartContainer
+                config={{
+                  urgent: { label: "Urgent", color: "hsl(var(--red-500))" },
+                  high: { label: "High", color: "hsl(var(--orange-500))" },
+                  medium: { label: "Medium", color: "hsl(var(--amber-500))" },
+                  low: { label: "Low", color: "hsl(var(--emerald-500))" },
+                  unclassified: { label: "Unclassified", color: "hsl(var(--slate-500))" },
+                }}
+                className="mt-4 h-[200px] w-full"
+              >
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent hideIndicator />} />
+                  <Pie
+                    data={priorityOrder.map((band) => {
+                      const count = priorityCounts[band] || 0;
+                      return { name: band, value: count };
+                    }).filter((d) => d.value > 0)}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {priorityOrder.filter((b) => (priorityCounts[b] || 0) > 0).map((band, i) => (
+                      <Cell key={band} fill={["#ef4444", "#f97316", "#eab308", "#10b981", "#64748b"][i % 5]} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
             </Card>
 
             <Card className="bg-slate-900/50 border-slate-800 p-6">
@@ -395,23 +408,21 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-white">Activity by Hour</h2>
                 <span className="text-xs text-slate-500">Latest message time</span>
               </div>
-              <div className="mt-5 flex items-end gap-1 h-24">
-                {hourlyBuckets.map((count, idx) => {
-                  const height = Math.max(4, Math.round((count / maxHourly) * 80));
-                  return (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-1">
-                      <div
-                        className="w-full rounded bg-teal-500/40"
-                        style={{ height }}
-                        title={`${count} conversations`}
-                      />
-                      <span className="text-[10px] text-slate-500">
-                        {idx % 3 === 0 ? idx : ""}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              <ChartContainer
+                config={{ conversations: { label: "Conversations", color: "hsl(var(--teal-500))" } }}
+                className="mt-4 h-[200px] w-full"
+              >
+                <BarChart
+                  data={hourlyBuckets.map((count, idx) => ({ hour: idx, conversations: count }))}
+                  margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-slate-700" />
+                  <XAxis dataKey="hour" tick={{ fill: "rgb(148 163 184)" }} fontSize={10} />
+                  <YAxis tick={{ fill: "rgb(148 163 184)" }} fontSize={10} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="conversations" fill="rgb(20 184 166 / 0.5)" radius={[2, 2, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
             </Card>
           </div>
 
