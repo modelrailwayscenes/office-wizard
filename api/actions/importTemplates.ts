@@ -197,7 +197,7 @@ export const run: ActionRun = async ({ params: actionParams, api, logger }) => {
   let updated = 0;
 
   const existingTemplates = await api.template.findMany({
-    first: 1000,
+    first: 250,
     select: { id: true, name: true },
   });
   const existingByName = new Map(

@@ -45,7 +45,7 @@ const route: RouteHandler = async ({ request, reply, api, logger }) => {
     }
 
     const templates = await api.template.findMany({
-      first: 1000,
+      first: 250,
       select: {
         name: true,
         category: true,

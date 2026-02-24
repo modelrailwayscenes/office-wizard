@@ -451,7 +451,7 @@ function extractVariables(text: string): string[] {
 export const run: ActionRun = async ({ api, logger }) => {
   const existing = await api.template.findMany({
     select: { name: true },
-    first: 500,
+    first: 250,
   });
   const existingNames = new Set((existing || []).map((t: { name: string }) => t.name));
 
@@ -470,8 +470,7 @@ export const run: ActionRun = async ({ api, logger }) => {
     const availableVariables = vars.length > 0 ? vars : ["customerName", "orderNumber", "company_name"];
 
     try {
-      const templateCreate = (api as { internal?: { template?: { create: typeof api.template.create } } }).internal?.template?.create ?? api.template.create;
-      await templateCreate({
+      await api.template.create({
         name: t.name,
         category: t.category,
         subject: t.subject,

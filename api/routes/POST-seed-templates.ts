@@ -10,7 +10,7 @@ const route: RouteHandler = async ({ api, reply, logger }) => {
   try {
     const existing = await api.template.findMany({
       select: { name: true },
-      first: 500,
+      first: 250,
     });
     const existingNames = new Set((existing || []).map((t: { name: string }) => t.name));
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useNavigate } from "react-router";
 import { useFindMany, useGlobalAction } from "@gadgetinc/react";
 import { AutoTable } from "@/components/auto";
@@ -22,7 +22,7 @@ export default function TemplatesIndex() {
     sort: { updatedAt: "Descending" },
   });
   const [{ fetching: importing }, importTemplates] = useGlobalAction(api.importTemplates);
-  const [seeding, setSeeding] = useState(false);
+  const [{ fetching: seeding }, seedTemplates] = useGlobalAction(api.seedCustomerTemplates);
 
   const handleExport = async (format: "json" | "csv") => {
     try {
@@ -44,21 +44,13 @@ export default function TemplatesIndex() {
   };
 
   const handleSeed = async () => {
-    setSeeding(true);
     try {
-      const base = typeof window !== "undefined" ? window.location.origin : "";
-      const res = await fetch(`${base}/seed-templates`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = await res.json().catch(() => ({}));
-      const created = data?.created ?? 0;
-      const skipped = data?.skipped ?? 0;
-      const errs = data?.errors ?? [];
-      if (!res.ok) {
-        toast.error(`Seed failed: ${data?.error ?? res.statusText}`);
-      } else if (errs.length > 0) {
+      const r = await seedTemplates({});
+      const res = r as { created?: number; skipped?: number; errors?: string[] } | undefined;
+      const created = res?.created ?? 0;
+      const skipped = res?.skipped ?? 0;
+      const errs = res?.errors ?? [];
+      if (errs.length > 0) {
         toast.error(`Seeded ${created} (${skipped} existed). First error: ${errs[0]}`);
       } else {
         toast.success(`Seeded ${created} templates (${skipped} already existed)`);
@@ -66,8 +58,6 @@ export default function TemplatesIndex() {
       void refetch({ requestPolicy: "network-only" });
     } catch (e) {
       toast.error(`Seed failed: ${e instanceof Error ? e.message : "Unknown error"}`);
-    } finally {
-      setSeeding(false);
     }
   };
 
