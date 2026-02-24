@@ -21,8 +21,8 @@ import {
 
 const tabs = [
   { id: "summary",      label: "Summary",                icon: User2,        path: "/customer/support/settings/summary" },
-  { id: "account",      label: "Profile",                icon: User2,        path: "/customer/support/settings/account" },
-  { id: "team",         label: "Users",                  icon: UsersIcon,    path: "/customer/support/settings/team" },
+  { id: "account",      label: "Profile",                icon: User2,        path: "/customer/support/settings/profile" },
+  { id: "team",         label: "Users",                  icon: UsersIcon,    path: "/customer/support/settings/users" },
   { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/customer/support/settings/integrations" },
   { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/customer/support/settings/triage" },
   { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/customer/support/settings/ai" },

@@ -313,7 +313,7 @@ export default function SettingsSummaryPage() {
             icon={User2}
             title="Personal"
             description="Personal account settings"
-            path="/settings/profile"
+            path="/customer/support/settings/profile"
             healthTone="healthy"
             details={[
               user?.email || "No email",
@@ -326,7 +326,7 @@ export default function SettingsSummaryPage() {
             icon={UsersIcon}
             title="Users"
             description="Team member management"
-            path="/settings/users"
+            path="/customer/support/settings/users"
             healthTone={usersTone}
             statusLabel={userCount > 0 ? "Healthy" : "Needs attention"}
             details={[
@@ -340,7 +340,7 @@ export default function SettingsSummaryPage() {
             icon={LinkIcon}
             title="Integrations"
             description="Connect external services"
-            path="/settings/integrations"
+            path="/customer/support/settings/integrations"
             healthTone={integrationsTone}
             statusLabel={HEALTH_TONE_STYLES[integrationsTone].label}
             details={[
@@ -377,7 +377,7 @@ export default function SettingsSummaryPage() {
             icon={Sparkles}
             title="AI & Automation"
             description="AI models and auto-responses"
-            path="/settings/ai"
+            path="/customer/support/settings/ai"
             healthTone={aiTone}
             statusLabel={config?.autoSendGlobalEnabled ? "Healthy" : "Disabled"}
             details={
@@ -411,7 +411,7 @@ export default function SettingsSummaryPage() {
             icon={Bell}
             title="Alerts & Notifications"
             description="Email and desktop alerts"
-            path="/settings/alerts"
+            path="/customer/support/settings/alerts"
             healthTone={alertsTone}
             statusLabel={config?.emailNotificationsEnabled ? "Healthy" : "Warning"}
             details={
@@ -426,7 +426,7 @@ export default function SettingsSummaryPage() {
             icon={Shield}
             title="Security & Compliance"
             description="Security settings and audit logs"
-            path="/settings/security"
+            path="/customer/support/settings/security"
             healthTone="healthy"
             details={["Configure security policies", "Review audit logs", "Manage access controls"]}
           />
@@ -436,7 +436,7 @@ export default function SettingsSummaryPage() {
             icon={SettingsIcon}
             title="Advanced"
             description="Advanced configuration options"
-            path="/settings/advanced"
+            path="/customer/support/settings/advanced"
             healthTone="healthy"
             details={["Developer settings", "System configuration", "Debug options"]}
           />

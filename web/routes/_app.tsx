@@ -95,7 +95,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!location.pathname.startsWith("/settings")) {
+    if (!location.pathname.startsWith("/customer/support/settings")) {
       const path = `${location.pathname}${location.search}${location.hash}`;
       window.sessionStorage.setItem("ow:lastNonSettingsPath", path);
     }
