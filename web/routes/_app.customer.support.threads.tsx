@@ -121,7 +121,7 @@ export default function ThreadsPage() {
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
   const [markNotCustomerDialogOpen, setMarkNotCustomerDialogOpen] = useState(false);
 
-  const { user } = useOutletContext<AuthOutletContext>();
+  const { user } = useOutletContext<AuthOutletContext>() ?? {};
 
   // Check if user has system-admin role
   // roleList is an array of role objects with a `key` property

@@ -1,5 +1,7 @@
-import { Outlet } from "react-router";
+import { Outlet, useOutletContext } from "react-router";
+import type { AuthOutletContext } from "./_app";
 
 export default function CustomerSupportLayout() {
-  return <Outlet />;
+  const context = useOutletContext<AuthOutletContext>() ?? {};
+  return <Outlet context={context} />;
 }
