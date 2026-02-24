@@ -453,10 +453,11 @@ export const run: ActionRun = async ({ api, logger }) => {
     select: { name: true },
     first: 500,
   });
-  const existingNames = new Set((existing || []).map((t: any) => t.name));
+  const existingNames = new Set((existing || []).map((t: { name: string }) => t.name));
 
   let created = 0;
   let skipped = 0;
+  const errors: string[] = [];
 
   for (const t of SEED_TEMPLATES) {
     if (existingNames.has(t.name)) {
@@ -469,7 +470,8 @@ export const run: ActionRun = async ({ api, logger }) => {
     const availableVariables = vars.length > 0 ? vars : ["customerName", "orderNumber", "company_name"];
 
     try {
-      await api.template.create({
+      const templateCreate = (api as { internal?: { template?: { create: typeof api.template.create } } }).internal?.template?.create ?? api.template.create;
+      await templateCreate({
         name: t.name,
         category: t.category,
         subject: t.subject,
@@ -478,20 +480,20 @@ export const run: ActionRun = async ({ api, logger }) => {
         requiredVariables: [],
         safetyLevel: t.safetyLevel,
         active: true,
-        description: t.description || null,
+        description: t.description ?? undefined,
         autoSendEnabled: false,
-        useCount: 0,
-        version: 1,
-      } as any);
+      });
       created++;
       existingNames.add(t.name);
-    } catch (err: any) {
-      logger.warn({ name: t.name, error: err?.message }, "Failed to create template");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.warn({ name: t.name, error: msg }, "Failed to create template");
+      if (errors.length < 3) errors.push(`${t.name}: ${msg}`);
     }
   }
 
-  logger.info({ created, skipped, total: SEED_TEMPLATES.length }, "Seed complete");
-  return { created, skipped, total: SEED_TEMPLATES.length };
+  logger.info({ created, skipped, total: SEED_TEMPLATES.length, errors: errors.length }, "Seed complete");
+  return { created, skipped, total: SEED_TEMPLATES.length, errors };
 };
 
 export const options: ActionOptions = {

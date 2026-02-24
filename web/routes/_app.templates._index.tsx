@@ -43,6 +43,24 @@ export default function TemplatesIndex() {
     }
   };
 
+  const handleSeed = async () => {
+    try {
+      const r = await seedTemplates({});
+      const res = r as { created?: number; skipped?: number; errors?: string[] } | undefined;
+      const created = res?.created ?? 0;
+      const skipped = res?.skipped ?? 0;
+      const errs = res?.errors ?? [];
+      if (errs.length > 0) {
+        toast.error(`Seeded ${created} (${skipped} existed). First error: ${errs[0]}`);
+      } else {
+        toast.success(`Seeded ${created} templates (${skipped} already existed)`);
+      }
+      void refetch({ requestPolicy: "network-only" });
+    } catch (e) {
+      toast.error(`Seed failed: ${e instanceof Error ? e.message : "Unknown error"}`);
+    }
+  };
+
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -139,16 +157,7 @@ export default function TemplatesIndex() {
           {!isEmpty && (
             <Button
               variant="outline"
-              onClick={async () => {
-                try {
-                  const r = await seedTemplates({});
-                  const res = r as { created?: number; skipped?: number } | undefined;
-                  toast.success(`Seeded ${res?.created ?? 0} templates (${res?.skipped ?? 0} already existed)`);
-                  void refetch({ requestPolicy: "network-only" });
-                } catch (e) {
-                  toast.error(`Seed failed: ${e instanceof Error ? e.message : "Unknown error"}`);
-                }
-              }}
+              onClick={handleSeed}
               disabled={seeding}
               className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
             >
@@ -196,16 +205,7 @@ export default function TemplatesIndex() {
           </p>
           <div className="flex gap-3">
             <Button
-              onClick={async () => {
-                try {
-                  const r = await seedTemplates({});
-                  const res = r as { created?: number; skipped?: number } | undefined;
-                  toast.success(`Seeded ${res?.created ?? 0} templates (${res?.skipped ?? 0} already existed)`);
-                  void refetch({ requestPolicy: "network-only" });
-                } catch (e) {
-                  toast.error(`Seed failed: ${e instanceof Error ? e.message : "Unknown error"}`);
-                }
-              }}
+              onClick={handleSeed}
               disabled={seeding}
               variant="outline"
               className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"

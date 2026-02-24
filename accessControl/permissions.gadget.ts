@@ -81,6 +81,11 @@ export const permissions: GadgetPermissions = {
         },
         template: {
           read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
         },
         triageSession: {
           read: {
@@ -124,11 +129,13 @@ export const permissions: GadgetPermissions = {
         disconnectShopify: true,
         fetchEmails: true,
         generateDraft: true,
+        importTemplates: true,
         makeUserAdmin: true,
         rebuildConversations: true,
         requestPasswordReset: true,
         runBatchOperation: true,
         runTriage: true,
+        seedCustomerTemplates: true,
         shopifyLookupDirectAPI: true,
         triageAllPending: true,
         verifyMondayConnection: true,
