@@ -75,7 +75,7 @@ export function TemplatesList() {
     }
     try {
       const content = await file.text();
-      const result = await importTemplates({ format, content });
+      const result = (await importTemplates({ format, content })) as { created?: number; updated?: number; errors?: string[] } | undefined;
       const { created, updated, errors } = result ?? {};
       const msg = `Imported: ${created ?? 0} created, ${updated ?? 0} updated`;
       if (errors?.length) {
