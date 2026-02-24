@@ -1,10 +1,12 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { getNewsletters } from '@/modules/newsletter/lib/newsletter-store';
 import {
   TrendingUp, TrendingDown, Mail, MousePointerClick,
   Eye, DollarSign, Users, BarChart3, ArrowUpRight
 } from 'lucide-react';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 // Mock analytics data for demonstration
 const MOCK_STATS = {
