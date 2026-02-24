@@ -1,10 +1,9 @@
-import { ModulePlaceholder } from "@/components/ModulePlaceholder";
+import { redirect } from "react-router";
+
+export async function loader() {
+  return redirect("/marketing/newsletter");
+}
 
 export default function MarketingModule() {
-  return (
-    <ModulePlaceholder
-      title="Marketing"
-      description="Campaign management, content generation, and performance analytics."
-    />
-  );
+  return null;
 }

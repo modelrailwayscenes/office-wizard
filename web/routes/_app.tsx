@@ -84,7 +84,7 @@ const modules = [
   { id: "finance",   label: "FINANCE",   path: "/finance",   activePaths: ["/finance"] },
   { id: "it",        label: "IT",        path: "/it",        activePaths: ["/it"] },
   { id: "sales",     label: "SHOPIFY",     path: "/sales",     activePaths: ["/sales"] },
-  { id: "marketing", label: "MARKETING", path: "/marketing", activePaths: ["/marketing"] },
+  { id: "marketing", label: "MARKETING", path: "/marketing/newsletter", activePaths: ["/marketing", "/marketing/newsletter"] },
   { id: "production", label: "PRODUCTION", path: "/production", activePaths: ["/production"] },
 ];
 
