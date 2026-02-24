@@ -55,7 +55,13 @@ export default function TriageQueuePage() {
   };
 
   const [{ data: conversationsData }, refresh] = useFindMany(api.conversation, {
-    filter: { status: { notEquals: "resolved" } },
+    filter: {
+      AND: [
+        { status: { notEquals: "resolved" } },
+        { status: { notEquals: "ignored" } },
+        { isCustomer: { notEquals: false } },
+      ],
+    } as any,
     select: {
       id: true,
       subject: true,

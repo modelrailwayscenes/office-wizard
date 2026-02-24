@@ -17,8 +17,18 @@ import { SecondaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import {
   Search, RefreshCw, Mail, Calendar, User, MessageSquare, Clock, Tag, AlertTriangle,
-  LayoutDashboard, Layers, FileText, PenLine, Settings, ShieldAlert,
+  LayoutDashboard, Layers, FileText, PenLine, Settings, ShieldAlert, UserX,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // ── Customer Sidebar ────────────────────────────────────────────────
 const customerTabs = [
@@ -108,6 +118,7 @@ export default function ThreadsPage() {
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
+  const [markNotCustomerDialogOpen, setMarkNotCustomerDialogOpen] = useState(false);
 
   const { user } = useOutletContext<AuthOutletContext>();
 
@@ -121,6 +132,7 @@ export default function ThreadsPage() {
   const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
 
   const [{ fetching: triaging }, runTriage] = useGlobalAction(api.triageAllPending);
+  const [{ fetching: markNotCustomerLoading }, markNotCustomer] = useGlobalAction(api.markNotCustomer);
   const [{ data: configData }] = useFindFirst(api.appConfiguration);
   const telemetryEnabled = (configData as any)?.telemetryBannersEnabled ?? true;
 
@@ -135,6 +147,7 @@ export default function ThreadsPage() {
       subject: true,
       primaryCustomerEmail: true,
       status: true,
+      isCustomer: true,
       currentPriorityBand: true,
       sentiment: true,
       messageCount: true,
@@ -241,6 +254,19 @@ export default function ThreadsPage() {
         severity: "error",
         durationMs: Date.now() - start,
       });
+    }
+  };
+
+  const handleMarkNotCustomer = async () => {
+    if (!selectedConvId) return;
+    setMarkNotCustomerDialogOpen(false);
+    try {
+      await markNotCustomer({ conversationId: selectedConvId, reason: "" });
+      toast.success("Marked as Not a Customer");
+      await refresh();
+      setSelectedConvId(null);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to mark as Not a Customer");
     }
   };
 
@@ -499,6 +525,20 @@ export default function ThreadsPage() {
                       <Mail className="h-4 w-4" />
                       <span>{selectedConversation.primaryCustomerEmail || "—"}</span>
                     </div>
+                    {selectedConversation.isCustomer !== false && (
+                      <div className="mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-slate-600 hover:bg-slate-800 hover:border-amber-500/50 text-amber-400"
+                          onClick={() => setMarkNotCustomerDialogOpen(true)}
+                          disabled={markNotCustomerLoading}
+                        >
+                          <UserX className="h-4 w-4 mr-2" />
+                          Mark Not a Customer
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Metadata grid */}
@@ -663,6 +703,27 @@ export default function ThreadsPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={markNotCustomerDialogOpen} onOpenChange={setMarkNotCustomerDialogOpen}>
+        <AlertDialogContent className="bg-slate-900 border-slate-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark as Not a Customer?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              This removes it from triage. You can undo this in Triage History.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleMarkNotCustomer}
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+              disabled={markNotCustomerLoading}
+            >
+              {markNotCustomerLoading ? "Marking..." : "Mark Not a Customer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

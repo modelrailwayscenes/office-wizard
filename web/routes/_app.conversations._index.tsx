@@ -17,6 +17,16 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Card,
   CardContent,
   CardHeader,
@@ -25,7 +35,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useGlobalAction, useFindOne, useFindMany, useFindFirst } from "@gadgetinc/react";
 import { toast } from "sonner";
-import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard, ShieldAlert } from "lucide-react";
+import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard, ShieldAlert, UserX } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { format } from "date-fns";
@@ -131,6 +141,8 @@ export default function ConversationsIndex() {
 
   const [{ fetching: fetchingEmails }, fetchEmails] = useGlobalAction(api.fetchEmails);
   const [{ fetching: rebuildingConversations }, rebuildConversations] = useGlobalAction(api.rebuildConversations);
+  const [{ fetching: markNotCustomerLoading }, markNotCustomer] = useGlobalAction(api.markNotCustomer);
+  const [markNotCustomerDialogOpen, setMarkNotCustomerDialogOpen] = useState(false);
   const [{ data: configData }] = useFindFirst(api.appConfiguration);
   const telemetryEnabled = (configData as any)?.telemetryBannersEnabled ?? true;
 
@@ -173,6 +185,7 @@ export default function ConversationsIndex() {
         primaryCustomerEmail: true,
         primaryCustomerName: true,
         status: true,
+        isCustomer: true,
         currentPriorityBand: true,
         currentPriorityScore: true,
         sentiment: true,
@@ -315,6 +328,18 @@ export default function ConversationsIndex() {
   const handleCloseDrawer = () => {
     setDrawerOpen(false);
     setTimeout(() => setSelectedConversationId(null), 300);
+  };
+
+  const handleMarkNotCustomer = async () => {
+    if (!selectedConversationId) return;
+    setMarkNotCustomerDialogOpen(false);
+    try {
+      await markNotCustomer({ conversationId: selectedConversationId, reason: "" });
+      toast.success("Marked as Not a Customer");
+      handleCloseDrawer();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to mark as Not a Customer");
+    }
   };
 
   const formatClassification = (category: string | null | undefined) => {
@@ -615,6 +640,21 @@ export default function ConversationsIndex() {
             {conversationData && (
               <div className="space-y-4">
 
+                {conversationData.isCustomer !== false && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-slate-600 hover:bg-slate-800 hover:border-amber-500/50 text-amber-400"
+                      onClick={() => setMarkNotCustomerDialogOpen(true)}
+                      disabled={markNotCustomerLoading}
+                    >
+                      <UserX className="h-4 w-4 mr-2" />
+                      Mark Not a Customer
+                    </Button>
+                  </div>
+                )}
+
                 {/* Metadata */}
                 <Card className="bg-slate-800/50 border-slate-700">
                   <CardHeader>
@@ -889,6 +929,27 @@ export default function ConversationsIndex() {
             </div>
           </SheetContent>
         </Sheet>
+
+        <AlertDialog open={markNotCustomerDialogOpen} onOpenChange={setMarkNotCustomerDialogOpen}>
+          <AlertDialogContent className="bg-slate-900 border-slate-800">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Mark as Not a Customer?</AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-400">
+                This removes it from triage. You can undo this in Triage History.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleMarkNotCustomer}
+                className="bg-amber-500 hover:bg-amber-600 text-black"
+                disabled={markNotCustomerLoading}
+              >
+                {markNotCustomerLoading ? "Marking..." : "Mark Not a Customer"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

@@ -1,11 +1,13 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Link as RouterLink,
   useLocation,
   useSearchParams,
 } from "react-router";
-import { useFindMany } from "@gadgetinc/react";
+import { useFindMany, useGlobalAction } from "@gadgetinc/react";
 import { api } from "../api";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SecondaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -23,6 +25,8 @@ import {
   Calendar,
   Tag,
   Users,
+  UserX,
+  RotateCcw,
 } from "lucide-react";
 
 // ── Customer Sidebar ────────────────────────────────────────────────
@@ -140,6 +144,7 @@ export default function TriageHistoryPage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedBatchId = searchParams.get("batch");
+  const viewMode = searchParams.get("view") || "batches";
 
   const [{ data: rawBatches, fetching: fetchingBatches }, refreshBatches] = useFindMany(api.batchOperation, {
     sort: { createdAt: "Descending" },
@@ -167,11 +172,33 @@ export default function TriageHistoryPage() {
   const batches = (rawBatches as any[]) || [];
   const selectedBatch = batches.find((batch) => batch.id === selectedBatchId) || null;
 
-  useEffect(() => {
-    if (!selectedBatchId && batches.length > 0) {
-      setSearchParams({ batch: batches[0].id });
+  const [{ data: rawNonCustomerConvs, fetching: fetchingNonCustomer }, refreshNonCustomer] = useFindMany(
+    api.conversation,
+    {
+      pause: viewMode !== "non_customer",
+      filter: { isCustomer: { equals: false } },
+      sort: { updatedAt: "Descending" },
+      first: 100,
+      select: {
+        id: true,
+        subject: true,
+        primaryCustomerEmail: true,
+        primaryCustomerName: true,
+        status: true,
+        currentCategory: true,
+        updatedAt: true,
+      },
     }
-  }, [selectedBatchId, batches, setSearchParams]);
+  );
+  const nonCustomerConvs = (rawNonCustomerConvs as any[]) || [];
+
+  const [{ fetching: undoing }, undoNotCustomer] = useGlobalAction(api.undoNotCustomer);
+
+  useEffect(() => {
+    if (viewMode !== "non_customer" && !selectedBatchId && batches.length > 0) {
+      setSearchParams((prev) => ({ ...Object.fromEntries(prev), view: "batches", batch: batches[0].id }));
+    }
+  }, [viewMode, selectedBatchId, batches, setSearchParams]);
 
   const [{ data: rawComments, fetching: fetchingComments }] = useFindMany(api.aiComment, {
     pause: !selectedBatch?.id,
@@ -208,27 +235,112 @@ export default function TriageHistoryPage() {
     });
   }, [comments]);
 
+  const handleUndoNotCustomer = async (conversationId: string) => {
+    try {
+      await undoNotCustomer({ conversationId, restoreMode: "return_to_queue" });
+      toast.success("Returned to triage queue");
+      await refreshNonCustomer();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to return to queue");
+    }
+  };
+
   return (
     <div className="flex flex-1 min-h-0 bg-slate-950 text-white">
       <CustomerSidebar currentPath={location.pathname} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <PageHeader
-          title="Batch History"
-          subtitle="Review batch operations and individual results"
+          title="Triage History"
+          subtitle={viewMode === "non_customer" ? "Conversations marked as not a customer" : "Review batch operations and individual results"}
           actions={
-            <SecondaryButton onClick={() => refreshBatches()} disabled={fetchingBatches}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${fetchingBatches ? "animate-spin" : ""}`} />
-              {fetchingBatches ? "Refreshing..." : "Refresh"}
-            </SecondaryButton>
+            <div className="flex items-center gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSearchParams((prev) => ({ ...Object.fromEntries(prev), view: "batches" }))}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    viewMode !== "non_customer"
+                      ? "bg-teal-500/20 text-teal-400 border border-teal-500/40"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                  }`}
+                >
+                  Batches
+                </button>
+                <button
+                  onClick={() => setSearchParams({ view: "non_customer" })}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    viewMode === "non_customer"
+                      ? "bg-amber-500/20 text-amber-400 border border-amber-500/40"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                  }`}
+                >
+                  Non-customer
+                </button>
+              </div>
+              <SecondaryButton
+                onClick={() => (viewMode === "non_customer" ? refreshNonCustomer() : refreshBatches())}
+                disabled={viewMode === "non_customer" ? fetchingNonCustomer : fetchingBatches}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${(viewMode === "non_customer" ? fetchingNonCustomer : fetchingBatches) ? "animate-spin" : ""}`} />
+                {(viewMode === "non_customer" ? fetchingNonCustomer : fetchingBatches) ? "Refreshing..." : "Refresh"}
+              </SecondaryButton>
+            </div>
           }
         />
 
         <div className="flex-1 overflow-hidden flex">
-          {/* Left: Batch list */}
+          {/* Left: Batch list or Non-customer list */}
           <div className="w-1/3 border-r border-slate-800 flex flex-col bg-slate-900/30">
             <div className="flex-1 overflow-y-auto">
-              {fetchingBatches ? (
+              {viewMode === "non_customer" ? (
+                fetchingNonCustomer ? (
+                  <EmptyState title="Loading non-customer list..." />
+                ) : nonCustomerConvs.length === 0 ? (
+                  <EmptyState
+                    title="No non-customer conversations"
+                    description="Conversations marked as Not a Customer will appear here. You can undo them to return to the triage queue."
+                  />
+                ) : (
+                  <div className="divide-y divide-slate-800">
+                    {nonCustomerConvs.map((conv: any) => (
+                      <div
+                        key={conv.id}
+                        className="p-4 hover:bg-slate-800/40 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <span className="text-sm font-medium text-slate-100 line-clamp-2">
+                            {conv.subject || "(No subject)"}
+                          </span>
+                          <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400 shrink-0">
+                            NOT A CUSTOMER
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-400 mb-2">
+                          {conv.primaryCustomerEmail || conv.primaryCustomerName || "—"}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <RouterLink
+                            to={`/conversations/${conv.id}`}
+                            className="text-[11px] text-teal-400 hover:text-teal-300"
+                          >
+                            View
+                          </RouterLink>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs border-teal-600 text-teal-400 hover:bg-teal-600/10"
+                            onClick={() => handleUndoNotCustomer(conv.id)}
+                            disabled={undoing}
+                          >
+                            <RotateCcw className="h-3 w-3 mr-1" />
+                            Return to Queue
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : fetchingBatches ? (
                 <EmptyState title="Loading batch history..." />
               ) : batches.length === 0 ? (
                 <EmptyState title="No batch operations found" description="Run a batch action to see results here." />
@@ -274,9 +386,26 @@ export default function TriageHistoryPage() {
             </div>
           </div>
 
-          {/* Right: Batch detail */}
+          {/* Right: Batch detail or Non-customer info */}
           <div className="flex-1 overflow-y-auto bg-slate-950">
-            {!selectedBatch ? (
+            {viewMode === "non_customer" ? (
+              <div className="p-8">
+                <div className="max-w-xl mx-auto">
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <UserX className="h-8 w-8 text-amber-400" />
+                      <h3 className="text-lg font-semibold text-white">Non-customer conversations</h3>
+                    </div>
+                    <p className="text-sm text-slate-400 mb-4">
+                      These conversations were marked as Not a Customer and removed from the triage queue. Use <strong className="text-slate-300">Return to Queue</strong> to undo and restore them.
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {nonCustomerConvs.length} conversation{nonCustomerConvs.length !== 1 ? "s" : ""} marked
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : !selectedBatch ? (
               <div className="h-full flex items-center justify-center text-slate-500">
                 <div className="text-center">
                   <Layers className="h-12 w-12 mx-auto mb-3 opacity-50" />

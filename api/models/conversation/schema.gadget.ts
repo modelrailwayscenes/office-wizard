@@ -174,6 +174,17 @@ export const schema: GadgetModel = {
       storageKey: "xkmpcgWz0MfG",
       searchIndex: false,
     },
+    isCustomer: {
+      type: "boolean",
+      default: true,
+      storageKey: "isCustomer_nac_pkg7",
+      searchIndex: false,
+    },
+    nonCustomerReason: {
+      type: "string",
+      storageKey: "nonCustomerReason_nac_pkg7",
+      searchIndex: false,
+    },
     lastTriagedAt: {
       type: "dateTime",
       includeTime: true,
@@ -301,6 +312,7 @@ export const schema: GadgetModel = {
         "waiting_customer",
         "waiting_internal",
         "resolved",
+        "ignored",
         "archived",
       ],
       validations: { required: true },

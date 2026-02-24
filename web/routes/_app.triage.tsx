@@ -37,7 +37,18 @@ import {
   FileText,
   PenLine,
   Settings,
+  UserX,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // ── Customer Sidebar ────────────────────────────────────────────────
 const customerTabs = [
@@ -135,6 +146,7 @@ export default function TriageQueuePage() {
 
   const [assignToUserId, setAssignToUserId] = useState("");
   const [moveToCategory, setMoveToCategory] = useState("");
+  const [markNotCustomerDialogOpen, setMarkNotCustomerDialogOpen] = useState(false);
 
   const extractOrderNumber = (text: string): string | null => {
     const match = text?.match(/\b(MRS|NRS)[-\s]?\d{5}\b/i);
@@ -154,7 +166,13 @@ export default function TriageQueuePage() {
   };
 
   const [{ data: conversationsData, fetching }, refresh] = useFindMany(api.conversation, {
-    filter: { status: { notEquals: "resolved" } },
+    filter: {
+      AND: [
+        { status: { notEquals: "resolved" } },
+        { status: { notEquals: "ignored" } },
+        { isCustomer: { notEquals: false } },
+      ],
+    } as any,
     select: {
       id: true,
       subject: true,
@@ -195,6 +213,7 @@ export default function TriageQueuePage() {
   const [{ fetching: batchLoading }, runBatchOperation] = useGlobalAction(api.runBatchOperation);
   const [{ fetching: applyEditsLoading }, applyDraftEdits] = useGlobalAction(api.applyDraftEdits);
   const [, generateDraft] = useGlobalAction(api.generateDraft);
+  const [{ fetching: markNotCustomerLoading }, markNotCustomer] = useGlobalAction(api.markNotCustomer);
   const [{ data: configData }] = useFindFirst(api.appConfiguration);
   const telemetryEnabled = (configData as any)?.telemetryBannersEnabled ?? true;
   const [{ data: aiCommentData, fetching: aiCommentFetching }] = useFindMany(api.aiComment, {
@@ -285,6 +304,21 @@ export default function TriageQueuePage() {
       });
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleMarkNotCustomer = async () => {
+    if (!selectedConvId) return;
+    setMarkNotCustomerDialogOpen(false);
+    const currentIndex = filteredConversations?.findIndex((c: any) => c.id === selectedConvId) ?? -1;
+    try {
+      await markNotCustomer({ conversationId: selectedConvId, reason: "" });
+      toast.success("Marked as Not a Customer");
+      await refresh();
+      const nextConv = filteredConversations?.[currentIndex + 1] ?? filteredConversations?.[currentIndex - 1];
+      setSelectedConvId(nextConv?.id ?? null);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to mark as Not a Customer");
     }
   };
 
@@ -604,6 +638,18 @@ export default function TriageQueuePage() {
                       <Mail className="h-4 w-4" />
                       <span>{selectedConv.primaryCustomerEmail || "—"}</span>
                     </div>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-slate-600 hover:bg-slate-800 hover:border-amber-500/50 text-amber-400"
+                      onClick={() => setMarkNotCustomerDialogOpen(true)}
+                      disabled={markNotCustomerLoading}
+                    >
+                      <UserX className="h-4 w-4 mr-2" />
+                      Mark Not a Customer
+                    </Button>
                   </div>
                 </div>
 
@@ -985,6 +1031,27 @@ export default function TriageQueuePage() {
           return "Regenerated";
         }}
       />
+
+      <AlertDialog open={markNotCustomerDialogOpen} onOpenChange={setMarkNotCustomerDialogOpen}>
+        <AlertDialogContent className="bg-slate-900 border-slate-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark as Not a Customer?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              This removes it from triage. You can undo this in Triage History.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleMarkNotCustomer}
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+              disabled={markNotCustomerLoading}
+            >
+              {markNotCustomerLoading ? "Marking..." : "Mark Not a Customer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
