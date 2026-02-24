@@ -12,10 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import {
   AlertDialog,
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useGlobalAction, useFindOne, useFindMany, useFindFirst } from "@gadgetinc/react";
+import { useConversationsListQuery, useInvalidateConversations } from "@/hooks/useConversationsQuery";
 import { toast } from "sonner";
 import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard, ShieldAlert, UserX } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
@@ -47,6 +48,7 @@ import { SecondaryButton, PrimaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { getAiCommentStyle } from "@/components/aiCommentUtils";
 import { timeAgo } from "@/components/healthStatus";
+import { ConversationDetailContent } from "@/components/ConversationDetailContent";
 
 // ── Customer Sidebar (same as dashboard) ────────────────────────────
 const BASE = "/customer/support";
@@ -170,11 +172,12 @@ export default function ConversationsIndex() {
     return { AND: filters };
   }, [priorityFilter, search, statusFilter]);
 
-  const [{ data: conversationListData, fetching: fetchingList }] = useFindMany(api.conversation, {
-    select: { id: true },
+  const { data: conversationListResult, isLoading: fetchingList } = useConversationsListQuery({
     filter: listFilter,
     first: 100,
+    select: { id: true },
   });
+  const conversationListData = conversationListResult as { id: string }[] | undefined;
 
   const [{ data: rawConversationData, fetching: fetchingConversation, error: conversationError }] = useFindOne(
     api.conversation,
@@ -331,11 +334,13 @@ export default function ConversationsIndex() {
     setTimeout(() => setSelectedConversationId(null), 300);
   };
 
+  const invalidateConversations = useInvalidateConversations();
   const handleMarkNotCustomer = async () => {
     if (!selectedConversationId) return;
     setMarkNotCustomerDialogOpen(false);
     try {
       await markNotCustomer({ conversationId: selectedConversationId, reason: "" });
+      invalidateConversations();
       toast.success("Marked as Not a Customer");
       handleCloseDrawer();
     } catch (err: any) {
@@ -618,19 +623,20 @@ export default function ConversationsIndex() {
                         <X className="h-5 w-5" />
                       </Button>
                     </div>
-                    {fetchingConversation && (
-                      <div className="flex items-center justify-center py-12"><RefreshCw className="h-8 w-8 animate-spin text-teal-500" /></div>
-                    )}
-                    {conversationError && (
-                      <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
-                        <AlertTriangle className="h-5 w-5" /><span>Error loading conversation: {conversationError.toString()}</span>
-                      </div>
-                    )}
-                    {conversationData && (
-                      <RouterLink to={`/customer/support/conversations/${selectedConversationId}`} className="text-teal-400 hover:text-teal-300 text-sm">
-                        Open full view →
-                      </RouterLink>
-                    )}
+                    <ConversationDetailContent
+                      conversationData={conversationData}
+                      messagesData={messagesData}
+                      latestAiComment={latestAiComment}
+                      fetchingConversation={fetchingConversation}
+                      fetchingMessages={fetchingMessages}
+                      fetchingAiComments={fetchingAiComments}
+                      conversationError={conversationError}
+                      markNotCustomerLoading={markNotCustomerLoading}
+                      formatDateTime={formatDateTime}
+                      titleCaseEnum={titleCaseEnum}
+                      onMarkNotCustomer={() => setMarkNotCustomerDialogOpen(true)}
+                      conversationId={selectedConversationId!}
+                    />
                   </div>
                 )}
               </div>
@@ -638,339 +644,42 @@ export default function ConversationsIndex() {
           </ResizablePanelGroup>
         </div>
 
-        {/* Conversation Details Drawer - Mobile only */}
-        <Sheet open={drawerOpen} onOpenChange={(open) => !open && handleCloseDrawer()} className="lg:hidden">
-          <SheetContent side="right" className="w-full sm:max-w-2xl bg-slate-900 border-slate-800 overflow-y-auto p-0">
-            {/* Drawer header band */}
+        {/* Conversation Details Drawer - Mobile only (Vaul Drawer, hidden on lg via wrapper) */}
+        <div className="lg:hidden">
+        <Drawer open={drawerOpen} onOpenChange={(open) => !open && handleCloseDrawer()} direction="right">
+          <DrawerContent direction="right" hideHandle className="w-full sm:max-w-2xl bg-slate-900 border-slate-800 overflow-y-auto p-0">
             <div className="border-b border-slate-800 bg-slate-900/50 px-6 py-5 sticky top-0 z-10">
               <div className="flex items-start justify-between">
                 <div>
-                  <SheetTitle className="text-xl font-semibold text-white">
-                    Conversation Details
-                  </SheetTitle>
-                  {conversationData?.subject && (
-                    <p className="text-sm text-slate-400 mt-1 line-clamp-1 pr-8">{conversationData.subject}</p>
-                  )}
+                  <DrawerTitle className="text-xl font-semibold text-white">Conversation Details</DrawerTitle>
+                  {conversationData?.subject && <p className="text-sm text-slate-400 mt-1 line-clamp-1 pr-8">{conversationData.subject}</p>}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleCloseDrawer}
-                  className="text-slate-400 hover:text-white flex-shrink-0"
-                >
+                <Button variant="ghost" size="icon" onClick={handleCloseDrawer} className="text-slate-400 hover:text-white flex-shrink-0">
                   <X className="h-5 w-5" />
                 </Button>
               </div>
             </div>
-
-            {/* Drawer content */}
             <div className="px-6 py-6">
-
-            {fetchingConversation && (
-              <div className="flex items-center justify-center py-12">
-                <RefreshCw className="h-8 w-8 animate-spin text-teal-500" />
-              </div>
-            )}
-
-            {conversationError && (
-              <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
-                <AlertTriangle className="h-5 w-5" />
-                <span>Error loading conversation: {conversationError.toString()}</span>
-              </div>
-            )}
-
-            {conversationData && (
-              <div className="space-y-4">
-
-                {conversationData.currentCategory !== "not_customer" && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-slate-600 hover:bg-slate-800 hover:border-amber-500/50 text-amber-400"
-                      onClick={() => setMarkNotCustomerDialogOpen(true)}
-                      disabled={markNotCustomerLoading}
-                    >
-                      <UserX className="h-4 w-4 mr-2" />
-                      Mark Not a Customer
-                    </Button>
-                  </div>
-                )}
-
-                {/* Metadata */}
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-white">Metadata</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">Status</p>
-                        <UnifiedBadge
-                          type={conversationData.status}
-                          label={titleCaseEnum(conversationData.status)}
-                        />
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">Sentiment</p>
-                        <SentimentBadge
-                          sentiment={conversationData.sentiment}
-                        />
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">Priority</p>
-                        <UnifiedBadge
-                          type={conversationData.currentPriorityBand}
-                          label={titleCaseEnum(conversationData.currentPriorityBand)}
-                        />
-                      </div>
-                    </div>
-
-                    <Separator className="bg-slate-700" />
-
-                    <div>
-                      <p className="text-xs text-slate-400 mb-1">Customer</p>
-                      <p className="text-slate-200">
-                        {conversationData.primaryCustomerName || conversationData.primaryCustomerEmail || "—"}
-                      </p>
-                      {conversationData.primaryCustomerName && conversationData.primaryCustomerEmail && (
-                        <p className="text-sm text-slate-400">{conversationData.primaryCustomerEmail}</p>
-                      )}
-                    </div>
-
-                    <Separator className="bg-slate-700" />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">First Message</p>
-                        <p className="text-sm text-slate-300">{formatDateTime(conversationData.firstMessageAt)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">Last Activity</p>
-                        <p className="text-sm text-slate-300">{formatDateTime(conversationData.latestMessageAt)}</p>
-                      </div>
-                    </div>
-
-                    {conversationData.resolvedAt && (
-                      <>
-                        <Separator className="bg-slate-700" />
-                        <div>
-                          <p className="text-xs text-slate-400 mb-1">Resolved At</p>
-                          <p className="text-sm text-slate-300">{formatDateTime(conversationData.resolvedAt)}</p>
-                        </div>
-                      </>
-                    )}
-
-                    <Separator className="bg-slate-700" />
-
-                    <div>
-                      <p className="text-xs text-slate-400 mb-1">Message Count</p>
-                      <p className="text-slate-200">{conversationData.messageCount ?? 0}</p>
-                    </div>
-
-                    {conversationData.currentPriorityScore && (
-                      <>
-                        <Separator className="bg-slate-700" />
-                        <div>
-                          <p className="text-xs text-slate-400 mb-1">Priority Score</p>
-                          <p className="text-slate-200">{conversationData.currentPriorityScore.toFixed(2)}</p>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Classification */}
-                {conversationData.classifications?.edges?.[0]?.node && (
-                  <Card className="bg-slate-800/50 border-slate-700">
-                    <CardHeader>
-                      <CardTitle className="text-lg text-white">Classification</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">Intent Category</p>
-                        <UnifiedBadge
-                          type={conversationData.classifications.edges[0].node.intentCategory}
-                          label={titleCaseEnum(conversationData.classifications.edges[0].node.intentCategory)}
-                        />
-                      </div>
-
-                      <Separator className="bg-slate-700" />
-
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">Sentiment</p>
-                        <SentimentBadge sentiment={conversationData.classifications.edges[0].node.sentimentLabel} />
-                      </div>
-
-                      {conversationData.classifications.edges[0].node.automationTag && (
-                        <>
-                          <Separator className="bg-slate-700" />
-                          <div>
-                            <p className="text-xs text-slate-400 mb-1">Automation Tag</p>
-                            <p className="text-slate-200">
-                              {titleCaseEnum(conversationData.classifications.edges[0].node.automationTag)}
-                            </p>
-                          </div>
-                        </>
-                      )}
-
-                      <Separator className="bg-slate-700" />
-
-                      <div>
-                        <p className="text-xs text-slate-400 mb-1">Classified At</p>
-                        <p className="text-sm text-slate-300">
-                          {formatDateTime(conversationData.classifications.edges[0].node.createdAt)}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Internal Notes */}
-                {conversationData.internalNotes && (
-                  <Card className="bg-slate-800/50 border-slate-700">
-                    <CardHeader>
-                      <CardTitle className="text-lg text-white">Internal Notes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-slate-300 whitespace-pre-wrap">{conversationData.internalNotes}</p>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Latest Activity */}
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-white">Latest Activity</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {fetchingAiComments ? (
-                      <div className="text-sm text-slate-400">Loading activity...</div>
-                    ) : latestAiComment ? (
-                      <div className="rounded-lg border border-slate-700/40 bg-slate-900/60 p-4">
-                        <div className="flex items-center justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {(() => {
-                              const style = getAiCommentStyle(latestAiComment.kind);
-                              return (
-                                <span
-                                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${style.className}`}
-                                >
-                                  <style.Icon className="h-3 w-3" />
-                                  {style.label}
-                                </span>
-                              );
-                            })()}
-                            {latestAiComment.batchOperation?.id && (
-                              <RouterLink
-                                to={`/customer/support/triage/history?batch=${latestAiComment.batchOperation.id}`}
-                                className="text-[11px] text-teal-400 hover:text-teal-300"
-                              >
-                                Batch {latestAiComment.batchOperation.id}
-                              </RouterLink>
-                            )}
-                          </div>
-                          <span
-                            className="text-[11px] text-slate-500"
-                            title={
-                              latestAiComment.createdAt
-                                ? new Date(latestAiComment.createdAt).toLocaleString()
-                                : "Unknown"
-                            }
-                          >
-                            {timeAgo(latestAiComment.createdAt)}
-                          </span>
-                        </div>
-                        <div className="text-xs text-slate-300 whitespace-pre-wrap">
-                          {latestAiComment.content}
-                        </div>
-                        <div className="mt-2 text-[11px] text-slate-500">
-                          Source: {latestAiComment.source || "system"}
-                          {latestAiComment.user?.email ? ` · ${latestAiComment.user.email}` : ""}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-slate-400">No activity recorded yet.</div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Messages */}
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-white flex items-center gap-2">
-                      <Mail className="h-5 w-5" />
-                      Messages
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {fetchingMessages && (
-                      <div className="flex items-center justify-center py-8">
-                        <RefreshCw className="h-6 w-6 animate-spin text-teal-500" />
-                      </div>
-                    )}
-
-                    {!fetchingMessages && messagesData && messagesData.length === 0 && (
-                      <p className="text-slate-400 text-center py-8">No messages found</p>
-                    )}
-
-                    {!fetchingMessages && messagesData && messagesData.length > 0 && (
-                      <div className="space-y-4">
-                        {messagesData.map((message: any, index: number) => (
-                          <div
-                            key={message.id}
-                            className="p-4 bg-slate-900/50 border border-slate-700 rounded-lg space-y-2"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-white">
-                                  {message.fromName || message.fromAddress}
-                                </p>
-                                {message.fromName && (
-                                  <p className="text-xs text-slate-400">{message.fromAddress}</p>
-                                )}
-                              </div>
-                              <p className="text-xs text-slate-400">
-                                {formatDateTime(message.receivedDateTime)}
-                              </p>
-                            </div>
-
-                            {message.subject && (
-                              <p className="text-sm text-slate-300 font-medium">{message.subject}</p>
-                            )}
-
-                            {message.hasAttachments && (
-                              <div className="flex items-center gap-1 text-xs text-teal-400">
-                                <Paperclip className="h-3 w-3" />
-                                <span>Has attachments</span>
-                              </div>
-                            )}
-
-                            {message.bodyText && (
-                              <div className="mt-2 p-3 bg-slate-800/50 rounded text-sm text-slate-300 whitespace-pre-wrap">
-                                {message.bodyText.slice(0, 500)}
-                                {message.bodyText.length > 500 && "..."}
-                              </div>
-                            )}
-
-                            {!message.bodyText && message.bodyPreview && (
-                              <p className="text-sm text-slate-400 italic">{message.bodyPreview}</p>
-                            )}
-
-                            {index < messagesData.length - 1 && (
-                              <Separator className="bg-slate-700 mt-4" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+              {selectedConversationId && (
+                <ConversationDetailContent
+                  conversationData={conversationData}
+                  messagesData={messagesData}
+                  latestAiComment={latestAiComment}
+                  fetchingConversation={fetchingConversation}
+                  fetchingMessages={fetchingMessages}
+                  fetchingAiComments={fetchingAiComments}
+                  conversationError={conversationError}
+                  markNotCustomerLoading={markNotCustomerLoading}
+                  formatDateTime={formatDateTime}
+                  titleCaseEnum={titleCaseEnum}
+                  onMarkNotCustomer={() => setMarkNotCustomerDialogOpen(true)}
+                  conversationId={selectedConversationId}
+                />
+              )}
             </div>
-          </SheetContent>
-        </Sheet>
+          </DrawerContent>
+        </Drawer>
+        </div>
 
         <AlertDialog open={markNotCustomerDialogOpen} onOpenChange={setMarkNotCustomerDialogOpen}>
           <AlertDialogContent className="bg-slate-900 border-slate-800">
@@ -992,7 +701,6 @@ export default function ConversationsIndex() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
     </div>
   );
 }

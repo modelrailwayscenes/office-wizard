@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSession, useFindMany, useFindFirst } from "@gadgetinc/react";
+import { useDashboardConversationsQuery } from "@/hooks/useConversationsQuery";
 import { Link as RouterLink, useLocation } from "react-router";
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Pie, PieChart, Cell } from "recharts";
 import { Card } from "@/components/ui/card";
@@ -138,20 +139,8 @@ export default function Dashboard() {
     }
   }, [user?.firstName]);
 
-  const [{ data: conversationsRaw, fetching: conversationsFetching }] = useFindMany(api.conversation, {
-    first: 1000,
-    filter: {
-      latestMessageAt: { greaterThanOrEqual: startOfDay.toISOString() },
-    } as any,
-    select: {
-      id: true,
-      status: true,
-      currentPriorityBand: true,
-      lastTriagedAt: true,
-      latestMessageAt: true,
-      hasDraft: true,
-      unreadCount: true,
-    } as any,
+  const { data: conversationsRaw, isLoading: conversationsFetching } = useDashboardConversationsQuery({
+    startOfDay,
   });
 
   const [{ data: configData }] = useFindFirst(api.appConfiguration, {

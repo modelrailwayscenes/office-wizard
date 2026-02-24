@@ -12,7 +12,14 @@ import type { Route } from "./+types/root";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000, // 30 seconds - cache conversations/dashboard data
+      gcTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 export const links = () => [];
 
