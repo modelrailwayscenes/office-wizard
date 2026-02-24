@@ -21,6 +21,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { ArrowLeft, Trash2, Plus, Code } from "lucide-react";
 import { toast } from "sonner";
@@ -59,6 +69,7 @@ export default function EditTemplate() {
   const navigate = useNavigate();
   const editorRef = useRef<MDXEditorMethods>(null);
   const [isCreateSigOpen, setIsCreateSigOpen] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const insertVariable = (variableName: string) => {
     const editor = editorRef.current;
@@ -152,11 +163,15 @@ export default function EditTemplate() {
 
   const handleBackClick = (e: React.MouseEvent) => {
     if (isDirty) {
-      const confirmLeave = confirm("You have unsaved changes. Are you sure you want to leave?");
-      if (!confirmLeave) {
-        e.preventDefault();
-      }
+      e.preventDefault();
+      setShowCancelConfirm(true);
     }
+  };
+
+  const handleCancelConfirm = () => {
+    setShowCancelConfirm(false);
+    reset();
+    navigate("/templates");
   };
 
   const renderPreview = () => {
@@ -512,6 +527,14 @@ export default function EditTemplate() {
                   >
                     Reset
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-zinc-900/50 border-zinc-800"
+                    onClick={() => (isDirty ? setShowCancelConfirm(true) : navigate("/templates"))}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </form>
             </CardContent>
@@ -530,6 +553,23 @@ export default function EditTemplate() {
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent className="bg-zinc-950 border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit without saving?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to exit without saving?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelConfirm} className="bg-amber-500 hover:bg-amber-600 text-black">
+              Exit without saving
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

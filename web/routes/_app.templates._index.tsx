@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useNavigate } from "react-router";
-import { useFindMany, useGlobalAction } from "@gadgetinc/react";
+import { useFindMany, useGlobalAction, useUser } from "@gadgetinc/react";
 import { AutoTable } from "@/components/auto";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,11 @@ export default function TemplatesIndex() {
   });
   const [{ fetching: importing }, importTemplates] = useGlobalAction(api.importTemplates);
   const [{ fetching: seeding }, seedTemplates] = useGlobalAction(api.seedCustomerTemplates);
+  const user = useUser(api, { select: { roleList: { key: true } } });
+  const roleKeys = Array.isArray(user?.roleList)
+    ? user.roleList.map((r: any) => (typeof r === "string" ? r : r?.key)).filter(Boolean)
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
 
   const handleExport = async (format: "json" | "csv") => {
     try {
@@ -154,16 +159,6 @@ export default function TemplatesIndex() {
             <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-pulse" : ""}`} />
             {importing ? "Importing…" : "Import"}
           </Button>
-          {!isEmpty && (
-            <Button
-              variant="outline"
-              onClick={handleSeed}
-              disabled={seeding}
-              className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
-            >
-              {seeding ? "Seeding…" : "Seed Samples"}
-            </Button>
-          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -204,14 +199,16 @@ export default function TemplatesIndex() {
             Create your first template to automate email responses and save time
           </p>
           <div className="flex gap-3">
-            <Button
-              onClick={handleSeed}
-              disabled={seeding}
-              variant="outline"
-              className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
-            >
-              {seeding ? "Seeding…" : "Seed Sample Templates"}
-            </Button>
+            {isAdmin && (
+              <Button
+                onClick={handleSeed}
+                disabled={seeding}
+                variant="outline"
+                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                {seeding ? "Seeding…" : "Seed Sample Templates"}
+              </Button>
+            )}
             <Button
               onClick={() => navigate("/templates/new")}
               className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
