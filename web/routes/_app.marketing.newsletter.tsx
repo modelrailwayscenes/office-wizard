@@ -29,7 +29,7 @@ export default function MarketingNewsletterLayout() {
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-slate-950 text-white">
       {/* Sidebar */}
       <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-        <SidebarBrandHeader icon={LayoutTemplate} title="MARKETING" subtitle="Newsletter" />
+        <SidebarBrandHeader icon={LayoutTemplate} overline="Marketing" title="NEWSLETTER" />
         <nav className="space-y-1">
           {NAV_ITEMS.map((item) => {
             const isActive =

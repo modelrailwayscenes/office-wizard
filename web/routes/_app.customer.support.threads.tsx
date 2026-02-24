@@ -19,6 +19,7 @@ import {
   Search, RefreshCw, Mail, Calendar, User, MessageSquare, Clock, Tag, AlertTriangle,
   LayoutDashboard, Layers, FileText, PenLine, Settings, ShieldAlert, UserX,
 } from "lucide-react";
+import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,10 +66,7 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
 
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-      <div className="mb-6 px-3">
-        <h2 className="text-lg font-semibold text-white leading-tight">CUSTOMER</h2>
-        <p className="text-xs text-slate-400">Support</p>
-      </div>
+      <SidebarBrandHeader icon={LayoutDashboard} overline="Customer" title="SUPPORT" />
       <nav className="space-y-1">
         {customerTabs.map(({ id, label, icon: Icon, path, children }) => (
           <div key={id}>
