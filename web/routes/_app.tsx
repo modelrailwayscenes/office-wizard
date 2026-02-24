@@ -79,7 +79,7 @@ const modules = [
     label: "CUSTOMER",
     path: "/customer/support",
     // Any path starting with these counts as "in this module"
-    activePaths: ["/customer/support", "/customer/support/conversations", "/customer/support/threads", "/customer/support/triage", "/customer/support/templates", "/customer/support/signatures", "/customer/support/settings"],
+    activePaths: ["/customer/support", "/customer/support/conversations", "/customer/support/threads", "/customer/support/triage-queue", "/customer/support/triage", "/customer/support/templates", "/customer/support/signatures", "/customer/support/settings"],
   },
   { id: "finance",   label: "FINANCE",   path: "/finance",   activePaths: ["/finance"] },
   { id: "it",        label: "IT",        path: "/it",        activePaths: ["/it"] },

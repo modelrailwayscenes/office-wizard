@@ -34,7 +34,7 @@ const customerTabs = [
   { id: "dashboard",     label: "Dashboard",     icon: LayoutDashboard, path: `${BASE}` },
   { id: "conversations", label: "Conversations", icon: MessageSquare,   path: `${BASE}/conversations` },
   { id: "threads",       label: "Threads",       icon: MessageSquare,   path: `${BASE}/threads` },
-  { id: "triage",        label: "Triage",        icon: Layers,          path: `${BASE}/triage` },
+  { id: "triage",        label: "Triage",        icon: Layers,          path: `${BASE}/triage-queue` },
   { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: `${BASE}/quarantine` },
   { id: "templates",     label: "Templates",     icon: FileText,        path: `${BASE}/templates`,
     children: [
