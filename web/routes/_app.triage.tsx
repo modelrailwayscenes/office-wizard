@@ -170,7 +170,7 @@ export default function TriageQueuePage() {
       AND: [
         { status: { notEquals: "resolved" } },
         { status: { notEquals: "ignored" } },
-        { isCustomer: { notEquals: false } },
+        { currentCategory: { notEquals: "not_customer" } },
       ],
     } as any,
     select: {

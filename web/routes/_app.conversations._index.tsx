@@ -185,7 +185,6 @@ export default function ConversationsIndex() {
         primaryCustomerEmail: true,
         primaryCustomerName: true,
         status: true,
-        isCustomer: true,
         currentPriorityBand: true,
         currentPriorityScore: true,
         sentiment: true,
@@ -640,7 +639,7 @@ export default function ConversationsIndex() {
             {conversationData && (
               <div className="space-y-4">
 
-                {conversationData.isCustomer !== false && (
+                {conversationData.currentCategory !== "not_customer" && (
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

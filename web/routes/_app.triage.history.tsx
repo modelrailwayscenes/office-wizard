@@ -176,7 +176,7 @@ export default function TriageHistoryPage() {
     api.conversation,
     {
       pause: viewMode !== "non_customer",
-      filter: { isCustomer: { equals: false } },
+      filter: { currentCategory: { equals: "not_customer" } },
       sort: { updatedAt: "Descending" },
       first: 100,
       select: {

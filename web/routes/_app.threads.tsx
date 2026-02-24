@@ -147,7 +147,7 @@ export default function ThreadsPage() {
       subject: true,
       primaryCustomerEmail: true,
       status: true,
-      isCustomer: true,
+      currentCategory: true,
       currentPriorityBand: true,
       sentiment: true,
       messageCount: true,
@@ -525,7 +525,7 @@ export default function ThreadsPage() {
                       <Mail className="h-4 w-4" />
                       <span>{selectedConversation.primaryCustomerEmail || "—"}</span>
                     </div>
-                    {selectedConversation.isCustomer !== false && (
+                    {selectedConversation.currentCategory !== "not_customer" && (
                       <div className="mt-3">
                         <Button
                           variant="outline"
