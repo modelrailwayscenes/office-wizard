@@ -701,6 +701,7 @@ export default function ConversationsIndex() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      </div>
     </div>
   );
 }
