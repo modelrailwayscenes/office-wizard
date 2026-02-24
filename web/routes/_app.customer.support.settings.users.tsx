@@ -175,59 +175,43 @@ export default function TeamPage() {
 
   const handleEdit = (user: any) => {
     setEditingUser(user);
-    setEditForm({
-      email:     user.email      || "",
-      firstName: user.firstName  || "",
-      lastName:  user.lastName   || "",
-      role:      getPrimaryRoleKey(user.roleList) || "signed-in",
+    editForm.reset({
+      email: user.email || "",
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      role: getPrimaryRoleKey(user.roleList) || "signed-in",
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (values: UserFormValues) => {
     if (!editingUser) return;
-    
     try {
-      // Update the user's basic info
-      await api.user.update(editingUser.id, {
-        email: editForm.email,
-        firstName: editForm.firstName,
-        lastName: editForm.lastName,
-      });
-      
-      // Update the user's role using the internal API
-      await api.internal.user.update(editingUser.id, {
-        roleList: [editForm.role],
-      });
-      
+      await api.user.update(editingUser.id, { email: values.email, firstName: values.firstName, lastName: values.lastName });
+      await api.internal.user.update(editingUser.id, { roleList: [values.role] });
       toast.success("User updated successfully");
       setEditingUser(null);
       void refetch();
     } catch (err: any) {
       toast.error("Failed to update user: " + (err.message || err));
-      console.error("Error updating user:", err);
     }
   };
 
-  const handleAddUser = async () => {
+  const handleAddUser = async (values: NewUserFormValues) => {
     try {
-      await (signUp as any)({ email: newUserForm.email, password: newUserForm.password });
-
-      const newUsers = await api.user.findMany({ filter: { email: { equals: newUserForm.email } } });
-
+      await (signUp as any)({ email: values.email, password: values.password });
+      const newUsers = await api.user.findMany({ filter: { email: { equals: values.email } } });
       if (newUsers.length > 0) {
-        await api.user.update(newUsers[0].id, { firstName: newUserForm.firstName, lastName: newUserForm.lastName });
-        if (newUserForm.role !== "signed-in") {
-          await api.internal.user.update(newUsers[0].id, { roleList: [newUserForm.role] });
+        await api.user.update(newUsers[0].id, { firstName: values.firstName, lastName: values.lastName });
+        if (values.role !== "signed-in") {
+          await api.internal.user.update(newUsers[0].id, { roleList: [values.role] });
         }
       }
-
       toast.success("User added successfully");
       navigate("/customer/support/settings/users");
-      setNewUserForm({ email: "", firstName: "", lastName: "", role: "signed-in", password: "" });
+      newUserForm.reset();
       void refetch();
     } catch (err) {
       toast.error("Failed to add user");
-      console.error(err);
     }
   };
 
