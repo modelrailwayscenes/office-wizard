@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useOutletContext, useRevalidator, Link as RouterLink, useLocation, useNavigate } from "react-router";
 import { useAction, useUser } from "@gadgetinc/react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { api } from "../api";
 import type { AuthOutletContext } from "./_app";
 import { UserIcon } from "@/components/shared/UserIcon";
@@ -10,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import {
   User2, Users as UsersIcon, Link as LinkIcon, Layers,
@@ -17,6 +21,25 @@ import {
   UserCircle, Lock, Accessibility,
 } from "lucide-react";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
+
+const profileSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  role: z.string().optional(),
+});
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
+type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 const tabs = [
   { id: "summary",      label: "Summary",                icon: User2,        path: "/customer/support/settings/summary" },
@@ -178,11 +201,15 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Edit profile form state
-  const [editFirstName, setEditFirstName] = useState("");
-  const [editLastName, setEditLastName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editRole, setEditRole] = useState("");
+  const profileForm = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { firstName: "", lastName: "", email: "", role: "signed-in" },
+  });
+
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
+  });
 
   // User preferences
   const [highContrastMode, setHighContrastMode] = useState(user.highContrastMode ?? false);
@@ -194,12 +221,14 @@ export default function ProfilePage() {
     setHighContrastMode(loggedInUser.highContrastMode ?? false);
     setReduceMotion(loggedInUser.reduceMotion ?? false);
     setTextSize(loggedInUser.textSize || "medium");
-    setEditFirstName(loggedInUser.firstName || "");
-    setEditLastName(loggedInUser.lastName || "");
-    setEditEmail(loggedInUser.email || "");
     const primaryRole = loggedInUser.roleList?.[0];
     const primaryRoleKey = typeof primaryRole === "string" ? primaryRole : primaryRole?.key;
-    setEditRole(primaryRoleKey || "signed-in");
+    profileForm.reset({
+      firstName: loggedInUser.firstName || "",
+      lastName: loggedInUser.lastName || "",
+      email: loggedInUser.email || "",
+      role: primaryRoleKey || "signed-in",
+    });
   }, [loggedInUser]);
 
   const handleUserToggle = (field: string, setter: (v: boolean) => void) => async (value: boolean) => {
@@ -214,30 +243,23 @@ export default function ProfilePage() {
     }
   };
 
-  const handleProfileSave = async () => {
+  const handleProfileSave = async (values: ProfileFormValues) => {
     if (!user?.id) return;
     try {
-      // Update basic user info
       await updateUser({
         id: user.id,
-        firstName: editFirstName,
-        lastName: editLastName,
-        email: editEmail,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
       });
-      
-      if (isAdmin) {
-        // Update role using internal API
-        await api.internal.user.update(user.id, {
-          roleList: [editRole],
-        });
+      if (isAdmin && values.role) {
+        await api.internal.user.update(user.id, { roleList: [values.role] });
       }
-      
       toast.success("Profile updated successfully");
       setIsEditing(false);
       revalidator.revalidate();
     } catch (err: any) {
       toast.error("Failed to update profile: " + (err.message || err));
-      console.error("Error updating profile:", err);
     }
   };
 
@@ -396,145 +418,158 @@ export default function ProfilePage() {
               <DialogTitle className="text-xl font-semibold text-white">Edit Profile</DialogTitle>
               <p className="text-sm text-slate-400 mt-1">Update your account information</p>
             </DialogHeader>
-            <div className="space-y-5 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium text-slate-200">
-                  First Name
-                </Label>
-                <Input
-                  id="firstName"
-                  value={editFirstName}
-                  onChange={(e) => setEditFirstName(e.target.value)}
-                  className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all"
-                  placeholder="Enter first name"
+            <Form {...profileForm}>
+              <form onSubmit={profileForm.handleSubmit(handleProfileSave)} className="space-y-5 py-2">
+                <FormField
+                  control={profileForm.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-200">First Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500"
+                          placeholder="Enter first name"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-destructive" />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium text-slate-200">
-                  Last Name
-                </Label>
-                <Input
-                  id="lastName"
-                  value={editLastName}
-                  onChange={(e) => setEditLastName(e.target.value)}
-                  className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all"
-                  placeholder="Enter last name"
+                <FormField
+                  control={profileForm.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-200">Last Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500"
+                          placeholder="Enter last name"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-destructive" />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-slate-200">
-                  Email Address
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all"
-                  placeholder="your.email@example.com"
+                <FormField
+                  control={profileForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-200">Email Address</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="email"
+                          className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500"
+                          placeholder="your.email@example.com"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-destructive" />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              {isAdmin && (
-                <div className="space-y-2">
-                  <Label htmlFor="role" className="text-sm font-medium text-slate-200">
-                    Account Role
-                  </Label>
-                  <Select value={editRole} onValueChange={setEditRole}>
-                    <SelectTrigger id="role" className="h-10 bg-slate-800/50 border-slate-700 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-700">
-                      <SelectItem value="signed-in" className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                        Standard User
-                      </SelectItem>
-                      <SelectItem value="system-admin" className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                        Administrator (system-admin)
-                      </SelectItem>
-                      <SelectItem value="sysadmin" className="text-white hover:bg-slate-700 focus:bg-slate-700">
-                        Administrator (sysadmin)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                {isAdmin && (
+                  <FormField
+                    control={profileForm.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-200">Account Role</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-10 bg-slate-800/50 border-slate-700 text-white focus:border-teal-500">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-slate-800 border-slate-700">
+                            <SelectItem value="signed-in" className="text-white hover:bg-slate-700">Standard User</SelectItem>
+                            <SelectItem value="system-admin" className="text-white hover:bg-slate-700">Administrator (system-admin)</SelectItem>
+                            <SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Administrator (sysadmin)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-destructive" />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
+                  <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={updatingUser} className="border-slate-700 hover:bg-slate-800 hover:text-white">
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updatingUser} className="bg-teal-500 hover:bg-teal-600 text-black font-medium">
+                    {updatingUser ? "Saving..." : "Save Changes"}
+                  </Button>
                 </div>
-              )}
-            </div>
-            <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsEditing(false)} 
-                disabled={updatingUser}
-                className="border-slate-700 hover:bg-slate-800 hover:text-white transition-colors"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleProfileSave}
-                disabled={updatingUser}
-                className="bg-teal-500 hover:bg-teal-600 text-black font-medium transition-colors"
-              >
-                {updatingUser ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       )}
 
       {/* Change Password Dialog */}
       {isChangingPassword && (
-        <Dialog open={isChangingPassword} onOpenChange={setIsChangingPassword}>
+        <Dialog open={isChangingPassword} onOpenChange={(open) => { if (!open) passwordForm.reset(); setIsChangingPassword(open); }}>
           <DialogContent className="bg-slate-900 border-slate-700 max-w-md">
             <DialogHeader className="pb-4">
               <DialogTitle className="text-xl font-semibold text-white">Change Password</DialogTitle>
               <p className="text-sm text-slate-400 mt-1">Update your account password</p>
             </DialogHeader>
-            <div className="space-y-5 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword" className="text-sm font-medium text-slate-200">
-                  Current Password
-                </Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all"
-                  placeholder="Enter current password"
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(async (values) => {
+                toast.info("Password change requires backend implementation");
+                setIsChangingPassword(false);
+                passwordForm.reset();
+              })} className="space-y-5 py-2">
+                <FormField
+                  control={passwordForm.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-200">Current Password</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500" placeholder="Enter current password" />
+                      </FormControl>
+                      <FormMessage className="text-destructive" />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-sm font-medium text-slate-200">
-                  New Password
-                </Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all"
-                  placeholder="Enter new password"
+                <FormField
+                  control={passwordForm.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-200">New Password</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500" placeholder="Enter new password" />
+                      </FormControl>
+                      <p className="text-xs text-slate-500">Must be at least 8 characters long</p>
+                      <FormMessage className="text-destructive" />
+                    </FormItem>
+                  )}
                 />
-                <p className="text-xs text-slate-500">Must be at least 8 characters long</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-200">
-                  Confirm New Password
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all"
-                  placeholder="Confirm new password"
+                <FormField
+                  control={passwordForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-200">Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500" placeholder="Confirm new password" />
+                      </FormControl>
+                      <FormMessage className="text-destructive" />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsChangingPassword(false)}
-                className="border-slate-700 hover:bg-slate-800 hover:text-white transition-colors"
-              >
-                Cancel
-              </Button>
-              <Button className="bg-teal-500 hover:bg-teal-600 text-black font-medium transition-colors">
-                Update Password
-              </Button>
-            </div>
+                <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
+                  <Button type="button" variant="outline" onClick={() => setIsChangingPassword(false)} className="border-slate-700 hover:bg-slate-800 hover:text-white">Cancel</Button>
+                  <Button type="submit" className="bg-teal-500 hover:bg-teal-600 text-black font-medium">Update Password</Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       )}
