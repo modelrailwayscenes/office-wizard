@@ -157,19 +157,15 @@ export default function TeamPage() {
   const users = usersRaw as any[];
 
   const [editingUser, setEditingUser] = useState<any>(null);
-  const [editForm, setEditForm] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
-    role: "",
+
+  const editForm = useForm<UserFormValues>({
+    resolver: zodResolver(userSchema),
+    defaultValues: { email: "", firstName: "", lastName: "", role: "signed-in" },
   });
 
-  const [newUserForm, setNewUserForm] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
-    role: "signed-in",
-    password: "",
+  const newUserForm = useForm<NewUserFormValues>({
+    resolver: zodResolver(newUserSchema),
+    defaultValues: { email: "", firstName: "", lastName: "", role: "signed-in", password: "" },
   });
 
   const [{ fetching: updating }] = useAction(api.user.update);
