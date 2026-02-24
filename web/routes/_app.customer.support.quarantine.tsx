@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   LayoutDashboard,
+  CircleHelp,
   MessageSquare,
   Layers,
   FileText,
@@ -73,7 +74,7 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
 
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-      <SidebarBrandHeader icon={LayoutDashboard} overline="CUSTOMER" title="SUPPORT" />
+      <SidebarBrandHeader icon={CircleHelp} overline="CUSTOMER" title="SUPPORT" />
       <nav className="space-y-1">
         {customerTabs.map(({ id, label, icon: Icon, path, children }) => (
           <div key={id}>

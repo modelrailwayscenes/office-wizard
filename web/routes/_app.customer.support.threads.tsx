@@ -17,7 +17,7 @@ import { SecondaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import {
   Search, RefreshCw, Mail, Calendar, User, MessageSquare, Clock, Tag, AlertTriangle,
-  LayoutDashboard, Layers, FileText, PenLine, Settings, ShieldAlert, UserX,
+  LayoutDashboard, CircleHelp, Layers, FileText, PenLine, Settings, ShieldAlert, UserX,
 } from "lucide-react";
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import {
@@ -66,7 +66,7 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
 
   return (
     <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-      <SidebarBrandHeader icon={LayoutDashboard} overline="CUSTOMER" title="SUPPORT" />
+      <SidebarBrandHeader icon={CircleHelp} overline="CUSTOMER" title="SUPPORT" />
       <nav className="space-y-1">
         {customerTabs.map(({ id, label, icon: Icon, path, children }) => (
           <div key={id}>
