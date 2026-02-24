@@ -1,7 +1,5 @@
-import { Outlet, Link as RouterLink, useLocation, useNavigate } from "react-router";
+import { Outlet, Link as RouterLink, useLocation } from "react-router";
 import { useFindMany } from "@gadgetinc/react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { TemplatesList } from "@/components/TemplatesList";
 import { api } from "../api";
 import {
   LayoutDashboard,
@@ -13,19 +11,20 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
+const BASE = "/customer/support";
 const customerTabs = [
-  { id: "dashboard",     label: "Dashboard",     icon: LayoutDashboard, path: "/" },
-  { id: "conversations", label: "Conversations", icon: MessageSquare,   path: "/conversations" },
-  { id: "threads",       label: "Threads",       icon: MessageSquare,   path: "/threads" },
-  { id: "triage",        label: "Triage",        icon: Layers,          path: "/triage" },
-  { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: "/quarantine" },
-  { id: "templates",     label: "Templates",     icon: FileText,        path: "/templates",
+  { id: "dashboard",     label: "Dashboard",     icon: LayoutDashboard, path: BASE },
+  { id: "conversations", label: "Conversations", icon: MessageSquare,   path: `${BASE}/conversations` },
+  { id: "threads",       label: "Threads",       icon: MessageSquare,   path: `${BASE}/threads` },
+  { id: "triage",        label: "Triage",        icon: Layers,          path: `${BASE}/triage` },
+  { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: `${BASE}/quarantine` },
+  { id: "templates",     label: "Templates",     icon: FileText,        path: `${BASE}/templates`,
     children: [
-      { id: "templates-list", label: "Templates",  icon: FileText, path: "/templates" },
-      { id: "signatures",     label: "Signatures", icon: PenLine,  path: "/signatures" },
+      { id: "templates-list", label: "Templates",  icon: FileText, path: `${BASE}/templates` },
+      { id: "signatures",     label: "Signatures", icon: PenLine,  path: `${BASE}/signatures` },
     ],
   },
-  { id: "settings",      label: "Settings",      icon: Settings,        path: "/settings" },
+  { id: "settings",      label: "Settings",      icon: Settings,        path: `${BASE}/settings` },
 ];
 
 function CustomerSidebar({ currentPath }: { currentPath: string }) {
@@ -37,7 +36,7 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
   const quarantineCount = (quarantineData as any[] | undefined)?.length ?? 0;
 
   const isActive = (path: string, children?: { path: string }[]) => {
-    if (path === "/") return currentPath === "/";
+    if (path === BASE) return currentPath === BASE || currentPath === BASE + "/";
     if (children) {
       return children.some((child) => currentPath === child.path || currentPath.startsWith(child.path + "/"));
     }
@@ -93,40 +92,14 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
   );
 }
 
-export default function TemplatesLayout() {
+export default function SignaturesLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const path = location.pathname;
-  const isTemplatesFormRoute =
-    path === "/templates/new" || /^\/templates\/[^/]+$/.test(path);
-  const isTemplatesSection = path === "/templates" || path.startsWith("/templates/");
-  const isSignaturesSection = path.startsWith("/signatures");
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-slate-950 text-white">
       <CustomerSidebar currentPath={location.pathname} />
       <div className="flex-1 overflow-auto">
-        {isSignaturesSection ? (
-          <Outlet />
-        ) : isTemplatesSection ? (
-          <>
-            <TemplatesList />
-            {isTemplatesFormRoute && (
-              <Sheet open onOpenChange={(open) => !open && navigate("/templates")}>
-                <SheetContent
-                  side="right"
-                  className="w-full sm:max-w-2xl overflow-y-auto bg-zinc-950 border-zinc-800 p-0"
-                >
-                  <div className="p-6">
-                    <Outlet />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            )}
-          </>
-        ) : (
-          <Outlet />
-        )}
+        <Outlet />
       </div>
     </div>
   );

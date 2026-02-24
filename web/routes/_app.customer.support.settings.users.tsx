@@ -22,19 +22,19 @@ function formatDate(date: string | Date) {
 }
 
 const tabs = [
-  { id: "summary",      label: "Summary",                icon: User2,        path: "/settings/summary" },
-  { id: "profile",      label: "Profile",                icon: User2,        path: "/settings/profile" },
-  { id: "users",         label: "Users",                  icon: UsersIcon,    path: "/settings/users" },
-  { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/settings/triage" },
-  { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/settings/ai" },
-  { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/settings/templates" },
-  { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/settings/security" },
+  { id: "summary",      label: "Summary",                icon: User2,        path: "/customer/support/settings/summary" },
+  { id: "profile",      label: "Profile",                icon: User2,        path: "/customer/support/settings/profile" },
+  { id: "users",         label: "Users",                  icon: UsersIcon,    path: "/customer/support/settings/users" },
+  { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/customer/support/settings/triage" },
+  { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/customer/support/settings/ai" },
+  { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/customer/support/settings/templates" },
+  { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/customer/support/settings/security" },
 ];
 
 const adminTabs = [
-  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/settings/integrations" },
-  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
-  { id: "advanced",     label: "Advanced Settings",      icon: SettingsIcon, path: "/settings/advanced" },
+  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/customer/support/settings/integrations" },
+  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/customer/support/settings/alerts" },
+  { id: "advanced",     label: "Advanced Settings",      icon: SettingsIcon, path: "/customer/support/settings/advanced" },
 ];
 
 function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
@@ -208,7 +208,7 @@ export default function TeamPage() {
       }
 
       toast.success("User added successfully");
-      navigate("/settings/users");
+      navigate("/customer/support/settings/users");
       setNewUserForm({ email: "", firstName: "", lastName: "", role: "signed-in", password: "" });
       void refetch();
     } catch (err) {
@@ -286,7 +286,7 @@ export default function TeamPage() {
                 {showDeleted ? "Show Active Users" : "Show Deleted Users"}
               </Button>
               <Button
-                onClick={() => navigate("/settings/users?addMember=1")}
+                onClick={() => navigate("/customer/support/settings/users?addMember=1")}
                 className="bg-teal-500 text-white hover:bg-teal-600"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -462,7 +462,7 @@ export default function TeamPage() {
         </Dialog>
 
         {/* Add User Dialog */}
-        <Dialog open={isAddMemberOpen} onOpenChange={(open) => !open && navigate("/settings/users")}>
+        <Dialog open={isAddMemberOpen} onOpenChange={(open) => !open && navigate("/customer/support/settings/users")}>
           <DialogContent className="bg-slate-900 border-slate-800 text-white">
             <DialogHeader>
               <DialogTitle className="text-2xl">Add New User</DialogTitle>
@@ -505,7 +505,7 @@ export default function TeamPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => navigate("/settings/users")}
+              <Button variant="outline" onClick={() => navigate("/customer/support/settings/users")}
                 className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">
                 Cancel
               </Button>

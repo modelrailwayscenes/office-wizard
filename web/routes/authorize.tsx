@@ -19,13 +19,13 @@ export default function Authorize() {
 
       if (error) {
         toast.error(errorDescription || error);
-        navigate("/settings", { replace: true });
+        navigate("/customer/support/settings", { replace: true });
         return;
       }
 
       if (!code) {
         toast.error("Missing authorization code");
-        navigate("/settings", { replace: true });
+        navigate("/customer/support/settings", { replace: true });
         return;
       }
 
@@ -37,16 +37,16 @@ export default function Authorize() {
 
         if (result?.success) {
           toast.success("Successfully connected to Microsoft 365");
-          navigate("/settings", { replace: true });
+          navigate("/customer/support/settings", { replace: true });
           return;
         }
 
         toast.error(result?.error || "Failed to connect to Microsoft 365");
-        navigate("/settings", { replace: true });
+        navigate("/customer/support/settings", { replace: true });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to connect to Microsoft 365";
         toast.error(errorMessage);
-        navigate("/settings", { replace: true });
+        navigate("/customer/support/settings", { replace: true });
       }
     };
 

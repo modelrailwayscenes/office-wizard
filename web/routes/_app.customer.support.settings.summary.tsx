@@ -9,19 +9,19 @@ import { HEALTH_TONE_STYLES, HealthTone, timeAgo, isStaleByHours } from "@/compo
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
 
 const tabs = [
-  { id: "summary",      label: "Summary",                icon: User2,        path: "/settings/summary" },
-  { id: "profile",      label: "Profile",                icon: User2,        path: "/settings/profile" },
-  { id: "users",        label: "Users",                  icon: UsersIcon,    path: "/settings/users" },
-  { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/settings/triage" },
-  { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/settings/ai" },
-  { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/settings/templates" },
-  { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/settings/security" },
+  { id: "summary",      label: "Summary",                icon: User2,        path: "/customer/support/settings/summary" },
+  { id: "profile",      label: "Profile",                icon: User2,        path: "/customer/support/settings/profile" },
+  { id: "users",        label: "Users",                  icon: UsersIcon,    path: "/customer/support/settings/users" },
+  { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/customer/support/settings/triage" },
+  { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/customer/support/settings/ai" },
+  { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/customer/support/settings/templates" },
+  { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/customer/support/settings/security" },
 ];
 
 const adminTabs = [
-  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/settings/integrations" },
-  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
-  { id: "advanced",     label: "Advanced Settings",      icon: SettingsIcon, path: "/settings/advanced" },
+  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/customer/support/settings/integrations" },
+  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/customer/support/settings/alerts" },
+  { id: "advanced",     label: "Advanced Settings",      icon: SettingsIcon, path: "/customer/support/settings/advanced" },
 ];
 
 function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
@@ -358,7 +358,7 @@ export default function SettingsSummaryPage() {
             icon={Layers}
             title="Triage & Workflow"
             description="Email classification and routing"
-            path="/settings/triage"
+            path="/customer/support/settings/triage"
             healthTone={triageTone}
             statusLabel={config?.autoTriageEnabled ? (triageStale ? "Stale" : "Healthy") : "Disabled"}
             details={
@@ -396,7 +396,7 @@ export default function SettingsSummaryPage() {
             icon={FileText}
             title="Templates & Batching"
             description="Response templates and batch operations"
-            path="/settings/templates"
+            path="/customer/support/settings/templates"
             healthTone={templatesTone}
             statusLabel={hasTemplates ? "Healthy" : "Needs attention"}
             details={

@@ -5,7 +5,7 @@ export default function SettingsIndex() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate("/settings/summary", { replace: true });
+    navigate("/customer/support/settings/summary", { replace: true });
   }, [navigate]);
 
   return null;

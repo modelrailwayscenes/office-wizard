@@ -10,7 +10,7 @@ export const settings: GadgetSettings = {
     },
     authentications: {
       settings: {
-        redirectOnSignIn: "/",
+        redirectOnSignIn: "/customer/support",
         signInPath: "/sign-in",
         unauthorizedUserRedirect: "signInPath",
         defaultSignedInRoles: ["signed-in"],

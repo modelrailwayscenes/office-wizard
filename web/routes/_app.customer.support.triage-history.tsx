@@ -286,7 +286,7 @@ export default function BatchHistoryPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate("/triage")}
+            onClick={() => navigate("/customer/support/triage")}
             className="text-slate-400 hover:text-slate-200 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

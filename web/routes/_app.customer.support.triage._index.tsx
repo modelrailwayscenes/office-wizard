@@ -375,7 +375,7 @@ export default function TriageLandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {/* Queue View */}
           <button
-            onClick={() => navigate("/triage/queue")}
+            onClick={() => navigate("/customer/support/triage-queue")}
             className="text-left p-6 bg-slate-800/50 border border-slate-700 rounded-xl hover:bg-slate-800/70 hover:border-teal-500/30 transition-all group"
           >
             <QueueIcon />
@@ -392,7 +392,7 @@ export default function TriageLandingPage() {
 
           {/* Workflow Mode */}
           <button
-            onClick={() => navigate("/triage/workflow")}
+            onClick={() => navigate("/customer/support/triage?mode=workflow")}
             className="text-left p-6 bg-slate-800/50 border border-slate-700 rounded-xl hover:bg-slate-800/70 hover:border-purple-500/30 transition-all group"
           >
             <WorkflowIcon />
@@ -421,7 +421,7 @@ export default function TriageLandingPage() {
             </div>
             {recentBatches.length > 0 && (
               <button
-                onClick={() => navigate("/triage/history")}
+                onClick={() => navigate("/customer/support/triage/history")}
                 className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
               >
                 View history →

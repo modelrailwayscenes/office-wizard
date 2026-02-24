@@ -77,9 +77,9 @@ const modules = [
   {
     id: "customer",
     label: "CUSTOMER",
-    path: "/",
+    path: "/customer/support",
     // Any path starting with these counts as "in this module"
-    activePaths: ["/", "/conversations", "/threads", "/triage", "/templates", "/signatures", "/settings"],
+    activePaths: ["/customer/support", "/customer/support/conversations", "/customer/support/threads", "/customer/support/triage", "/customer/support/templates", "/customer/support/signatures", "/customer/support/settings"],
   },
   { id: "finance",   label: "FINANCE",   path: "/finance",   activePaths: ["/finance"] },
   { id: "it",        label: "IT",        path: "/it",        activePaths: ["/it"] },
@@ -116,12 +116,8 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
 
   const isModuleActive = (mod: typeof modules[0]) => {
     const path = location.pathname;
-    // Special case: "/" should only match exactly "/" for the customer module
-    // but customer module also matches all its sub-paths
     if (mod.id === "customer") {
-      return mod.activePaths.some((ap) =>
-        ap === "/" ? path === "/" : path.startsWith(ap)
-      );
+      return mod.activePaths.some((ap) => path === ap || path.startsWith(ap + "/"));
     }
     return mod.activePaths.some((ap) => path.startsWith(ap));
   };
@@ -131,7 +127,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
       <header className="h-16 bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
         <div className="h-full px-6 flex items-center justify-between">
           {/* Left: Logo */}
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/customer/support" className="flex items-center gap-2">
             <svg
               width="32"
               height="32"
@@ -205,14 +201,14 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
                 <DropdownMenuSeparator className="bg-slate-800" />
 
                 <DropdownMenuItem asChild>
-                  <Link to="/settings/profile" className="cursor-pointer text-slate-300 hover:text-slate-50">
+                  <Link to="/customer/support/settings/profile" className="cursor-pointer text-slate-300 hover:text-slate-50">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Personal</span>
                   </Link>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem asChild>
-                  <Link to="/settings" className="cursor-pointer text-slate-300 hover:text-slate-50">
+                  <Link to="/customer/support/settings" className="cursor-pointer text-slate-300 hover:text-slate-50">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </Link>

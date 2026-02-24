@@ -20,16 +20,16 @@ import {
 } from "lucide-react";
 
 const tabs = [
-  { id: "summary",      label: "Summary",                icon: User2,        path: "/settings/summary" },
-  { id: "account",      label: "Profile",                icon: User2,        path: "/settings/account" },
-  { id: "team",         label: "Users",                  icon: UsersIcon,    path: "/settings/team" },
-  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/settings/integrations" },
-  { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/settings/triage" },
-  { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/settings/ai" },
-  { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/settings/templates" },
-  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/settings/alerts" },
-  { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/settings/security" },
-  { id: "advanced",     label: "Advanced",               icon: SettingsIcon, path: "/settings/advanced" },
+  { id: "summary",      label: "Summary",                icon: User2,        path: "/customer/support/settings/summary" },
+  { id: "account",      label: "Profile",                icon: User2,        path: "/customer/support/settings/account" },
+  { id: "team",         label: "Users",                  icon: UsersIcon,    path: "/customer/support/settings/team" },
+  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/customer/support/settings/integrations" },
+  { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/customer/support/settings/triage" },
+  { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/customer/support/settings/ai" },
+  { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/customer/support/settings/templates" },
+  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/customer/support/settings/alerts" },
+  { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/customer/support/settings/security" },
+  { id: "advanced",     label: "Advanced",               icon: SettingsIcon, path: "/customer/support/settings/advanced" },
 ];
 
 function Sidebar({ currentPath }: { currentPath: string }) {

@@ -21,19 +21,19 @@ export const meta: MetaFunction = () => [
 ];
 
 const tabs = [
-  { id: "summary",    label: "Summary",               icon: User2,        path: "/settings/summary" },
-  { id: "profile",    label: "Profile",               icon: User2,        path: "/settings/profile" },
-  { id: "users",      label: "Users",                 icon: UsersIcon,    path: "/settings/users" },
-  { id: "triage",     label: "Triage & Workflow",      icon: Layers,      path: "/settings/triage" },
-  { id: "ai",         label: "AI & Automation",        icon: Sparkles,    path: "/settings/ai" },
-  { id: "templates",  label: "Templates & Batching",   icon: FileText,    path: "/settings/templates" },
-  { id: "security",   label: "Security & Compliance",  icon: Shield,      path: "/settings/security" },
+  { id: "summary",    label: "Summary",               icon: User2,        path: "/customer/support/settings/summary" },
+  { id: "profile",    label: "Profile",               icon: User2,        path: "/customer/support/settings/profile" },
+  { id: "users",      label: "Users",                 icon: UsersIcon,    path: "/customer/support/settings/users" },
+  { id: "triage",     label: "Triage & Workflow",      icon: Layers,      path: "/customer/support/settings/triage" },
+  { id: "ai",         label: "AI & Automation",        icon: Sparkles,    path: "/customer/support/settings/ai" },
+  { id: "templates",  label: "Templates & Batching",   icon: FileText,    path: "/customer/support/settings/templates" },
+  { id: "security",   label: "Security & Compliance",  icon: Shield,      path: "/customer/support/settings/security" },
 ];
 
 const adminTabs = [
-  { id: "integrations", label: "Integrations",        icon: LinkIcon,     path: "/settings/integrations" },
-  { id: "alerts",     label: "Alerts & Notifications", icon: Bell,        path: "/settings/alerts" },
-  { id: "advanced",   label: "Advanced Settings",      icon: SettingsIcon, path: "/settings/advanced" },
+  { id: "integrations", label: "Integrations",        icon: LinkIcon,     path: "/customer/support/settings/integrations" },
+  { id: "alerts",     label: "Alerts & Notifications", icon: Bell,        path: "/customer/support/settings/alerts" },
+  { id: "advanced",   label: "Advanced Settings",      icon: SettingsIcon, path: "/customer/support/settings/advanced" },
 ];
 
 // ── Shared sidebar ─────────────────────────────────────────────────────────────

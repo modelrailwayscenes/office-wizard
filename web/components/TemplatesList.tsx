@@ -155,7 +155,7 @@ export function TemplatesList() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Button
-            onClick={() => navigate("/templates/new")}
+            onClick={() => navigate("/customer/support/templates/new")}
             className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -181,7 +181,7 @@ export function TemplatesList() {
                 </Button>
               )}
               <Button
-                onClick={() => navigate("/templates/new")}
+                onClick={() => navigate("/customer/support/templates/new")}
                 className="bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700"
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -223,7 +223,7 @@ export function TemplatesList() {
                   ),
                 },
               ]}
-              onClick={(record: any) => navigate(`/templates/${record.id}`)}
+              onClick={(record: any) => navigate(`/customer/support/templates/${record.id}`)}
             />
           </div>
         )}

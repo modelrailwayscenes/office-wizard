@@ -17,7 +17,7 @@ export default function () {
           <h1 className="text-6xl font-bold text-foreground">404</h1>
           <h2 className="text-3xl font-semibold text-foreground">Page Not Found</h2>
           <Button asChild>
-            <a href="/">Return to Home</a>
+            <a href="/customer/support">Return to Home</a>
           </Button>
         </div>
       </div>

@@ -9,7 +9,7 @@ export default function NewTemplatePage() {
   const navigate = useNavigate();
 
   const handleSuccess = () => {
-    navigate("/templates");
+    navigate("/customer/support/templates");
   };
 
   return (
@@ -18,7 +18,7 @@ export default function NewTemplatePage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate("/templates")}
+          onClick={() => navigate("/customer/support/templates")}
           aria-label="Close"
           className="hover:bg-zinc-800 hover:text-amber-500"
         >

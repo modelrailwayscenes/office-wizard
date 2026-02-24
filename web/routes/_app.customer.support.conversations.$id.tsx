@@ -98,14 +98,14 @@ export default function ConversationDetail() {
   const aiComments = rawAiComments as any[] | undefined;
 
   if (!conversationId) {
-    return <Navigate to="/conversations" replace />;
+    return <Navigate to="/customer/support/conversations" replace />;
   }
 
   if (fetching) {
     return (
       <div className="min-h-screen bg-black text-zinc-100 p-6">
         <div className="mx-auto max-w-3xl space-y-4">
-          <Link to="/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
+          <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
             <ArrowLeft className="h-4 w-4" />
             Back to Conversations
           </Link>
@@ -125,7 +125,7 @@ export default function ConversationDetail() {
     return (
       <div className="min-h-screen bg-black text-zinc-100 p-6">
         <div className="mx-auto max-w-3xl space-y-4">
-          <Link to="/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
+          <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
             <ArrowLeft className="h-4 w-4" />
             Back to Conversations
           </Link>
@@ -147,7 +147,7 @@ export default function ConversationDetail() {
     return (
       <div className="min-h-screen bg-black text-zinc-100 p-6">
         <div className="mx-auto max-w-3xl space-y-4">
-          <Link to="/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
+          <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
             <ArrowLeft className="h-4 w-4" />
             Back to Conversations
           </Link>
@@ -176,7 +176,7 @@ export default function ConversationDetail() {
   return (
     <div className="min-h-screen bg-black text-zinc-100 p-6">
       <div className="mx-auto max-w-3xl space-y-4">
-        <Link to="/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
+        <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
           <ArrowLeft className="h-4 w-4" />
           Back to Conversations
         </Link>
@@ -288,7 +288,7 @@ export default function ConversationDetail() {
                             </span>
                             {comment.batchOperation?.id && (
                               <Link
-                                to={`/triage/history?batch=${comment.batchOperation.id}`}
+                                to={`/customer/support/triage/history?batch=${comment.batchOperation.id}`}
                                 className="text-[11px] text-teal-400 hover:text-teal-300"
                               >
                                 Batch {comment.batchOperation.id}

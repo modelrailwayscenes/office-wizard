@@ -31,19 +31,20 @@ import {
 } from "@/components/ui/alert-dialog";
 
 // ── Customer Sidebar ────────────────────────────────────────────────
+const BASE = "/customer/support";
 const customerTabs = [
-  { id: "dashboard",     label: "Dashboard",     icon: LayoutDashboard, path: "/" },
-  { id: "conversations", label: "Conversations", icon: MessageSquare,   path: "/conversations" },
-  { id: "threads",       label: "Threads",       icon: MessageSquare,   path: "/threads" },
-  { id: "triage",        label: "Triage",        icon: Layers,          path: "/triage" },
-  { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: "/quarantine" },
-  { id: "templates",     label: "Templates",     icon: FileText,        path: "/templates",
+  { id: "dashboard",     label: "Dashboard",     icon: LayoutDashboard, path: BASE },
+  { id: "conversations", label: "Conversations", icon: MessageSquare,   path: `${BASE}/conversations` },
+  { id: "threads",       label: "Threads",       icon: MessageSquare,   path: `${BASE}/threads` },
+  { id: "triage",        label: "Triage",        icon: Layers,          path: `${BASE}/triage` },
+  { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: `${BASE}/quarantine` },
+  { id: "templates",     label: "Templates",     icon: FileText,        path: `${BASE}/templates`,
     children: [
-      { id: "templates-list", label: "Templates",  icon: FileText, path: "/templates" },
-      { id: "signatures",     label: "Signatures", icon: PenLine,  path: "/signatures" },
+      { id: "templates-list", label: "Templates",  icon: FileText, path: `${BASE}/templates` },
+      { id: "signatures",     label: "Signatures", icon: PenLine,  path: `${BASE}/signatures` },
     ],
   },
-  { id: "settings",      label: "Settings",      icon: Settings,        path: "/settings" },
+  { id: "settings",      label: "Settings",      icon: Settings,        path: `${BASE}/settings` },
 ];
 
 function CustomerSidebar({ currentPath }: { currentPath: string }) {
@@ -55,7 +56,7 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
   const quarantineCount = (quarantineData as any[] | undefined)?.length ?? 0;
 
   const isActive = (path: string, children?: { path: string }[]) => {
-    if (path === "/") return currentPath === "/";
+    if (path === BASE) return currentPath === BASE || currentPath === BASE + "/";
     if (children) {
       return children.some((child) => currentPath === child.path || currentPath.startsWith(child.path + "/"));
     }
@@ -350,7 +351,7 @@ export default function ThreadsPage() {
             Current roles: {roleKeys.length > 0 ? roleKeys.join(", ") : "none"}
           </div>
           <Button asChild className="mt-6 bg-teal-500 hover:bg-teal-600 text-black">
-            <RouterLink to="/">Back to dashboard</RouterLink>
+            <RouterLink to="/customer/support">Back to dashboard</RouterLink>
           </Button>
         </div>
       </div>
@@ -626,7 +627,7 @@ export default function ThreadsPage() {
                             })()}
                             {latestAiComment.batchOperation?.id && (
                               <RouterLink
-                                to={`/triage/history?batch=${latestAiComment.batchOperation.id}`}
+                                to={`/customer/support/triage/history?batch=${latestAiComment.batchOperation.id}`}
                                 className="text-[11px] text-teal-400 hover:text-teal-300"
                               >
                                 Batch {latestAiComment.batchOperation.id}

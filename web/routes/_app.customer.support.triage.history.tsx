@@ -30,23 +30,24 @@ import {
 } from "lucide-react";
 
 // ── Customer Sidebar ────────────────────────────────────────────────
+const BASE = "/customer/support";
 const customerTabs = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/" },
-  { id: "conversations", label: "Conversations", icon: MessageSquare, path: "/conversations" },
-  { id: "threads", label: "Threads", icon: MessageSquare, path: "/threads" },
-  { id: "triage", label: "Triage", icon: Layers, path: "/triage" },
-  { id: "quarantine", label: "Quarantine", icon: ShieldAlert, path: "/quarantine" },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: BASE },
+  { id: "conversations", label: "Conversations", icon: MessageSquare, path: `${BASE}/conversations` },
+  { id: "threads", label: "Threads", icon: MessageSquare, path: `${BASE}/threads` },
+  { id: "triage", label: "Triage", icon: Layers, path: `${BASE}/triage` },
+  { id: "quarantine", label: "Quarantine", icon: ShieldAlert, path: `${BASE}/quarantine` },
   {
     id: "templates",
     label: "Templates",
     icon: FileText,
-    path: "/templates",
+    path: `${BASE}/templates`,
     children: [
-      { id: "templates-list", label: "Templates", icon: FileText, path: "/templates" },
-      { id: "signatures", label: "Signatures", icon: PenLine, path: "/signatures" },
+      { id: "templates-list", label: "Templates", icon: FileText, path: `${BASE}/templates` },
+      { id: "signatures", label: "Signatures", icon: PenLine, path: `${BASE}/signatures` },
     ],
   },
-  { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
+  { id: "settings", label: "Settings", icon: Settings, path: `${BASE}/settings` },
 ];
 
 function CustomerSidebar({ currentPath }: { currentPath: string }) {
@@ -58,7 +59,7 @@ function CustomerSidebar({ currentPath }: { currentPath: string }) {
   const quarantineCount = (quarantineData as any[] | undefined)?.length ?? 0;
 
   const isActive = (path: string, children?: { path: string }[]) => {
-    if (path === "/") return currentPath === "/";
+    if (path === BASE) return currentPath === BASE || currentPath === BASE + "/";
     if (children) {
       return children.some((child) => currentPath === child.path || currentPath.startsWith(child.path + "/"));
     }
@@ -320,7 +321,7 @@ export default function TriageHistoryPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <RouterLink
-                            to={`/conversations/${conv.id}`}
+                            to={`/customer/support/conversations/${conv.id}`}
                             className="text-[11px] text-teal-400 hover:text-teal-300"
                           >
                             View
@@ -543,7 +544,7 @@ export default function TriageHistoryPage() {
                               <div className="mt-2 text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
                                 {conversationId ? (
                                   <RouterLink
-                                    to={`/conversations/${conversationId}`}
+                                    to={`/customer/support/conversations/${conversationId}`}
                                     className="text-teal-400 hover:text-teal-300"
                                   >
                                     {comment.conversation?.subject || "View conversation"}

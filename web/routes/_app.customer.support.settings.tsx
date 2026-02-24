@@ -1,7 +1,8 @@
 import { Outlet, redirect } from "react-router";
-import type { Route } from "./+types/_app.settings";
+import type { Route } from "./+types/_app.customer.support.settings";
 
-const PERSONAL_PATHS = ["/settings/profile", "/settings/personal"];
+const BASE = "/customer/support";
+const PERSONAL_PATHS = [`${BASE}/settings/profile`, `${BASE}/settings/personal`];
 
 const getUserIdFromSession = (userRef: any) => {
   if (typeof userRef === "string") return userRef;
@@ -33,14 +34,14 @@ export const loader = async ({ context, request }: Route.LoaderArgs) => {
   const path = new URL(request.url).pathname;
   const isPersonalPath =
     PERSONAL_PATHS.some((p) => path === p) ||
-    path.startsWith("/settings/profile/");
+    path.startsWith(`${BASE}/settings/profile/`);
 
   if (!isAdmin) {
-    if (path === "/settings" || path === "/settings/summary") {
-      throw redirect("/settings/profile");
+    if (path === `${BASE}/settings` || path === `${BASE}/settings/summary`) {
+      throw redirect(`${BASE}/settings/profile`);
     }
     if (!isPersonalPath) {
-      throw redirect("/settings/profile");
+      throw redirect(`${BASE}/settings/profile`);
     }
   }
 

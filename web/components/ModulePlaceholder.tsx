@@ -30,7 +30,7 @@ export function ModulePlaceholder({
             </div>
             <div className="mt-5">
               <Button asChild variant="outline" className="border-slate-700 hover:bg-slate-800">
-                <Link to="/">Back to Customer</Link>
+                <Link to="/customer/support">Back to Customer</Link>
               </Button>
             </div>
           </div>

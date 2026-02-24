@@ -48,7 +48,7 @@ interface NavItem {
 const navigationItems: NavItem[] = [
   {
     title: "Home",
-    path: "/signed-in",
+    path: "/customer/support/signed-in",
     icon: Home,
   },
 ];
@@ -81,7 +81,7 @@ export const DesktopNav = () => {
 const secondaryNavigationItems: NavItem[] = [
   {
     title: "Profile",
-    path: "/profile",
+    path: "/customer/support/profile",
     icon: User,
   },
 ];
@@ -97,7 +97,7 @@ export const Navigation = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   return (
     <>
       <div className="h-16 flex items-center px-6 border-b">
-        <Link to="/signed-in" className="flex items-center" onClick={onLinkClick}>
+        <Link to="/customer/support/signed-in" className="flex items-center" onClick={onLinkClick}>
           <img src="/api/assets/autologo?background=light" alt="App logo" className="h-8 w-auto" />
         </Link>
       </div>
@@ -163,7 +163,7 @@ export const SecondaryNavigation = ({ icon }: { icon: ReactNode }) => {
 };
 
 const SignOutOption = () => {
-  const signOut = useSignOut({ redirectToPath: "/" });
+  const signOut = useSignOut({ redirectToPath: "/customer/support" });
 
   return (
     <DropdownMenuItem onClick={signOut} className="flex items-center text-red-600 focus:text-red-600 cursor-pointer">

@@ -155,7 +155,7 @@ export default function EditTemplate() {
     try {
       await deleteTemplate({ id } as any);
       toast.success("Template deleted");
-      navigate("/templates");
+      navigate("/customer/support/templates");
     } catch {
       toast.error("Failed to delete template");
     }
@@ -171,7 +171,7 @@ export default function EditTemplate() {
   const handleCancelConfirm = () => {
     setShowCancelConfirm(false);
     reset();
-    navigate("/templates");
+    navigate("/customer/support/templates");
   };
 
   const renderPreview = () => {
@@ -214,7 +214,7 @@ export default function EditTemplate() {
     <div className="text-zinc-100 space-y-4">
       <div className="flex items-center justify-between">
         <Link
-          to="/templates"
+          to="/customer/support/templates"
           className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white"
           onClick={handleBackClick}
         >
@@ -444,7 +444,7 @@ export default function EditTemplate() {
                               New signature
                             </button>
                             <Link
-                              to="/signatures"
+                              to="/customer/support/signatures"
                               target="_blank"
                               className="text-xs text-zinc-400 hover:text-zinc-300 inline-flex items-center gap-1"
                             >
@@ -530,7 +530,7 @@ export default function EditTemplate() {
                     type="button"
                     variant="outline"
                     className="bg-zinc-900/50 border-zinc-800"
-                    onClick={() => (isDirty ? setShowCancelConfirm(true) : navigate("/templates"))}
+                    onClick={() => (isDirty ? setShowCancelConfirm(true) : navigate("/customer/support/templates"))}
                   >
                     Cancel
                   </Button>
