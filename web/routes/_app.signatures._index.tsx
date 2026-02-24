@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from "@/components/ui/sheet";
 
 import {
   AlertDialog,
@@ -222,13 +222,12 @@ export default function SignaturesPage() {
         </div>
       </div>
 
-      {/* CREATE MODAL */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="bg-zinc-950 border-zinc-800">
-          <DialogHeader>
-            <DialogTitle>Create Signature</DialogTitle>
-          </DialogHeader>
-
+      {/* CREATE DRAWER */}
+      <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto bg-zinc-950 border-zinc-800">
+          <SheetHeader>
+            <SheetTitle>Create Signature</SheetTitle>
+          </SheetHeader>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -291,7 +290,7 @@ export default function SignaturesPage() {
               </Select>
             </div>
 
-            <DialogFooter>
+            <SheetFooter>
               <Button
                 type="submit"
                 disabled={isCreating}
@@ -299,21 +298,17 @@ export default function SignaturesPage() {
               >
                 Save
               </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
-      {/* EDIT MODAL */}
-      <Dialog
-        open={!!editingSignature}
-        onOpenChange={() => setEditingSignature(null)}
-      >
-        <DialogContent className="bg-zinc-950 border-zinc-800">
-          <DialogHeader>
-            <DialogTitle>Edit Signature</DialogTitle>
-          </DialogHeader>
-
+      {/* EDIT DRAWER */}
+      <Sheet open={!!editingSignature} onOpenChange={(open) => !open && setEditingSignature(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto bg-zinc-950 border-zinc-800">
+          <SheetHeader>
+            <SheetTitle>Edit Signature</SheetTitle>
+          </SheetHeader>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -331,7 +326,7 @@ export default function SignaturesPage() {
               <Textarea rows={6} {...registerUpdate("signature.body")} />
             </div>
 
-            <DialogFooter>
+            <SheetFooter>
               <Button
                 type="submit"
                 disabled={isUpdating}
@@ -339,10 +334,10 @@ export default function SignaturesPage() {
               >
                 Update
               </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* DELETE CONFIRM */}
       <AlertDialog

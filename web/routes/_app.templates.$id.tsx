@@ -211,17 +211,16 @@ export default function EditTemplate() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 p-6">
-      <div className="mx-auto max-w-5xl space-y-4">
-        <div className="flex items-center justify-between">
-          <Link 
-            to="/templates" 
-            className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white"
-            onClick={handleBackClick}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Templates
-          </Link>
+    <div className="text-zinc-100 space-y-4">
+      <div className="flex items-center justify-between">
+        <Link
+          to="/templates"
+          className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white"
+          onClick={handleBackClick}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Templates
+        </Link>
 
           <div className="flex items-center gap-2">
             <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleting}>
@@ -231,7 +230,7 @@ export default function EditTemplate() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <Card className="bg-zinc-950/50 border-zinc-800">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
