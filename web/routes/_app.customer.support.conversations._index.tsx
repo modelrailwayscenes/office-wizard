@@ -16,6 +16,7 @@ import {
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -427,8 +428,11 @@ export default function ConversationsIndex() {
 
         <StatusBar />
 
-        {/* Content */}
-        <div className="px-8 pb-8">
+        {/* Content - Resizable list + detail on desktop */}
+        <div className="flex-1 flex min-h-0 px-0 pb-0">
+          <ResizablePanelGroup direction="horizontal" className="flex-1">
+            <ResizablePanel defaultSize={50} minSize={30} className="min-w-0">
+        <div className="px-8 pb-8 h-full overflow-auto">
           {/* Search + Filters */}
           <div className="flex flex-wrap gap-3 mb-6 mt-6">
 
@@ -595,9 +599,47 @@ export default function ConversationsIndex() {
             </div>
           )}
         </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle className="bg-slate-800 data-[panel-group-direction=vertical]:hidden" />
+            <ResizablePanel defaultSize={50} minSize={30} className="hidden lg:block min-w-0">
+              {/* Desktop: inline detail panel */}
+              <div className="h-full overflow-auto border-l border-slate-800 bg-slate-900/30">
+                {!selectedConversationId ? (
+                  <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-slate-500 p-8">
+                    <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+                    <p className="text-sm font-medium">Select a conversation</p>
+                    <p className="text-xs mt-1">Click a row to view details</p>
+                  </div>
+                ) : (
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-semibold text-white">Conversation Details</h2>
+                      <Button variant="ghost" size="icon" onClick={handleCloseDrawer} className="text-slate-400 hover:text-white">
+                        <X className="h-5 w-5" />
+                      </Button>
+                    </div>
+                    {fetchingConversation && (
+                      <div className="flex items-center justify-center py-12"><RefreshCw className="h-8 w-8 animate-spin text-teal-500" /></div>
+                    )}
+                    {conversationError && (
+                      <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
+                        <AlertTriangle className="h-5 w-5" /><span>Error loading conversation: {conversationError.toString()}</span>
+                      </div>
+                    )}
+                    {conversationData && (
+                      <RouterLink to={`/customer/support/conversations/${selectedConversationId}`} className="text-teal-400 hover:text-teal-300 text-sm">
+                        Open full view →
+                      </RouterLink>
+                    )}
+                  </div>
+                )}
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
 
-        {/* Conversation Details Drawer */}
-        <Sheet open={drawerOpen} onOpenChange={(open) => !open && handleCloseDrawer()}>
+        {/* Conversation Details Drawer - Mobile only */}
+        <Sheet open={drawerOpen} onOpenChange={(open) => !open && handleCloseDrawer()} className="lg:hidden">
           <SheetContent side="right" className="w-full sm:max-w-2xl bg-slate-900 border-slate-800 overflow-y-auto p-0">
             {/* Drawer header band */}
             <div className="border-b border-slate-800 bg-slate-900/50 px-6 py-5 sticky top-0 z-10">

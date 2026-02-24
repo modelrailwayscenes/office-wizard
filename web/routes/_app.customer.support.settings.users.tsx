@@ -415,103 +415,58 @@ export default function TeamPage() {
             <DialogHeader>
               <DialogTitle className="text-2xl">Edit User</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-300">Email</Label>
-                <Input id="email" type="email" value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  className="bg-slate-800 border-slate-700 text-white" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-slate-300">First Name</Label>
-                <Input id="firstName" value={editForm.firstName}
-                  onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
-                  className="bg-slate-800 border-slate-700 text-white" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-slate-300">Last Name</Label>
-                <Input id="lastName" value={editForm.lastName}
-                  onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
-                  className="bg-slate-800 border-slate-700 text-white" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-slate-300">Role</Label>
-                <Select value={editForm.role} onValueChange={(value) => setEditForm({ ...editForm, role: value })}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="signed-in"    className="text-white hover:bg-slate-700">Standard user</SelectItem>
-                    <SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin (system-admin)</SelectItem>
-                    <SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Admin (sysadmin)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingUser(null)}
-                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={updating}
-                className="bg-teal-500 text-white hover:bg-teal-600">
-                {updating ? "Saving..." : "Save"}
-              </Button>
-            </DialogFooter>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(handleSave)} className="space-y-4 py-4">
+                <FormField control={editForm.control} name="email" render={({ field }) => (
+                  <FormItem><FormLabel className="text-slate-300">Email</FormLabel><FormControl><Input {...field} type="email" className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                )} />
+                <FormField control={editForm.control} name="firstName" render={({ field }) => (
+                  <FormItem><FormLabel className="text-slate-300">First Name</FormLabel><FormControl><Input {...field} className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                )} />
+                <FormField control={editForm.control} name="lastName" render={({ field }) => (
+                  <FormItem><FormLabel className="text-slate-300">Last Name</FormLabel><FormControl><Input {...field} className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                )} />
+                <FormField control={editForm.control} name="role" render={({ field }) => (
+                  <FormItem><FormLabel className="text-slate-300">Role</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="signed-in" className="text-white hover:bg-slate-700">Standard user</SelectItem><SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin (system-admin)</SelectItem><SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Admin (sysadmin)</SelectItem></SelectContent></Select><FormMessage className="text-destructive" /></FormItem>
+                )} />
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setEditingUser(null)} className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">Cancel</Button>
+                  <Button type="submit" disabled={updating} className="bg-teal-500 text-white hover:bg-teal-600">{updating ? "Saving..." : "Save"}</Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
 
         {/* Add User Dialog */}
-        <Dialog open={isAddMemberOpen} onOpenChange={(open) => !open && navigate("/customer/support/settings/users")}>
+        <Dialog open={isAddMemberOpen} onOpenChange={(open) => { if (!open) { newUserForm.reset(); navigate("/customer/support/settings/users"); } }}>
           <DialogContent className="bg-slate-900 border-slate-800 text-white">
             <DialogHeader>
               <DialogTitle className="text-2xl">Add New User</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-email" className="text-slate-300">Email</Label>
-                <Input id="new-email" type="email" value={newUserForm.email}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
-                  className="bg-slate-800 border-slate-700 text-white" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-firstName" className="text-slate-300">First Name</Label>
-                <Input id="new-firstName" value={newUserForm.firstName}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, firstName: e.target.value })}
-                  className="bg-slate-800 border-slate-700 text-white" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-lastName" className="text-slate-300">Last Name</Label>
-                <Input id="new-lastName" value={newUserForm.lastName}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, lastName: e.target.value })}
-                  className="bg-slate-800 border-slate-700 text-white" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password" className="text-slate-300">Password</Label>
-                <Input id="new-password" type="password" value={newUserForm.password}
-                  onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
-                  className="bg-slate-800 border-slate-700 text-white" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-role" className="text-slate-300">Role</Label>
-                <Select value={newUserForm.role} onValueChange={(value) => setNewUserForm({ ...newUserForm, role: value })}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="signed-in"    className="text-white hover:bg-slate-700">Standard user</SelectItem>
-                    <SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin (system-admin)</SelectItem>
-                    <SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Admin (sysadmin)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => navigate("/customer/support/settings/users")}
-                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">
-                Cancel
-              </Button>
-              <Button onClick={handleAddUser} disabled={creating}
-                className="bg-teal-500 text-white hover:bg-teal-600">
-                {creating ? "Adding..." : "Add User"}
-              </Button>
-            </DialogFooter>
+            <Form {...newUserForm}>
+              <form onSubmit={newUserForm.handleSubmit(handleAddUser)} className="space-y-4 py-4">
+                <FormField control={newUserForm.control} name="email" render={({ field }) => (
+                  <FormItem><FormLabel className="text-slate-300">Email</FormLabel><FormControl><Input {...field} type="email" className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                )} />
+                <FormField control={newUserForm.control} name="firstName" render={({ field }) => (
+                  <FormItem><FormLabel className="text-slate-300">First Name</FormLabel><FormControl><Input {...field} className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                )} />
+                <FormField control={newUserForm.control} name="lastName" render={({ field }) => (
+                  <FormItem><FormLabel className="text-slate-300">Last Name</FormLabel><FormControl><Input {...field} className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                )} />
+                <FormField control={newUserForm.control} name="password" render={({ field }) => (
+                  <FormItem><FormLabel className="text-slate-300">Password</FormLabel><FormControl><Input {...field} type="password" className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                )} />
+                <FormField control={newUserForm.control} name="role" render={({ field }) => (
+                  <FormItem><FormLabel className="text-slate-300">Role</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="signed-in" className="text-white hover:bg-slate-700">Standard user</SelectItem><SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin (system-admin)</SelectItem><SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Admin (sysadmin)</SelectItem></SelectContent></Select><FormMessage className="text-destructive" /></FormItem>
+                )} />
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => navigate("/customer/support/settings/users")} className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">Cancel</Button>
+                  <Button type="submit" disabled={creating} className="bg-teal-500 text-white hover:bg-teal-600">{creating ? "Adding..." : "Add User"}</Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
 
