@@ -56,21 +56,21 @@ export function StatusBar({ className = "" }: { className?: string }) {
 
   return (
     <div className={`px-8 pt-4 ${className}`}>
-      <div className="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
+      <div className="rounded-xl border border-border bg-card/40 px-4 py-3">
         <div className="flex flex-wrap items-center gap-4 text-sm">
-          <div className="flex items-center gap-2 text-slate-300">
-            <Activity className="h-4 w-4 text-teal-400" />
+          <div className="flex items-center gap-2 text-foreground">
+            <Activity className="h-4 w-4 text-primary" />
             <span className="font-medium">Last triage run</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-400">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <Clock className="h-4 w-4" />
             <span>{fetching ? "Loading..." : formatTimestamp(triageStatus.performedAt)}</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-400">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <User className="h-4 w-4" />
             <span>{triageStatus.performedBy || "system"}</span>
           </div>
-          <div className="text-slate-400">{statusLabel}</div>
+          <div className="text-muted-foreground">{statusLabel}</div>
         </div>
       </div>
     </div>

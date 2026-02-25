@@ -87,12 +87,12 @@ function BatchOpportunityCard({
       </svg>
     ),
     refund: (
-      <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5 text-amber-600 dark:text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
       </svg>
     ),
     product_question: (
-      <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
       </svg>
     ),
@@ -112,7 +112,7 @@ function BatchOpportunityCard({
         {typeIcons[opportunity.type] || typeIcons.general}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-slate-100 text-sm">{opportunity.label}</p>
+        <p className="font-semibold text-foreground text-sm">{opportunity.label}</p>
         <p className="text-xs text-muted-foreground mt-0.5">
           {opportunity.emailCount} similar emails detected – review each before sending
         </p>
@@ -120,9 +120,9 @@ function BatchOpportunityCard({
       <div className="text-right shrink-0 flex items-center gap-3">
         <div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Time Saved</p>
-          <p className="text-lg font-bold text-emerald-400">{opportunity.estimatedTimeSaved} minutes</p>
+          <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{opportunity.estimatedTimeSaved} minutes</p>
         </div>
-        <svg className="w-5 h-5 text-slate-600 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <svg className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
       </div>
@@ -133,9 +133,9 @@ function BatchOpportunityCard({
 // ─── Recent Batch Row ────────────────────────────────────────────────
 function RecentBatchRow({ batch }: { batch: RecentBatch }) {
   const statusColors: Record<string, string> = {
-    completed: "bg-emerald-500/20 text-emerald-400",
-    partial: "bg-amber-500/20 text-amber-400",
-    failed: "bg-red-500/20 text-red-400",
+    completed: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+    partial: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+    failed: "bg-red-500/15 text-red-700 dark:text-red-300",
   };
   const statusLabels: Record<string, string> = {
     completed: "Completed",
@@ -172,7 +172,7 @@ function RecentBatchRow({ batch }: { batch: RecentBatch }) {
         </p>
       </div>
       <div className="text-right shrink-0">
-        <span className="text-sm font-semibold text-emerald-400">{batch.timeSaved}m saved</span>
+        <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{batch.timeSaved}m saved</span>
       </div>
     </div>
   );
@@ -379,7 +379,7 @@ export default function TriageLandingPage() {
             className="text-left p-6 bg-muted/50 border border-border rounded-xl hover:bg-muted/70 hover:border-primary/30 transition-all group"
           >
             <QueueIcon />
-            <h3 className="text-lg font-bold text-slate-100 mt-4 mb-1">Queue View</h3>
+            <h3 className="text-lg font-bold text-foreground mt-4 mb-1">Queue View</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Browse, search, and manage all emails with full flexibility
             </p>
@@ -396,7 +396,7 @@ export default function TriageLandingPage() {
             className="text-left p-6 bg-muted/50 border border-border rounded-xl hover:bg-muted/70 hover:border-purple-500/30 transition-all group"
           >
             <WorkflowIcon />
-            <h3 className="text-lg font-bold text-slate-100 mt-4 mb-1">Workflow Mode</h3>
+            <h3 className="text-lg font-bold text-foreground mt-4 mb-1">Workflow Mode</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Guided session to power through your queue efficiently
             </p>
@@ -449,15 +449,15 @@ export default function TriageLandingPage() {
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground bg-muted/50 border border-border rounded-xl">
-              <svg className="w-8 h-8 mx-auto mb-2 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <svg className="w-8 h-8 mx-auto mb-2 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-sm">No batch opportunities right now</p>
-              <p className="text-xs text-slate-600 mt-1">AI will detect groups as new emails arrive</p>
+              <p className="text-xs text-muted-foreground mt-1">AI will detect groups as new emails arrive</p>
             </div>
           )}
 
-          <p className="text-center text-xs text-slate-600 mt-3">
+          <p className="text-center text-xs text-muted-foreground mt-3">
             Click a batch to review individual emails before sending
           </p>
         </div>
@@ -467,7 +467,7 @@ export default function TriageLandingPage() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-2xl font-semibold text-foreground">Recent Batches</h2>
-              <span className="text-xs text-emerald-400 font-medium">
+              <span className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
                 {historicalTimeSaved}m total saved
               </span>
             </div>

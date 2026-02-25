@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ThemeAwareLogo } from "@/components/ThemeAwareLogo";
 import { useActionForm } from "@gadgetinc/react";
 import { Link, useLocation } from "react-router";
 import { api } from "../../api";
@@ -28,7 +29,7 @@ export const SignInComponent = (props: {
           <div className="flex-1 flex flex-col justify-between bg-muted/80 p-8">
             <div className="flex flex-col gap-7">
               <div className="w-12 h-12 overflow-hidden">
-                <img src="/api/assets/autologo?background=dark" alt="App name" className="h-12 max-w-none!" />
+                <ThemeAwareLogo alt="App name" className="h-12 max-w-none!" />
               </div>
               <h1 className="text-3xl font-bold tracking-tight">
                 Sign in to

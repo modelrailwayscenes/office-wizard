@@ -11,6 +11,7 @@
 
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
+import { ThemeAwareLogo } from "@/components/ThemeAwareLogo";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -61,7 +62,7 @@ export const Navigation = () => (
         You can update the src, alt, and styling as needed for your brand.
       */}
       <Link to="/" className="text-xl font-bold">
-        <img src="/api/assets/autologo?background=dark" alt="App name" className="h-5 w-auto" />
+        <ThemeAwareLogo alt="App name" className="h-5 w-auto" />
       </Link>
     </div>
     <DesktopNav />
@@ -84,7 +85,7 @@ const MobileNav = () => {
                       <Link
                         key={subItem.title}
                         to={subItem.href}
-                        className="text-sm text-gray-600 hover:text-gray-900"
+                        className="text-sm text-muted-foreground hover:text-foreground"
                         onClick={close}
                       >
                         {subItem.title}
@@ -96,7 +97,7 @@ const MobileNav = () => {
                 <Link
                   key={item.title}
                   to={item.href}
-                  className="text-sm font-medium hover:text-gray-900"
+                  className="text-sm font-medium hover:text-foreground"
                   onClick={close}
                 >
                   {item.title}

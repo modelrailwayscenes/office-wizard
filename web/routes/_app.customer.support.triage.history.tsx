@@ -219,7 +219,7 @@ export default function TriageHistoryPage() {
                     description="Conversations marked as Not a Customer will appear here. You can undo them to return to the triage queue."
                   />
                 ) : (
-                  <div className="divide-y divide-slate-800">
+                  <div className="divide-y divide-border">
                     {nonCustomerConvs.map((conv: any) => (
                       <div
                         key={conv.id}
@@ -263,7 +263,7 @@ export default function TriageHistoryPage() {
               ) : batches.length === 0 ? (
                 <EmptyState title="No batch operations found" description="Run a batch action to see results here." />
               ) : (
-                <div className="divide-y divide-slate-800">
+                <div className="divide-y divide-border">
                   {batches.map((batch) => {
                     const isSelected = batch.id === selectedBatchId;
                     const statusClass = statusStyles[batch.status] || statusStyles.completed;

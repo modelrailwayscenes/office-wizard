@@ -105,7 +105,7 @@ function Section({ icon: Icon, title, description, children, faded = false }: {
           <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
       </div>
-      <div className="divide-y divide-slate-700/60">{children}</div>
+      <div className="divide-y divide-border">{children}</div>
     </div>
   );
 }
@@ -302,7 +302,7 @@ export default function AlertsSettings() {
             {alertFetching ? (
               <div className="px-6 py-4 text-sm text-muted-foreground">Loading alerts...</div>
             ) : (alertLogs && alertLogs.length > 0) ? (
-              <div className="divide-y divide-slate-700/60">
+              <div className="divide-y divide-border">
                 {alertLogs.map((log: any) => (
                   <div key={log.id} className="px-6 py-4 flex items-start justify-between gap-6">
                     <div>

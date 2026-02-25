@@ -20,17 +20,17 @@ export default function NewTemplatePage() {
           size="icon"
           onClick={() => navigate("/customer/support/templates")}
           aria-label="Close"
-          className="hover:bg-zinc-800 hover:text-amber-500"
+          className="hover:bg-accent hover:text-accent-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-xl font-semibold text-foreground">Create New Template</h2>
       </div>
 
-      <Card className="bg-zinc-900 border-zinc-800">
+      <Card>
           <CardHeader>
             <CardTitle className="text-foreground">Template Details</CardTitle>
-            <CardDescription className="text-zinc-400">
+            <CardDescription className="text-muted-foreground">
               Fill in the information below to create a new email template
             </CardDescription>
           </CardHeader>

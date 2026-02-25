@@ -211,11 +211,11 @@ export default function EditTemplate() {
   };
 
   return (
-    <div className="text-zinc-100 space-y-4">
+    <div className="text-foreground space-y-4">
       <div className="flex items-center justify-between">
         <Link
           to="/customer/support/templates"
-          className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           onClick={handleBackClick}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -231,12 +231,12 @@ export default function EditTemplate() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="bg-zinc-950/50 border-zinc-800">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 Edit Template
                 {id ? (
-                  <Badge variant="outline" className="bg-zinc-900/50 border-zinc-800">
+                  <Badge variant="outline" className="bg-muted/60 border-border">
                     ID: {id}
                   </Badge>
                 ) : null}
@@ -252,25 +252,25 @@ export default function EditTemplate() {
                 className="space-y-4"
               >
                 <div>
-                  <label className="text-sm text-zinc-400">Name</label>
+                  <label className="text-sm text-muted-foreground">Name</label>
                   <Input
-                    className="mt-1 bg-zinc-900/50 border-zinc-800"
+                    className="mt-1"
                     placeholder="Template name"
                     {...register("template.name" as any)}
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm text-zinc-400">Category</label>
+                  <label className="text-sm text-muted-foreground">Category</label>
                   <Controller
                     control={control}
                     name={"template.category" as any}
                     render={({ field }) => (
                       <Select value={field.value ? String(field.value) : undefined} onValueChange={field.onChange}>
-                        <SelectTrigger className="mt-1 bg-zinc-900/50 border-zinc-800">
+                        <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
-                        <SelectContent className="bg-zinc-950 border-zinc-800">
+                        <SelectContent>
                           {categoryOptions.map((c) => (
                             <SelectItem key={c} value={c}>
                               {formatEnumValue(c)}
@@ -283,16 +283,16 @@ export default function EditTemplate() {
                 </div>
 
                 <div>
-                  <label className="text-sm text-zinc-400">Safety level</label>
+                  <label className="text-sm text-muted-foreground">Safety level</label>
                   <Controller
                     control={control}
                     name={"template.safetyLevel" as any}
                     render={({ field }) => (
                       <Select value={field.value ? String(field.value) : undefined} onValueChange={field.onChange}>
-                        <SelectTrigger className="mt-1 bg-zinc-900/50 border-zinc-800">
+                        <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Select safety level" />
                         </SelectTrigger>
-                        <SelectContent className="bg-zinc-950 border-zinc-800">
+                        <SelectContent>
                           {safetyLevelOptions.map((s) => (
                             <SelectItem key={s} value={s}>
                               {formatEnumValue(s)}
@@ -305,27 +305,27 @@ export default function EditTemplate() {
                 </div>
 
                 <div>
-                  <label className="text-sm text-zinc-400">Subject</label>
+                  <label className="text-sm text-muted-foreground">Subject</label>
                   <Input
-                    className="mt-1 bg-zinc-900/50 border-zinc-800"
+                    className="mt-1"
                     placeholder="Email subject"
                     {...register("template.subject" as any)}
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm text-zinc-400">Body</label>
+                  <label className="text-sm text-muted-foreground">Body</label>
                   <Controller
                     control={control}
                     name={"template.bodyText" as any}
                     render={({ field }) => (
-                      <div className="mt-1 border border-zinc-800 rounded-md overflow-hidden">
+                      <div className="mt-1 border border-border rounded-md overflow-hidden">
                         <MDXEditor
                           ref={editorRef}
                           markdown={field.value || ""}
                           onChange={field.onChange}
-                          className="dark-theme dark-editor bg-zinc-900/50 text-white min-h-[300px]"
-                          contentEditableClassName="prose prose-invert max-w-none p-4"
+                          className="template-editor min-h-[300px]"
+                          contentEditableClassName="prose dark:prose-invert max-w-none p-4"
                           plugins={[
                             headingsPlugin(),
                             listsPlugin(),
@@ -340,12 +340,12 @@ export default function EditTemplate() {
                                   <BlockTypeSelect />
                                   <InsertTable />
                                   {/* Variable inserter button */}
-                                  <div className="ml-2 border-l border-zinc-700 pl-2">
+                                  <div className="ml-2 border-l border-border pl-2">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <button
                                           type="button"
-                                          className="inline-flex items-center justify-center h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition-colors"
+                                          className="inline-flex items-center justify-center h-8 px-3 rounded-md bg-card hover:bg-accent border border-border text-foreground transition-colors"
                                           title="Insert variable"
                                         >
                                           <svg
@@ -368,16 +368,16 @@ export default function EditTemplate() {
                                           </svg>
                                         </button>
                                       </DropdownMenuTrigger>
-                                      <DropdownMenuContent className="bg-zinc-900 border-zinc-700">
+                                      <DropdownMenuContent>
                                         {availableVariables.map((v) => (
                                           <DropdownMenuItem
                                             key={v.value}
                                             onClick={() => insertVariable(v.value)}
-                                            className="text-white text-sm cursor-pointer hover:bg-zinc-800"
+                                            className="text-sm cursor-pointer"
                                           >
-                                            <Code className="h-3 w-3 mr-2 text-amber-400" />
+                                            <Code className="h-3 w-3 mr-2 text-primary" />
                                             {v.label}
-                                            <span className="ml-auto text-xs text-zinc-500">{`{{${v.value}}}`}</span>
+                                            <span className="ml-auto text-xs text-muted-foreground">{`{{${v.value}}}`}</span>
                                           </DropdownMenuItem>
                                         ))}
                                       </DropdownMenuContent>
@@ -394,7 +394,7 @@ export default function EditTemplate() {
                 </div>
 
                 <div>
-                  <label className="text-sm text-zinc-400">Signature</label>
+                  <label className="text-sm text-muted-foreground">Signature</label>
                   <Controller
                     control={control}
                     name={"template.signature" as any}
@@ -412,16 +412,16 @@ export default function EditTemplate() {
                             value={signatureValue}
                             onValueChange={(val: string) => field.onChange({ _link: val } as any)}
                           >
-                            <SelectTrigger className="mt-1 bg-zinc-900/50 border-zinc-800">
+                            <SelectTrigger className="mt-1">
                               <SelectValue placeholder="Select signature" />
                             </SelectTrigger>
-                            <SelectContent className="bg-zinc-950 border-zinc-800">
+                            <SelectContent>
                               {fetchingSignatures ? (
-                                <SelectItem value="__loading__" disabled className="text-zinc-500 italic">
+                                <SelectItem value="__loading__" disabled className="text-muted-foreground italic">
                                   Loading signatures...
                                 </SelectItem>
                               ) : signatureItems.length === 0 ? (
-                                <SelectItem value="__empty__" disabled className="text-zinc-500 italic">
+                                <SelectItem value="__empty__" disabled className="text-muted-foreground italic">
                                   No signatures yet — create one first
                                 </SelectItem>
                               ) : (
@@ -438,7 +438,7 @@ export default function EditTemplate() {
                             <button
                               type="button"
                               onClick={() => setIsCreateSigOpen(true)}
-                              className="text-xs text-amber-400 hover:text-amber-300 inline-flex items-center gap-1"
+                              className="text-xs text-primary hover:text-primary/80 inline-flex items-center gap-1"
                             >
                               <Plus className="h-3 w-3" />
                               New signature
@@ -446,7 +446,7 @@ export default function EditTemplate() {
                             <Link
                               to="/customer/support/signatures"
                               target="_blank"
-                              className="text-xs text-zinc-400 hover:text-zinc-300 inline-flex items-center gap-1"
+                              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
                             >
                               Manage all signatures
                             </Link>
@@ -454,7 +454,7 @@ export default function EditTemplate() {
 
                           {/* Inline Create Signature Modal */}
                           <Dialog open={isCreateSigOpen} onOpenChange={setIsCreateSigOpen}>
-                            <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100">
+                            <DialogContent>
                               <DialogHeader>
                                 <DialogTitle>Create signature</DialogTitle>
                               </DialogHeader>
@@ -472,18 +472,17 @@ export default function EditTemplate() {
                                 className="space-y-4"
                               >
                                 <div className="space-y-2">
-                                  <label className="text-sm text-zinc-400">Name *</label>
+                                  <label className="text-sm text-muted-foreground">Name *</label>
                                   <Input
-                                    className="bg-zinc-900/50 border-zinc-800"
                                     placeholder="e.g. Default"
                                     {...registerSig("signature.name")}
                                   />
                                 </div>
 
                                 <div className="space-y-2">
-                                  <label className="text-sm text-zinc-400">Body *</label>
+                                  <label className="text-sm text-muted-foreground">Body *</label>
                                   <Textarea
-                                    className="bg-zinc-900/50 border-zinc-800 min-h-[140px]"
+                                    className="min-h-[140px]"
                                     placeholder="Best regards, ..."
                                     {...registerSig("signature.body")}
                                   />
@@ -492,7 +491,7 @@ export default function EditTemplate() {
                                 <DialogFooter className="gap-2">
                                   <button
                                     type="button"
-                                    className="px-3 py-2 text-sm rounded-md border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800"
+                                    className="px-3 py-2 text-sm rounded-md border border-border bg-card hover:bg-accent"
                                     onClick={() => setIsCreateSigOpen(false)}
                                   >
                                     Cancel
@@ -500,7 +499,7 @@ export default function EditTemplate() {
                                   <button
                                     type="submit"
                                     disabled={creatingSig}
-                                    className="px-3 py-2 text-sm rounded-md bg-amber-500 hover:bg-amber-600 text-black disabled:opacity-60"
+                                    className="px-3 py-2 text-sm rounded-md bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-60"
                                   >
                                     {creatingSig ? "Saving..." : "Save signature"}
                                   </button>
@@ -515,13 +514,12 @@ export default function EditTemplate() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button type="submit" disabled={isSubmitting} className="bg-amber-500 hover:bg-amber-600 text-black">
+                  <Button type="submit" disabled={isSubmitting}>
                     Save
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    className="bg-zinc-900/50 border-zinc-800"
                     onClick={() => reset()}
                   >
                     Reset
@@ -529,7 +527,6 @@ export default function EditTemplate() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="bg-zinc-900/50 border-zinc-800"
                     onClick={() => (isDirty ? setShowCancelConfirm(true) : navigate("/customer/support/templates"))}
                   >
                     Cancel
@@ -539,13 +536,13 @@ export default function EditTemplate() {
             </CardContent>
           </Card>
 
-          <Card className="bg-zinc-950/50 border-zinc-800">
+          <Card>
             <CardHeader>
               <CardTitle>Preview</CardTitle>
             </CardHeader>
             <CardContent>
               <div
-                className="text-sm text-zinc-200 rounded-md border border-zinc-800 bg-zinc-900/20 p-4 min-h-[420px]"
+                className="text-sm text-foreground rounded-md border border-border bg-muted/30 p-4 min-h-[420px]"
                 dangerouslySetInnerHTML={{ __html: renderPreview() }}
               />
             </CardContent>
@@ -553,7 +550,7 @@ export default function EditTemplate() {
         </div>
 
     <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
-      <AlertDialogContent className="bg-zinc-950 border-zinc-800">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Exit without saving?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -562,7 +559,7 @@ export default function EditTemplate() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Stay</AlertDialogCancel>
-          <AlertDialogAction onClick={handleCancelConfirm} className="bg-amber-500 hover:bg-amber-600 text-black">
+          <AlertDialogAction onClick={handleCancelConfirm} className="bg-primary text-primary-foreground hover:bg-primary/90">
             Exit without saving
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -570,29 +567,4 @@ export default function EditTemplate() {
     </AlertDialog>
     </div>
   );
-}
-
-// Add global styles for MDXEditor dark theme
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = `
-    .dark-editor {
-      --color-background: rgb(24 24 27);
-      --color-text: rgb(244 244 245);
-      --color-border: rgb(39 39 42);
-    }
-    .dark-editor [role="toolbar"] {
-      background: rgb(24 24 27);
-      border-bottom: 1px solid rgb(39 39 42);
-      padding: 0.5rem;
-    }
-    .dark-editor button {
-      color: rgb(161 161 170);
-    }
-    .dark-editor button:hover {
-      background: rgb(39 39 42);
-      color: rgb(244 244 245);
-    }
-  `;
-  document.head.appendChild(style);
 }

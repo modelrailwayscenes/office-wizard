@@ -136,3 +136,21 @@ body,
     stroke-width: 1.5;
   }
 }
+
+@layer components {
+  .template-editor {
+    @apply bg-card text-foreground;
+  }
+
+  .template-editor [role="toolbar"] {
+    @apply bg-muted border-b border-border p-2;
+  }
+
+  .template-editor button {
+    @apply text-muted-foreground transition-colors;
+  }
+
+  .template-editor button:hover {
+    @apply bg-accent text-accent-foreground;
+  }
+}

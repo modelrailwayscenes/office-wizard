@@ -344,7 +344,7 @@ export default function ThreadsPage() {
                   onAction={fetching ? undefined : handleRefresh}
                 />
               ) : (
-                <div className="divide-y divide-slate-800">
+                <div className="divide-y divide-border">
                   {threadRows.map(({ conv, parentMessage, childMessages }) => {
                     const isSelected = selectedConvId === conv.id;
                     const maxVisibleChildren = 3;

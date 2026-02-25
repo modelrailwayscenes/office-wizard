@@ -17,13 +17,13 @@ export function SidebarBrandHeader({ icon: Icon, title, subtitle, overline }: Si
       <div>
         {overline ? (
           <>
-            <p className="text-xs text-slate-400">{overline}</p>
-            <h2 className="text-lg font-semibold text-white leading-tight">{title}</h2>
+            <p className="text-xs text-muted-foreground">{overline}</p>
+            <h2 className="text-lg font-semibold text-foreground leading-tight">{title}</h2>
           </>
         ) : (
           <>
-            <h2 className="text-lg font-semibold text-white leading-tight">{title}</h2>
-            {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
+            <h2 className="text-lg font-semibold text-foreground leading-tight">{title}</h2>
+            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </>
         )}
       </div>

@@ -165,7 +165,7 @@ export default function QuarantinePage() {
               ) : filteredItems.length === 0 ? (
                 <EmptyState title="No quarantined emails" description="Try changing the filter or refresh." />
               ) : (
-                <div className="divide-y divide-slate-800">
+                <div className="divide-y divide-border">
                   {filteredItems.map((item) => {
                     const isSelected = item.id === selectedId;
                     const statusClass = statusStyles[item.status] || statusStyles.pending_review;

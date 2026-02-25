@@ -36,10 +36,10 @@ interface BatchOperation {
 // ─── Status Badge ────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { bg: string; text: string; label: string }> = {
-    completed: { bg: "bg-emerald-500/20", text: "text-emerald-400", label: "Completed" },
-    partial: { bg: "bg-amber-500/20", text: "text-amber-400", label: "Partial" },
-    failed: { bg: "bg-red-500/20", text: "text-red-400", label: "Failed" },
-    in_progress: { bg: "bg-blue-500/20", text: "text-blue-400", label: "In Progress" },
+    completed: { bg: "bg-emerald-500/15", text: "text-emerald-700 dark:text-emerald-300", label: "Completed" },
+    partial: { bg: "bg-amber-500/15", text: "text-amber-700 dark:text-amber-300", label: "Partial" },
+    failed: { bg: "bg-red-500/15", text: "text-red-700 dark:text-red-300", label: "Failed" },
+    in_progress: { bg: "bg-blue-500/15", text: "text-blue-700 dark:text-blue-300", label: "In Progress" },
   };
   const c = config[status] || config.completed;
   return (
@@ -53,11 +53,11 @@ function StatusBadge({ status }: { status: string }) {
 function TypeBadge({ type }: { type: string }) {
   const config: Record<string, { bg: string; text: string; label: string }> = {
     tracking: { bg: "bg-primary/20", text: "text-primary", label: "Tracking" },
-    refund: { bg: "bg-amber-500/20", text: "text-amber-400", label: "Refund" },
-    product_question: { bg: "bg-blue-500/20", text: "text-blue-400", label: "Product Q" },
-    general: { bg: "bg-slate-500/20", text: "text-muted-foreground", label: "General" },
-    draft_send: { bg: "bg-purple-500/20", text: "text-purple-400", label: "Draft Send" },
-    resolve: { bg: "bg-emerald-500/20", text: "text-emerald-400", label: "Resolve" },
+    refund: { bg: "bg-amber-500/15", text: "text-amber-700 dark:text-amber-300", label: "Refund" },
+    product_question: { bg: "bg-blue-500/15", text: "text-blue-700 dark:text-blue-300", label: "Product Q" },
+    general: { bg: "bg-muted", text: "text-muted-foreground", label: "General" },
+    draft_send: { bg: "bg-purple-500/15", text: "text-purple-700 dark:text-purple-300", label: "Draft Send" },
+    resolve: { bg: "bg-emerald-500/15", text: "text-emerald-700 dark:text-emerald-300", label: "Resolve" },
   };
   const c = config[type] || config.general;
   return (
@@ -72,7 +72,7 @@ function StatCard({ label, value, accent }: { label: string; value: string | num
   return (
     <div className="bg-muted/40 border border-border/50 rounded-lg p-4">
       <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
-      <p className={`text-2xl font-bold ${accent || "text-slate-100"}`}>{value}</p>
+      <p className={`text-2xl font-bold ${accent || "text-foreground"}`}>{value}</p>
     </div>
   );
 }
@@ -80,9 +80,9 @@ function StatCard({ label, value, accent }: { label: string; value: string | num
 // ─── Expanded Batch Detail ───────────────────────────────────────────
 function BatchDetail({ batch }: { batch: BatchOperation }) {
   const resultIcons: Record<string, { icon: string; color: string }> = {
-    sent: { icon: "✓", color: "text-emerald-400" },
-    draft: { icon: "◐", color: "text-amber-400" },
-    error: { icon: "✕", color: "text-red-400" },
+    sent: { icon: "✓", color: "text-emerald-700 dark:text-emerald-300" },
+    draft: { icon: "◐", color: "text-amber-700 dark:text-amber-300" },
+    error: { icon: "✕", color: "text-red-700 dark:text-red-300" },
     skipped: { icon: "—", color: "text-muted-foreground" },
   };
 
@@ -144,7 +144,7 @@ function BatchDetail({ batch }: { batch: BatchOperation }) {
               <div key={conv.id} className="flex items-center gap-3 px-3 py-2 bg-card/40 rounded-md text-xs">
                 <span className={`font-mono font-bold ${ri.color}`}>{ri.icon}</span>
                 <span className="text-muted-foreground font-medium">{conv.customerName}</span>
-                <span className="text-slate-600">{conv.customerEmail}</span>
+                <span className="text-muted-foreground">{conv.customerEmail}</span>
                 {conv.orderId && (
                   <span className="text-muted-foreground font-mono">{conv.orderId}</span>
                 )}
@@ -281,7 +281,7 @@ export default function BatchHistoryPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-8 bg-background min-h-full animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -294,7 +294,7 @@ export default function BatchHistoryPage() {
             </svg>
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Batch History</h1>
+            <h1 className="text-3xl font-bold text-foreground">Batch History</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Review past batch operations and results</p>
           </div>
         </div>
@@ -304,7 +304,7 @@ export default function BatchHistoryPage() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         <StatCard label="Total Batches" value={totalBatches} />
         <StatCard label="Emails Sent" value={totalSent} />
-        <StatCard label="Time Saved" value={`${totalTimeSaved}m`} accent="text-emerald-400" />
+        <StatCard label="Time Saved" value={`${totalTimeSaved}m`} accent="text-emerald-700 dark:text-emerald-300" />
       </div>
 
       {/* Filters */}
@@ -325,7 +325,7 @@ export default function BatchHistoryPage() {
             </button>
           ))}
         </div>
-        <span className="text-slate-700">|</span>
+        <span className="text-border">|</span>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Status:</span>
           {["all", "completed", "partial", "failed"].map((s) => (
@@ -386,8 +386,8 @@ export default function BatchHistoryPage() {
 
                 {/* Time saved */}
                 <div className="text-right shrink-0">
-                  <span className="text-sm font-bold text-emerald-400">{batch.timeSaved}m</span>
-                  <p className="text-[10px] text-slate-600">saved</p>
+                  <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{batch.timeSaved}m</span>
+                  <p className="text-[10px] text-muted-foreground">saved</p>
                 </div>
 
                 {/* Expand */}

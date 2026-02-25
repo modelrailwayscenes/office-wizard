@@ -121,51 +121,50 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70">
-      <div className="absolute inset-4 rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/50">
+      <div className="absolute inset-4 rounded-2xl bg-background border border-border overflow-hidden flex flex-col shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-900/50 border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 bg-card/80 border-b border-border">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-white font-semibold truncate">{batch.label}</h2>
-              <Badge variant="outline" className="border-slate-700 text-slate-300">
+              <h2 className="text-foreground font-semibold truncate">{batch.label}</h2>
+              <Badge variant="outline" className="border-border text-muted-foreground bg-muted/40">
                 {selectedCount}/{emails.length} selected
               </Badge>
               {!!batch.aiSuggestion && (
-                <Badge variant="outline" className="border-teal-500/30 text-teal-300 bg-teal-500/10">
+                <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10">
                   {batch.aiSuggestion}
                 </Badge>
               )}
             </div>
-            <div className="text-xs text-slate-500 mt-1">Estimated time saved: {batch.estimatedTimeSaved} min</div>
+            <div className="text-xs text-muted-foreground mt-1">Estimated time saved: {batch.estimatedTimeSaved} min</div>
           </div>
 
-          <Button variant="outline" className="border-slate-700 hover:bg-slate-800" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             <X className="h-4 w-4 mr-2" />
             Close
           </Button>
         </div>
 
         {/* Toolbar */}
-        <div className="px-6 py-3 border-b border-slate-800 bg-slate-900/20 flex flex-wrap gap-3 items-center">
+        <div className="px-6 py-3 border-b border-border bg-card/60 flex flex-wrap gap-3 items-center">
           <div className="flex items-center gap-2">
             <Checkbox checked={selectedCount === emails.length && emails.length > 0} onCheckedChange={(v) => toggleAll(!!v)} />
-            <span className="text-sm text-slate-300">Select all</span>
+            <span className="text-sm text-muted-foreground">Select all</span>
           </div>
 
           <Separator orientation="vertical" className="h-6" />
 
           <div className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-slate-400" />
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
             <Input
               value={assignToUserId || ""}
               onChange={(e) => onAssignToUserIdChange?.(e.target.value)}
               placeholder="Assign to userId (optional)"
-              className="w-[240px] bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
+              className="w-[240px]"
             />
             <Button
               variant="outline"
-              className="border-slate-700 hover:bg-slate-800"
               disabled={loading || selectedIds.length === 0 || !onAssignAll}
               onClick={() => onAssignAll?.(selectedIds, batch.id, assignToUserId)}
               title="Assign selected"
@@ -176,16 +175,15 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <FolderInput className="h-4 w-4 text-slate-400" />
+            <FolderInput className="h-4 w-4 text-muted-foreground" />
             <Input
               value={moveToCategory || ""}
               onChange={(e) => onMoveToCategoryChange?.(e.target.value)}
               placeholder="Move to category (optional)"
-              className="w-[240px] bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
+              className="w-[240px]"
             />
             <Button
               variant="outline"
-              className="border-slate-700 hover:bg-slate-800"
               disabled={loading || selectedIds.length === 0 || !onMoveAll}
               onClick={() => onMoveAll?.(selectedIds, batch.id, moveToCategory)}
               title="Move selected"
@@ -198,7 +196,6 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
           <div className="ml-auto flex items-center gap-2">
             <Button
               variant="outline"
-              className="border-slate-700 hover:bg-slate-800"
               disabled={loading || selectedIds.length === 0}
               onClick={() => onSaveDrafts(selectedIds, batch.id, selectedDraftsMap)}
             >
@@ -207,7 +204,6 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
             </Button>
 
             <Button
-              className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
               disabled={loading || selectedIds.length === 0}
               onClick={() => onSendAll(selectedIds, batch.id, selectedDraftsMap)}
             >
@@ -217,7 +213,6 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
 
             <Button
               variant="outline"
-              className="border-slate-700 hover:bg-slate-800"
               disabled={loading || selectedIds.length === 0 || !onResolveAll}
               onClick={() => onResolveAll?.(selectedIds, batch.id)}
               title="Resolve selected"
@@ -227,7 +222,6 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
 
             <Button
               variant="outline"
-              className="border-slate-700 hover:bg-slate-800"
               disabled={loading || selectedIds.length === 0 || !onArchiveAll}
               onClick={() => onArchiveAll?.(selectedIds, batch.id)}
               title="Archive selected"
@@ -237,7 +231,6 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
 
             <Button
               variant="outline"
-              className="border-slate-700 hover:bg-slate-800"
               disabled={loading || selectedIds.length === 0 || !onRejectAll}
               onClick={() => onRejectAll?.(selectedIds, batch.id)}
               title="Reject selected"
@@ -250,8 +243,8 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
         {/* Body */}
         <div className="flex-1 grid grid-cols-2 overflow-hidden">
           {/* Left list */}
-          <div className="border-r border-slate-800 overflow-y-auto">
-            <div className="divide-y divide-slate-800">
+          <div className="border-r border-border overflow-y-auto">
+            <div className="divide-y divide-border">
               {emails.map((e) => {
                 const checked = selectedIds.includes(e.id);
                 const isOpenRow = e.id === openEmailId;
@@ -259,7 +252,7 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
                 return (
                   <div
                     key={e.id}
-                    className={`p-4 cursor-pointer hover:bg-slate-900/50 ${isOpenRow ? "bg-slate-900/70" : ""}`}
+                    className={`p-4 cursor-pointer hover:bg-muted/40 ${isOpenRow ? "bg-muted/50" : ""}`}
                     onClick={() => setOpenEmailId(e.id)}
                   >
                     <div className="flex items-start gap-2">
@@ -272,20 +265,20 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="border-slate-700 text-slate-300">
+                          <Badge variant="outline" className="border-border text-muted-foreground">
                             {e.priority}
                           </Badge>
-                          <div className="text-white font-medium truncate">{e.originalSubject || "(No subject)"}</div>
+                          <div className="text-foreground font-medium truncate">{e.originalSubject || "(No subject)"}</div>
                         </div>
 
-                        <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                           <span className="truncate">{e.customerEmail}</span>
                           <span>•</span>
                           <span>{timeAgo(e.receivedAt)}</span>
                           {e.orderId ? (
                             <>
                               <span>•</span>
-                              <span className="text-teal-300">{e.orderId}</span>
+                              <span className="text-primary">{e.orderId}</span>
                             </>
                           ) : null}
                         </div>
@@ -293,7 +286,6 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
 
                       <Button
                         variant="outline"
-                        className="border-slate-700 hover:bg-slate-800"
                         size="sm"
                         disabled={loading}
                         onClick={async (ev) => {
@@ -309,42 +301,42 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
                   </div>
                 );
               })}
-              {emails.length === 0 ? <div className="p-6 text-slate-500">Nothing selected.</div> : null}
+              {emails.length === 0 ? <div className="p-6 text-muted-foreground">Nothing selected.</div> : null}
             </div>
           </div>
 
           {/* Right review/editor */}
           <div className="overflow-y-auto p-6 space-y-4">
             {!openEmail ? (
-              <div className="text-slate-500">Select an item to review.</div>
+              <div className="text-muted-foreground">Select an item to review.</div>
             ) : (
               <>
                 <div className="flex items-center justify-between">
                   <div className="min-w-0">
-                    <div className="text-white font-semibold truncate">{openEmail.originalSubject || "(No subject)"}</div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-foreground font-semibold truncate">{openEmail.originalSubject || "(No subject)"}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
                       {openEmail.customerName} • {openEmail.customerEmail} • {timeAgo(openEmail.receivedAt)}
                     </div>
                   </div>
-                  <Badge variant="outline" className="border-slate-700 text-slate-300">
+                  <Badge variant="outline" className="border-border text-muted-foreground">
                     {openEmail.priority}
                   </Badge>
                 </div>
 
-                <Card className="bg-slate-900/40 border-slate-800 p-4">
-                  <div className="text-xs text-slate-400 mb-2">ORIGINAL</div>
-                  <div className="text-sm text-slate-300 whitespace-pre-wrap">{openEmail.originalBody || "—"}</div>
+                <Card className="bg-card/70 border-border p-4">
+                  <div className="text-xs text-muted-foreground mb-2">ORIGINAL</div>
+                  <div className="text-sm text-foreground whitespace-pre-wrap">{openEmail.originalBody || "—"}</div>
                 </Card>
 
-                <Card className="bg-slate-900/40 border-slate-800 p-4">
-                  <div className="text-xs text-slate-400 mb-2">DRAFT (EDITABLE)</div>
+                <Card className="bg-card/70 border-border p-4">
+                  <div className="text-xs text-muted-foreground mb-2">DRAFT (EDITABLE)</div>
                   <textarea
                     value={draftEdits[openEmail.id] ?? ""}
                     onChange={(e) => setDraftEdits((prev) => ({ ...prev, [openEmail.id]: e.target.value }))}
-                    className="w-full min-h-[240px] rounded-xl bg-slate-950 border border-slate-700 text-white p-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                    className="w-full min-h-[240px] rounded-xl bg-background border border-border text-foreground p-3 text-sm outline-none focus:ring-2 focus:ring-primary/40"
                     placeholder="Edit the response here…"
                   />
-                  <div className="text-xs text-slate-500 mt-2">
+                  <div className="text-xs text-muted-foreground mt-2">
                     Save drafts / Send will use these edited drafts for the selected items.
                   </div>
                 </Card>

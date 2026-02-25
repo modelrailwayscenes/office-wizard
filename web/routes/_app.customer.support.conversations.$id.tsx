@@ -103,18 +103,18 @@ export default function ConversationDetail() {
 
   if (fetching) {
     return (
-      <div className="min-h-screen bg-black text-zinc-100 p-6">
+      <div className="min-h-screen bg-background text-foreground p-6">
         <div className="mx-auto max-w-3xl space-y-4">
-          <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-foreground">
+          <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" />
             Back to Conversations
           </Link>
 
-          <Card className="bg-zinc-950/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle>Loading…</CardTitle>
             </CardHeader>
-            <CardContent className="text-zinc-400">Fetching conversation details.</CardContent>
+            <CardContent className="text-muted-foreground">Fetching conversation details.</CardContent>
           </Card>
         </div>
       </div>
@@ -123,18 +123,18 @@ export default function ConversationDetail() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-zinc-100 p-6">
+      <div className="min-h-screen bg-background text-foreground p-6">
         <div className="mx-auto max-w-3xl space-y-4">
-          <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-foreground">
+          <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" />
             Back to Conversations
           </Link>
 
-          <Card className="bg-zinc-950/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle>Couldn't load conversation</CardTitle>
             </CardHeader>
-            <CardContent className="text-zinc-400">
+            <CardContent className="text-muted-foreground">
               Please try again. If it keeps happening, check permissions or that the record exists.
             </CardContent>
           </Card>
@@ -145,18 +145,18 @@ export default function ConversationDetail() {
 
   if (!conversation) {
     return (
-      <div className="min-h-screen bg-black text-zinc-100 p-6">
+      <div className="min-h-screen bg-background text-foreground p-6">
         <div className="mx-auto max-w-3xl space-y-4">
-          <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-foreground">
+          <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" />
             Back to Conversations
           </Link>
 
-          <Card className="bg-zinc-950/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle>Not found</CardTitle>
             </CardHeader>
-            <CardContent className="text-zinc-400">No conversation exists with ID {conversationId}.</CardContent>
+            <CardContent className="text-muted-foreground">No conversation exists with ID {conversationId}.</CardContent>
           </Card>
         </div>
       </div>
@@ -166,27 +166,27 @@ export default function ConversationDetail() {
   const priority = conversation.currentPriorityBand ?? "unclassified";
   const priorityClass =
     priority === "P0"
-      ? "bg-red-500/10 text-red-400 border-red-500/20"
+      ? "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20"
       : priority === "P1"
-      ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+      ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20"
       : priority === "P2"
-      ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-      : "bg-zinc-500/10 text-zinc-300 border-zinc-500/20";
+      ? "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20"
+      : "bg-muted text-muted-foreground border-border";
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 p-6">
+    <div className="min-h-screen bg-background text-foreground p-6">
       <div className="mx-auto max-w-3xl space-y-4">
-        <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-foreground">
+        <Link to="/customer/support/conversations" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
           Back to Conversations
         </Link>
 
-        <Card className="bg-zinc-950/50 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardHeader className="space-y-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <CardTitle className="text-xl">{conversation.subject ?? "(No subject)"}</CardTitle>
-                <div className="mt-1 text-sm text-zinc-400">ID: {conversation.id}</div>
+                <div className="mt-1 text-sm text-muted-foreground">ID: {conversation.id}</div>
               </div>
               <Badge variant="outline" className={priorityClass}>
                 {priority}
@@ -197,43 +197,43 @@ export default function ConversationDetail() {
           <CardContent className="space-y-4">
             {conversation.requiresHumanReview && (
               <div className="flex items-center gap-2 p-3 bg-amber-950/30 border border-amber-500/20 rounded-md">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <span className="text-sm font-medium text-amber-500">Requires Human Review</span>
+                <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-300" />
+                <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Requires Human Review</span>
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-md border border-zinc-800 bg-zinc-900/20 p-3">
-                <div className="text-xs text-zinc-500">Customer</div>
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="text-xs text-muted-foreground">Customer</div>
                 <div className="text-sm font-medium">{conversation.primaryCustomerName ?? "—"}</div>
-                <div className="text-sm text-zinc-400">{conversation.primaryCustomerEmail ?? "—"}</div>
+                <div className="text-sm text-muted-foreground">{conversation.primaryCustomerEmail ?? "—"}</div>
               </div>
 
-              <div className="rounded-md border border-zinc-800 bg-zinc-900/20 p-3">
-                <div className="text-xs text-zinc-500">Status</div>
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="text-xs text-muted-foreground">Status</div>
                 <div className="mt-1 flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="bg-zinc-900/50 border-zinc-800">
+                  <Badge variant="outline" className="bg-muted/60 border-border">
                     {conversation.status ? titleCaseEnum(String(conversation.status)) : "—"}
                   </Badge>
                   {conversation.resolved && (
-                    <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20">
+                    <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20">
                       Resolved
                     </Badge>
                   )}
                   {conversation.automationTag && conversation.automationTag !== "none" && (
-                    <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                    <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20">
                       {titleCaseEnum(String(conversation.automationTag))}
                     </Badge>
                   )}
                 </div>
               </div>
 
-              <div className="rounded-md border border-zinc-800 bg-zinc-900/20 p-3">
-                <div className="text-xs text-zinc-500">Category</div>
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="text-xs text-muted-foreground">Category</div>
                 <div className="text-sm font-medium">
                   {conversation.currentCategory ? titleCaseEnum(String(conversation.currentCategory)) : "—"}
                 </div>
-                <div className="text-sm text-zinc-400">
+                <div className="text-sm text-muted-foreground">
                   Priority score:{" "}
                   {typeof conversation.currentPriorityScore === "number"
                     ? conversation.currentPriorityScore.toFixed(3)
@@ -241,34 +241,34 @@ export default function ConversationDetail() {
                 </div>
               </div>
 
-              <div className="rounded-md border border-zinc-800 bg-zinc-900/20 p-3">
-                <div className="text-xs text-zinc-500">Messages</div>
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="text-xs text-muted-foreground">Messages</div>
                 <div className="text-sm font-medium">{conversation.messageCount ?? 0} total</div>
-                <div className="text-sm text-zinc-400">{conversation.unreadCount ?? 0} unread</div>
+                <div className="text-sm text-muted-foreground">{conversation.unreadCount ?? 0} unread</div>
               </div>
 
-              <div className="rounded-md border border-zinc-800 bg-zinc-900/20 p-3">
-                <div className="text-xs text-zinc-500">First message</div>
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="text-xs text-muted-foreground">First message</div>
                 <div className="text-sm font-medium">{formatDateTime(conversation.firstMessageAt)}</div>
               </div>
 
-              <div className="rounded-md border border-zinc-800 bg-zinc-900/20 p-3">
-                <div className="text-xs text-zinc-500">Latest message</div>
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="text-xs text-muted-foreground">Latest message</div>
                 <div className="text-sm font-medium">{formatDateTime(conversation.latestMessageAt)}</div>
               </div>
             </div>
 
             {conversation.internalNotes && (
-              <div className="rounded-md border border-zinc-800 bg-zinc-900/20 p-3">
-                <div className="text-xs text-zinc-500 mb-1">Internal Notes</div>
-                <div className="text-sm text-zinc-200 whitespace-pre-wrap">{String(conversation.internalNotes)}</div>
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="text-xs text-muted-foreground mb-1">Internal Notes</div>
+                <div className="text-sm text-foreground whitespace-pre-wrap">{String(conversation.internalNotes)}</div>
               </div>
             )}
 
-            <div className="rounded-md border border-zinc-800 bg-zinc-900/20 p-3">
-              <div className="text-xs text-zinc-500 mb-2">Activity Timeline</div>
+            <div className="rounded-md border border-border bg-muted/30 p-3">
+              <div className="text-xs text-muted-foreground mb-2">Activity Timeline</div>
               {fetchingAiComments ? (
-                <div className="text-sm text-zinc-400">Loading activity...</div>
+                <div className="text-sm text-muted-foreground">Loading activity...</div>
               ) : aiComments && aiComments.length > 0 ? (
                 <div className="space-y-3">
                   {aiComments.map((comment) => {
@@ -277,7 +277,7 @@ export default function ConversationDetail() {
                       ? new Date(comment.createdAt).toLocaleString()
                       : "Unknown";
                     return (
-                      <div key={comment.id} className="rounded-md border border-zinc-800 bg-zinc-950/40 p-3">
+                      <div key={comment.id} className="rounded-md border border-border bg-card/70 p-3">
                         <div className="flex items-center justify-between gap-3 mb-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span
@@ -295,14 +295,14 @@ export default function ConversationDetail() {
                               </Link>
                             )}
                           </div>
-                          <span className="text-[11px] text-zinc-500" title={createdAtLabel}>
+                          <span className="text-[11px] text-muted-foreground" title={createdAtLabel}>
                             {timeAgo(comment.createdAt)}
                           </span>
                         </div>
-                        <div className="text-xs text-zinc-300 whitespace-pre-wrap">
+                        <div className="text-xs text-foreground whitespace-pre-wrap">
                           {comment.content}
                         </div>
-                        <div className="mt-2 text-[11px] text-zinc-500">
+                        <div className="mt-2 text-[11px] text-muted-foreground">
                           Source: {comment.source || "system"}
                           {comment.user?.email ? ` · ${comment.user.email}` : ""}
                         </div>
@@ -311,13 +311,13 @@ export default function ConversationDetail() {
                   })}
                 </div>
               ) : (
-                <div className="text-sm text-zinc-400">No activity recorded yet.</div>
+                <div className="text-sm text-muted-foreground">No activity recorded yet.</div>
               )}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-950/50 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />
@@ -326,61 +326,61 @@ export default function ConversationDetail() {
           </CardHeader>
           <CardContent>
             {fetchingMessages && (
-              <div className="text-sm text-zinc-400">Loading messages...</div>
+              <div className="text-sm text-muted-foreground">Loading messages...</div>
             )}
             
             {!fetchingMessages && messages && messages.length === 0 && (
-              <div className="text-sm text-zinc-400">No messages found in this conversation.</div>
+              <div className="text-sm text-muted-foreground">No messages found in this conversation.</div>
             )}
 
             {!fetchingMessages && messages && messages.length > 0 && (
               <div className="space-y-4">
                 {messages.map((message, index) => (
                   <div key={message.id}>
-                    {index > 0 && <Separator className="bg-zinc-800 my-4" />}
+                    {index > 0 && <Separator className="my-4" />}
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-zinc-200">
+                            <span className="text-sm font-medium text-foreground">
                               {message.fromName || message.fromAddress}
                             </span>
                             {!message.isRead && (
-                              <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs">
+                              <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20 text-xs">
                                 Unread
                               </Badge>
                             )}
                             {message.hasAttachments && (
-                              <Paperclip className="h-3 w-3 text-zinc-500" />
+                              <Paperclip className="h-3 w-3 text-muted-foreground" />
                             )}
                             {message.importance === "high" && (
-                              <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/20 text-xs">
+                              <Badge variant="outline" className="bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20 text-xs">
                                 High Priority
                               </Badge>
                             )}
                           </div>
-                          <div className="text-xs text-zinc-500 mt-0.5">
+                          <div className="text-xs text-muted-foreground mt-0.5">
                             {message.fromAddress}
                           </div>
                           {message.toAddresses && Array.isArray(message.toAddresses) && message.toAddresses.length > 0 && (
-                            <div className="text-xs text-zinc-500">
+                            <div className="text-xs text-muted-foreground">
                               To: {message.toAddresses.join(", ")}
                             </div>
                           )}
                         </div>
-                        <div className="text-xs text-zinc-500 whitespace-nowrap">
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">
                           {formatDateTime(message.receivedDateTime || message.sentDateTime, "PPp")}
                         </div>
                       </div>
                       
                       {message.subject && (
-                        <div className="text-sm font-medium text-zinc-300">
+                        <div className="text-sm font-medium text-foreground">
                           {message.subject}
                         </div>
                       )}
                       
                       {message.bodyPreview && (
-                        <div className="text-sm text-zinc-400 line-clamp-3">
+                        <div className="text-sm text-muted-foreground line-clamp-3">
                           {message.bodyPreview}
                         </div>
                       )}

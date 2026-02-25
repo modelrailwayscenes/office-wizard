@@ -20,7 +20,6 @@ export function SettingsButtonGroup({
         variant="outline"
         onClick={onCancel}
         disabled={saving || disabled}
-        className="border-slate-700 hover:bg-slate-800"
       >
         Cancel
       </Button>

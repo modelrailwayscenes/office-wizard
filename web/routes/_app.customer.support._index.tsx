@@ -281,7 +281,7 @@ export default function Dashboard() {
                   high: { label: "High", color: "hsl(var(--orange-500))" },
                   medium: { label: "Medium", color: "hsl(var(--amber-500))" },
                   low: { label: "Low", color: "hsl(var(--emerald-500))" },
-                  unclassified: { label: "Unclassified", color: "hsl(var(--slate-500))" },
+                  unclassified: { label: "Unclassified", color: "var(--muted-foreground)" },
                 }}
                 className="mt-4 h-[200px] w-full"
               >
@@ -322,7 +322,7 @@ export default function Dashboard() {
                   data={hourlyBuckets.map((count, idx) => ({ hour: idx, conversations: count }))}
                   margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-slate-700" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/60" />
                   <XAxis dataKey="hour" tick={{ fill: "rgb(148 163 184)" }} fontSize={10} />
                   <YAxis tick={{ fill: "rgb(148 163 184)" }} fontSize={10} />
                   <ChartTooltip content={<ChartTooltipContent />} />

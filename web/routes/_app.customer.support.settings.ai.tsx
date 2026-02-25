@@ -107,7 +107,7 @@ function Section({ title, description, children }: {
         <h2 className="text-base font-semibold text-foreground">{title}</h2>
         <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
       </div>
-      <div className="divide-y divide-slate-700/60">{children}</div>
+      <div className="divide-y divide-border">{children}</div>
     </div>
   );
 }

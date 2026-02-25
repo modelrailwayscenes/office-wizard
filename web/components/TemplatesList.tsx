@@ -99,16 +99,16 @@ export function TemplatesList() {
 
   if (error) {
     return (
-      <div className="flex-1 overflow-auto bg-slate-950 p-8">
-        <p className="text-red-400 text-lg">Error loading templates: {error.message}</p>
+      <div className="flex-1 overflow-auto bg-background p-8">
+        <p className="text-destructive text-lg">Error loading templates: {error.message}</p>
       </div>
     );
   }
 
   if (fetching && !templates) {
     return (
-      <div className="flex-1 overflow-auto bg-slate-950 p-8">
-        <p className="text-slate-400 text-lg">Loading templates...</p>
+      <div className="flex-1 overflow-auto bg-background p-8">
+        <p className="text-muted-foreground text-lg">Loading templates...</p>
       </div>
     );
   }
@@ -116,10 +116,10 @@ export function TemplatesList() {
   const isEmpty = !templates || templates.length === 0;
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-        <h1 className="text-2xl font-semibold text-white">Email Templates</h1>
-        <p className="text-sm text-slate-400 mt-1">Create and manage email response templates</p>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="border-b border-border bg-card/50 px-8 py-6">
+        <h1 className="text-2xl font-semibold text-foreground">Email Templates</h1>
+        <p className="text-sm text-muted-foreground mt-1">Create and manage email response templates</p>
       </div>
       <div className="px-8 py-6">
         <div className="flex justify-end gap-2 mb-6">
@@ -128,7 +128,6 @@ export function TemplatesList() {
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
             disabled={importing || isEmpty}
-            className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
           >
             <Upload className={`mr-2 h-4 w-4 ${importing ? "animate-pulse" : ""}`} />
             {importing ? "Importing…" : "Import"}
@@ -138,35 +137,33 @@ export function TemplatesList() {
               <Button
                 variant="outline"
                 disabled={isEmpty}
-                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Export
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-slate-900 border-slate-700">
-              <DropdownMenuItem onClick={() => handleExport("json")} className="text-slate-200 focus:bg-slate-800 focus:text-white">
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport("json")}>
                 Export as JSON
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("csv")} className="text-slate-200 focus:bg-slate-800 focus:text-white">
+              <DropdownMenuItem onClick={() => handleExport("csv")}>
                 Export as CSV
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button
             onClick={() => navigate("/customer/support/templates/new")}
-            className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
           >
             <Plus className="mr-2 h-4 w-4" />
             New Template
           </Button>
         </div>
         {isEmpty ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-slate-800/50 rounded-xl border border-slate-700">
-            <FileText className="h-20 w-20 text-slate-700 mb-6" />
-            <h2 className="text-2xl font-semibold text-white mb-2">No email templates yet</h2>
-            <p className="text-slate-400 mb-8 text-center max-w-md">
+          <div className="flex flex-col items-center justify-center py-24 bg-card/40 rounded-xl border border-border">
+            <FileText className="h-20 w-20 text-muted-foreground/60 mb-6" />
+            <h2 className="text-2xl font-semibold text-foreground mb-2">No email templates yet</h2>
+            <p className="text-muted-foreground mb-8 text-center max-w-md">
               Create your first template to automate email responses and save time
             </p>
             <div className="flex gap-3">
@@ -175,14 +172,12 @@ export function TemplatesList() {
                   onClick={handleSeed}
                   disabled={seeding}
                   variant="outline"
-                  className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
                 >
                   {seeding ? "Seeding…" : "Seed Sample Templates"}
                 </Button>
               )}
               <Button
                 onClick={() => navigate("/customer/support/templates/new")}
-                className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Template
@@ -190,7 +185,7 @@ export function TemplatesList() {
             </div>
           </div>
         ) : (
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+          <div className="bg-card/40 border border-border rounded-xl overflow-hidden">
             <AutoTable
               model={api.template}
               columns={[
@@ -208,19 +203,19 @@ export function TemplatesList() {
                 {
                   header: "Safety Level",
                   render: ({ record }: { record: any }) => (
-                    <span className="text-slate-300">{formatSafetyLevel(record.safetyLevel)}</span>
+                    <span className="text-foreground">{formatSafetyLevel(record.safetyLevel)}</span>
                   ),
                 },
                 {
                   header: "Auto Send",
                   render: ({ record }: { record: any }) => (
-                    <span className="text-slate-300">{record.autoSendEnabled ? "Yes" : "No"}</span>
+                    <span className="text-foreground">{record.autoSendEnabled ? "Yes" : "No"}</span>
                   ),
                 },
                 {
                   header: "Updated",
                   render: ({ record }: { record: any }) => (
-                    <span className="text-slate-400">{formatDate(record.updatedAt)}</span>
+                    <span className="text-muted-foreground">{formatDate(record.updatedAt)}</span>
                   ),
                 },
               ]}

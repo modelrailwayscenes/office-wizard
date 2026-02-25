@@ -9,10 +9,10 @@ export interface PageTelemetry {
 }
 
 const severityStyles: Record<NonNullable<PageTelemetry["severity"]>, string> = {
-  info: "border-slate-700 bg-slate-900/60 text-slate-200",
-  success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
-  warning: "border-amber-500/30 bg-amber-500/10 text-amber-100",
-  error: "border-red-500/30 bg-red-500/10 text-red-100",
+  info: "border-border bg-card/70 text-foreground",
+  success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200",
+  warning: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-200",
+  error: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-200",
 };
 
 function formatTelemetryTime(iso: string): string {
@@ -46,9 +46,9 @@ export default function TelemetryBanner({
         <div>
           <div className="text-sm font-semibold">{telemetry.lastAction}</div>
           {telemetry.details && (
-            <div className="text-xs text-slate-300 mt-1">{telemetry.details}</div>
+            <div className="text-xs text-muted-foreground mt-1">{telemetry.details}</div>
           )}
-          <div className="text-[11px] text-slate-400 mt-1">
+          <div className="text-[11px] text-muted-foreground mt-1">
             {formatTelemetryTime(telemetry.at)}
             {durationLabel}
           </div>
@@ -56,7 +56,7 @@ export default function TelemetryBanner({
         <button
           type="button"
           onClick={onDismiss}
-          className="text-slate-400 hover:text-slate-100 transition-colors"
+          className="text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Dismiss telemetry banner"
         >
           <X className="h-4 w-4" />

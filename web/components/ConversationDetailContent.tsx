@@ -44,7 +44,7 @@ export function ConversationDetailContent({
   }
   if (conversationError) {
     return (
-      <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
+      <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-700 dark:text-red-300">
         <span>Error loading conversation: {conversationError.toString()}</span>
       </div>
     );
@@ -58,7 +58,7 @@ export function ConversationDetailContent({
           <Button
             variant="outline"
             size="sm"
-            className="border-slate-600 hover:bg-slate-800 hover:border-amber-500/50 text-amber-400"
+            className="text-primary hover:border-primary/50"
             onClick={onMarkNotCustomer}
             disabled={markNotCustomerLoading}
           >

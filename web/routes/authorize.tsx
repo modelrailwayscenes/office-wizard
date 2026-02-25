@@ -54,11 +54,11 @@ export default function Authorize() {
   }, [searchParams, navigate, hasProcessed]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-950">
+    <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4" />
-        <p className="text-lg text-white">Connecting to Microsoft 365…</p>
-        <p className="text-sm text-slate-400 mt-2">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+        <p className="text-lg text-foreground">Connecting to Microsoft 365…</p>
+        <p className="text-sm text-muted-foreground mt-2">
           Please wait while we complete the authentication…
         </p>
       </div>

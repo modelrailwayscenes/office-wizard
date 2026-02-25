@@ -25,6 +25,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useSignOut } from "@gadgetinc/react";
 import { NavDrawer } from "@/components/shared/NavDrawer";
+import { ThemeAwareLogo } from "@/components/ThemeAwareLogo";
 import { Home, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,7 +99,7 @@ export const Navigation = ({ onLinkClick }: { onLinkClick?: () => void }) => {
     <>
       <div className="h-16 flex items-center px-6 border-b">
         <Link to="/customer/support/signed-in" className="flex items-center" onClick={onLinkClick}>
-          <img src="/api/assets/autologo?background=light" alt="App logo" className="h-8 w-auto" />
+          <ThemeAwareLogo alt="App logo" className="h-8 w-auto" />
         </Link>
       </div>
       <nav className="flex-1 px-4 py-4 flex flex-col gap-1">
@@ -166,7 +167,7 @@ const SignOutOption = () => {
   const signOut = useSignOut({ redirectToPath: "/customer/support" });
 
   return (
-    <DropdownMenuItem onClick={signOut} className="flex items-center text-red-600 focus:text-red-600 cursor-pointer">
+    <DropdownMenuItem onClick={signOut} className="flex items-center text-destructive focus:text-destructive cursor-pointer">
       <LogOut className="mr-2 h-4 w-4" />
       Sign out
     </DropdownMenuItem>

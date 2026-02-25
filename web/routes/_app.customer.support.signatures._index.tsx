@@ -166,7 +166,6 @@ export default function SignaturesPage() {
         <div className="space-y-6">
           <div className="flex justify-end mb-6">
             <Button
-              className="bg-amber-500 text-primary-foreground hover:bg-amber-600"
               onClick={() => setIsCreateOpen(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -176,8 +175,8 @@ export default function SignaturesPage() {
 
           {/* Empty State */}
           {!fetching && (signatures?.length ?? 0) === 0 && (
-            <Card className="p-8 text-center bg-zinc-950 border-zinc-800">
-              <p className="text-zinc-400">
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">
                 No signatures yet — click "New Signature" to create one.
               </p>
             </Card>
@@ -188,11 +187,11 @@ export default function SignaturesPage() {
             {signatures?.map((sig: any) => (
               <Card
                 key={sig.id}
-                className="p-4 bg-zinc-950 border-zinc-800 flex items-start justify-between"
+                className="p-4 flex items-start justify-between"
               >
                 <div>
                   <div className="font-medium">{sig.name}</div>
-                  <div className="text-sm text-zinc-400 line-clamp-2">
+                  <div className="text-sm text-muted-foreground line-clamp-2">
                     {sig.body}
                   </div>
                 </div>
@@ -201,7 +200,6 @@ export default function SignaturesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-zinc-700"
                     onClick={() => openEdit(sig)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -210,7 +208,7 @@ export default function SignaturesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-zinc-700 text-red-400"
+                    className="text-destructive"
                     onClick={() => setDeleteConfirmId(sig.id)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -224,7 +222,7 @@ export default function SignaturesPage() {
 
       {/* CREATE DRAWER */}
       <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto bg-zinc-950 border-zinc-800">
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Create Signature</SheetTitle>
           </SheetHeader>
@@ -294,7 +292,6 @@ export default function SignaturesPage() {
               <Button
                 type="submit"
                 disabled={isCreating}
-                className="bg-amber-500 text-primary-foreground hover:bg-amber-600"
               >
                 Save
               </Button>
@@ -305,7 +302,7 @@ export default function SignaturesPage() {
 
       {/* EDIT DRAWER */}
       <Sheet open={!!editingSignature} onOpenChange={(open) => !open && setEditingSignature(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto bg-zinc-950 border-zinc-800">
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Edit Signature</SheetTitle>
           </SheetHeader>
@@ -330,7 +327,6 @@ export default function SignaturesPage() {
               <Button
                 type="submit"
                 disabled={isUpdating}
-                className="bg-amber-500 text-primary-foreground hover:bg-amber-600"
               >
                 Update
               </Button>
@@ -344,7 +340,7 @@ export default function SignaturesPage() {
         open={!!deleteConfirmId}
         onOpenChange={() => setDeleteConfirmId(null)}
       >
-        <AlertDialogContent className="bg-zinc-950 border-zinc-800">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Signature?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -357,7 +353,7 @@ export default function SignaturesPage() {
             <AlertDialogAction
               disabled={deleting}
               onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

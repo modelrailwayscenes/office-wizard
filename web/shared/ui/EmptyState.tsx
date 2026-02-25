@@ -13,12 +13,12 @@ export function EmptyState({
   onAction?: () => void;
 }) {
   return (
-    <div className="p-8 text-center text-slate-500">
-      <div className="text-lg text-slate-300 font-semibold">{title}</div>
-      {description && <div className="text-sm text-slate-500 mt-1">{description}</div>}
+    <div className="p-8 text-center text-muted-foreground">
+      <div className="text-lg text-foreground font-semibold">{title}</div>
+      {description && <div className="text-sm text-muted-foreground mt-1">{description}</div>}
       {actionLabel && onAction && (
         <div className="mt-4">
-          <Button variant="outline" className="border-slate-700 hover:bg-slate-800" onClick={onAction}>
+          <Button variant="outline" onClick={onAction}>
             {actionLabel}
           </Button>
         </div>
