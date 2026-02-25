@@ -11,16 +11,16 @@ import {
 } from 'lucide-react';
 
 const SEASONAL_PROMPTS = [
-  { month: 0, label: 'New Year Sale', icon: Sparkles, color: 'bg-teal-500/10 text-teal-400' },
+  { month: 0, label: 'New Year Sale', icon: Sparkles, color: 'bg-primary/10 text-primary' },
   { month: 1, label: "Valentine's / Winter Scenery", icon: Snowflake, color: 'bg-blue-500/10 text-blue-400' },
   { month: 2, label: 'Spring Launch', icon: Leaf, color: 'bg-emerald-500/10 text-emerald-400' },
-  { month: 3, label: 'Easter Campaign', icon: Gift, color: 'bg-slate-700/50 text-slate-300' },
+  { month: 3, label: 'Easter Campaign', icon: Gift, color: 'bg-muted text-muted-foreground' },
   { month: 4, label: 'Spring Collection', icon: Leaf, color: 'bg-emerald-500/10 text-emerald-400' },
   { month: 5, label: 'Summer Preview', icon: Sun, color: 'bg-amber-500/10 text-amber-400' },
-  { month: 6, label: 'Mid-Year Sale', icon: ShoppingBag, color: 'bg-teal-500/10 text-teal-400' },
+  { month: 6, label: 'Mid-Year Sale', icon: ShoppingBag, color: 'bg-primary/10 text-primary' },
   { month: 7, label: 'Summer Scenery', icon: Sun, color: 'bg-amber-500/10 text-amber-400' },
-  { month: 8, label: 'Autumn Launch', icon: Leaf, color: 'bg-slate-700/50 text-slate-300' },
-  { month: 9, label: 'Halloween / Autumn', icon: Leaf, color: 'bg-slate-700/50 text-slate-300' },
+  { month: 8, label: 'Autumn Launch', icon: Leaf, color: 'bg-muted text-muted-foreground' },
+  { month: 9, label: 'Halloween / Autumn', icon: Leaf, color: 'bg-muted text-muted-foreground' },
   { month: 10, label: 'Black Friday', icon: ShoppingBag, color: 'bg-red-500/10 text-red-400' },
   { month: 11, label: 'Christmas Campaign', icon: Gift, color: 'bg-red-500/10 text-red-400' },
 ];
@@ -33,11 +33,11 @@ export default function CampaignCalendar() {
   const currentMonth = new Date().getMonth();
 
   return (
-    <div className="p-8 max-w-6xl mx-auto bg-slate-950 min-h-full animate-fade-in">
+    <div className="p-8 max-w-6xl mx-auto bg-background min-h-full animate-fade-in">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Campaign Calendar</h1>
-          <p className="text-slate-400 mt-1">Plan your newsletter campaigns across the year</p>
+          <h1 className="text-3xl font-bold text-foreground">Campaign Calendar</h1>
+          <p className="text-muted-foreground mt-1">Plan your newsletter campaigns across the year</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => setYear(y => y - 1)}><ChevronLeft className="w-4 h-4" /></Button>
@@ -57,13 +57,13 @@ export default function CampaignCalendar() {
           const isCurrent = year === new Date().getFullYear() && idx === currentMonth;
 
           return (
-            <Card key={month} className={`bg-slate-800/50 border-slate-700 p-4 transition-all ${isCurrent ? 'ring-2 ring-teal-500' : ''} ${isPast ? 'opacity-60' : ''}`}>
+            <Card key={month} className={`bg-card border-border p-4 transition-all ${isCurrent ? 'ring-2 ring-primary' : ''} ${isPast ? 'opacity-60' : ''}`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <CalIcon className="w-4 h-4 text-slate-400" />
-                  <h3 className="font-semibold text-sm text-white">{month}</h3>
+                  <CalIcon className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="font-semibold text-sm text-foreground">{month}</h3>
                 </div>
-                {isCurrent && <Badge className="bg-teal-500/10 text-teal-400 border-teal-500/30">Current</Badge>}
+                {isCurrent && <Badge className="bg-primary/10 text-primary border-primary/30">Current</Badge>}
               </div>
 
               {prompt && (
@@ -76,19 +76,19 @@ export default function CampaignCalendar() {
               {monthNewsletters.length > 0 ? (
                 <div className="space-y-2 mb-3">
                   {monthNewsletters.map(nl => (
-                    <div key={nl.id} className="flex items-center justify-between text-xs p-2 bg-slate-800 rounded">
-                      <span className="truncate font-medium text-white">{nl.title}</span>
-                      <Badge variant="secondary" className="text-xs ml-2 bg-slate-700 text-slate-300">{nl.status}</Badge>
+                    <div key={nl.id} className="flex items-center justify-between text-xs p-2 bg-muted rounded">
+                      <span className="truncate font-medium text-foreground">{nl.title}</span>
+                      <Badge variant="secondary" className="text-xs ml-2 bg-muted text-muted-foreground">{nl.status}</Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 mb-3">No newsletters planned</p>
+                <p className="text-xs text-muted-foreground mb-3">No newsletters planned</p>
               )}
 
               {!isPast && (
                 <Link to="/marketing/newsletter/create">
-                  <Button variant="outline" size="sm" className="border-slate-700 hover:bg-slate-800 w-full gap-1.5 text-xs">
+                  <Button variant="outline" size="sm" className="border-border hover:bg-muted w-full gap-1.5 text-xs">
                     <Plus className="w-3 h-3" /> Plan {month} Issue
                   </Button>
                 </Link>

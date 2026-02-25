@@ -27,9 +27,9 @@ export default function MarketingNewsletterLayout() {
   const location = useLocation();
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-slate-950 text-white">
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background text-foreground">
       {/* Sidebar */}
-      <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+      <div className="w-64 bg-sidebar border-r border-sidebar-border p-4 flex-shrink-0">
         <SidebarBrandHeader icon={Send} overline="MARKETING" title="NEWSLETTER" />
         <nav className="space-y-1">
           {NAV_ITEMS.map((item) => {
@@ -42,8 +42,8 @@ export default function MarketingNewsletterLayout() {
                 to={item.path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive
-                    ? "bg-teal-600/10 text-teal-400 font-medium"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                 }`}
               >
                 <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -55,7 +55,7 @@ export default function MarketingNewsletterLayout() {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto bg-slate-950">
+      <main className="flex-1 overflow-y-auto bg-background">
         <Outlet />
       </main>
     </div>

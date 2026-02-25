@@ -7,7 +7,7 @@ export function PrimaryButton({
 }: React.ComponentProps<typeof Button>) {
   return (
     <Button
-      className={cn("bg-teal-500 hover:bg-teal-600 text-black font-medium", className)}
+      className={cn("bg-primary hover:bg-primary/90 text-primary-foreground font-medium", className)}
       {...props}
     />
   );
@@ -20,7 +20,7 @@ export function SecondaryButton({
   return (
     <Button
       variant="outline"
-      className={cn("border-slate-700 hover:bg-slate-800", className)}
+      className={cn("border-border hover:bg-muted", className)}
       {...props}
     />
   );
@@ -31,7 +31,7 @@ export function GhostButton({
   ...props
 }: React.ComponentProps<typeof Button>) {
   return (
-    <Button variant="ghost" className={cn("text-slate-400 hover:text-white", className)} {...props} />
+    <Button variant="ghost" className={cn("text-muted-foreground hover:text-foreground", className)} {...props} />
   );
 }
 

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SentimentBadge } from "@/components/SentimentBadge";
@@ -20,6 +21,7 @@ import { PageHeader } from "@/shared/ui/PageHeader";
 import { SecondaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
+import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
 import {
   Mail,
   Clock,
@@ -51,86 +53,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-// ── Customer Sidebar ────────────────────────────────────────────────
-const BASE = "/customer/support";
-const customerTabs = [
-  { id: "dashboard",     label: "Dashboard",     icon: LayoutDashboard, path: BASE },
-  { id: "conversations", label: "Conversations", icon: MessageSquare,   path: `${BASE}/conversations` },
-  { id: "threads",       label: "Threads",       icon: MessageSquare,   path: `${BASE}/threads` },
-  { id: "triage",        label: "Triage",        icon: Layers,          path: `${BASE}/triage-queue` },
-  { id: "quarantine",    label: "Quarantine",    icon: ShieldAlert,     path: `${BASE}/quarantine` },
-  { id: "templates",     label: "Templates",     icon: FileText,        path: `${BASE}/templates`,
-    children: [
-      { id: "templates-list", label: "Templates",  icon: FileText, path: `${BASE}/templates` },
-      { id: "signatures",     label: "Signatures", icon: PenLine,  path: `${BASE}/signatures` },
-    ],
-  },
-  { id: "settings",      label: "Settings",      icon: Settings,        path: `${BASE}/settings` },
-];
-
-function CustomerSidebar({ currentPath }: { currentPath: string }) {
-  const [{ data: quarantineData }] = useFindMany(api.emailQuarantine, {
-    filter: { status: { equals: "pending_review" } },
-    select: { id: true },
-    first: 200,
-  });
-  const quarantineCount = (quarantineData as any[] | undefined)?.length ?? 0;
-
-  const isActive = (path: string, children?: { path: string }[]) => {
-    if (path === BASE) return currentPath === BASE || currentPath === BASE + "/";
-    if (children) {
-      return children.some((child) => currentPath === child.path || currentPath.startsWith(child.path + "/"));
-    }
-    return currentPath.startsWith(path);
-  };
-
-  return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
-      <SidebarBrandHeader icon={CircleHelp} overline="CUSTOMER" title="SUPPORT" />
-      <nav className="space-y-1">
-        {customerTabs.map(({ id, label, icon: Icon, path, children }) => (
-          <div key={id}>
-            <RouterLink
-              to={children ? children[0].path : path}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                isActive(path, children)
-                  ? "bg-teal-600/10 text-teal-400 font-medium"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-              }`}
-            >
-              <Icon className="h-4 w-4 flex-shrink-0" />
-              <span className="text-sm">{label}</span>
-              {id === "quarantine" && quarantineCount > 0 && (
-                <span className="ml-auto rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 text-[10px] font-semibold">
-                  {quarantineCount}
-                </span>
-              )}
-            </RouterLink>
-            {children && (
-              <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-3">
-                {children.map((child) => (
-                  <RouterLink
-                    key={child.id}
-                    to={child.path}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
-                      currentPath === child.path || currentPath.startsWith(child.path + "/")
-                        ? "text-teal-400 font-medium"
-                        : "text-slate-500 hover:text-white hover:bg-slate-800/50"
-                    }`}
-                  >
-                    <child.icon className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span>{child.label}</span>
-                  </RouterLink>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </nav>
-    </div>
-  );
-}
 
 // ── Main Page ───────────────────────────────────────────────────────
 export default function TriageQueuePage() {
@@ -452,8 +374,8 @@ export default function TriageQueuePage() {
   const loading = batchLoading || applyEditsLoading;
 
   return (
-    <div className="flex flex-1 min-h-0 bg-slate-950 text-white">
-      <CustomerSidebar currentPath={location.pathname} />
+    <div className="flex flex-1 min-h-0 bg-background text-foreground">
+      <CustomerSupportSidebar currentPath={location.pathname} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <PageHeader
@@ -461,7 +383,7 @@ export default function TriageQueuePage() {
           subtitle="Browse and search all emails with a flexible approach to triage"
           actions={
             <>
-              <Badge variant="outline" className="text-teal-400 border-teal-500/30 bg-teal-500/10">
+              <Badge variant="outline" className="text-primary border-primary/30 bg-primary/10">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 {draftsPendingCount} DRAFTS PENDING
               </Badge>
@@ -499,26 +421,26 @@ export default function TriageQueuePage() {
         <StatusBar />
 
         {/* Search Bar */}
-        <div className="px-8 py-4 border-b border-slate-800 flex-shrink-0">
+        <div className="px-8 py-4 border-b border-border flex-shrink-0">
           <Input
             placeholder="Search by customer, order ID, subject, or keywords..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
+            className="bg-card border-border"
           />
         </div>
 
         {/* Main Content */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left List */}
-          <div className="w-1/2 border-r border-slate-800 overflow-y-auto">
+          <div className="w-1/2 border-r border-border overflow-y-auto">
             {/* Quick Filters */}
-            <div className="flex gap-2 p-4 border-b border-slate-800 bg-slate-900/30">
+            <div className="flex gap-2 p-4 border-b border-border bg-muted/30 rounded-none">
               <Button
                 variant={activeTab === "all" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setActiveTab("all")}
-                className={activeTab === "all" ? "bg-teal-500 hover:bg-teal-600 text-black" : ""}
+                className={activeTab === "all" ? "bg-primary hover:bg-primary/90 text-primary-foreground" : ""}
               >
                 ALL ({totalQueue})
               </Button>
@@ -527,7 +449,7 @@ export default function TriageQueuePage() {
                 variant={activeTab === "urgent" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setActiveTab("urgent")}
-                className={activeTab === "urgent" ? "bg-red-500 hover:bg-red-600 text-black" : ""}
+                className={activeTab === "urgent" ? "bg-destructive hover:bg-destructive/90 text-white" : ""}
               >
                 URGENT ({criticalCount})
               </Button>
@@ -536,14 +458,14 @@ export default function TriageQueuePage() {
                 variant={activeTab === "pending" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setActiveTab("pending")}
-                className={activeTab === "pending" ? "bg-amber-500 hover:bg-amber-600 text-black" : ""}
+                className={activeTab === "pending" ? "bg-amber-500 hover:bg-amber-600 text-black" : "text-muted-foreground"}
               >
                 PENDING
               </Button>
             </div>
 
             {/* Conversation List */}
-            <div className="divide-y divide-slate-800">
+            <div className="divide-y divide-border">
               {filteredConversations.length === 0 && (
                 <EmptyState
                   title="No conversations to triage"
@@ -560,8 +482,8 @@ export default function TriageQueuePage() {
                 return (
                   <div
                     key={conv.id}
-                    className={`p-4 hover:bg-slate-900/50 transition-colors ${
-                      selectedConvId === conv.id ? "bg-slate-900/80 border-l-2 border-teal-500" : ""
+                    className={`p-4 hover:bg-muted/40 transition-colors ${
+                      selectedConvId === conv.id ? "bg-primary/5 border-l-2 border-primary" : ""
                     }`}
                   >
                     <div className="flex gap-3">
@@ -575,7 +497,7 @@ export default function TriageQueuePage() {
                             handleToggleEmailSelection(emailId, !!v);
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="border-slate-600 data-[state=checked]:border-teal-500 data-[state=checked]:bg-teal-500"
+                          className="border-border data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                         />
                       </div>
 
@@ -585,13 +507,13 @@ export default function TriageQueuePage() {
                         <div className="flex items-start gap-2 mb-2">
                           <UnifiedBadge type={conv.currentPriorityBand} label={getPriorityLabel(conv.currentPriorityBand)} />
                           <div className="flex-1 min-w-0">
-                            <div className="text-white font-medium truncate">{conv.subject || "(No subject)"}</div>
+                            <div className="font-medium truncate">{conv.subject || "(No subject)"}</div>
                           </div>
                           {conv.requiresHumanReview && <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />}
                         </div>
 
                         {/* Row 2: Customer */}
-                        <div className="text-sm text-slate-400 truncate mb-2 flex items-center gap-2">
+                        <div className="text-sm text-muted-foreground truncate mb-2 flex items-center gap-2">
                           <User className="h-3 w-3" />
                           {conv.primaryCustomerEmail || conv.primaryCustomerName || "Unknown"}
                         </div>
@@ -600,14 +522,14 @@ export default function TriageQueuePage() {
                         <div className="flex items-center gap-2 text-xs">
                           <SentimentBadge sentiment={conv.sentiment} />
                           <Separator orientation="vertical" className="h-4" />
-                          <Clock className="h-3 w-3 text-slate-500" />
-                          <span className="text-slate-500">{formatTime(conv.latestMessageAt)}</span>
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-muted-foreground">{formatTime(conv.latestMessageAt)}</span>
 
                           {getOrderNumbers(conv).length > 0 && (
                             <>
                               <Separator orientation="vertical" className="h-4" />
-                              <Tag className="h-3 w-3 text-teal-400" />
-                              <span className="text-teal-400">{getOrderNumbers(conv)[0]}</span>
+                              <Tag className="h-3 w-3 text-primary" />
+                              <span className="text-primary">{getOrderNumbers(conv)[0]}</span>
                             </>
                           )}
                         </div>
@@ -622,15 +544,15 @@ export default function TriageQueuePage() {
           {/* Right Panel - Details */}
           <div className="w-1/2 overflow-y-auto">
             {!selectedConv ? (
-              <div className="flex items-center justify-center h-full text-slate-500">
+              <div className="flex items-center justify-center h-full text-muted-foreground">
                 Select a conversation to view details
               </div>
             ) : (
               <div className="p-6 space-y-6">
                 {/* Conversation Header */}
                 <div>
-                  <h2 className="text-xl font-semibold text-white mb-2">{selectedConv.subject || "(No subject)"}</h2>
-                  <div className="text-sm text-slate-400 space-y-1">
+                  <h2 className="text-xl font-semibold mb-2">{selectedConv.subject || "(No subject)"}</h2>
+                  <div className="text-sm text-muted-foreground space-y-1">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       <span>{selectedConv.primaryCustomerName || selectedConv.primaryCustomerEmail || "Unknown"}</span>
@@ -644,7 +566,7 @@ export default function TriageQueuePage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-slate-600 hover:bg-slate-800 hover:border-amber-500/50 text-amber-400"
+                      className="border-border hover:bg-muted hover:border-amber-500/50 text-amber-500"
                       onClick={() => setMarkNotCustomerDialogOpen(true)}
                       disabled={markNotCustomerLoading}
                     >
@@ -655,17 +577,17 @@ export default function TriageQueuePage() {
                 </div>
 
                 {/* Original Message */}
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
-                  <h3 className="text-sm font-medium text-slate-300 mb-3">ORIGINAL MESSAGE</h3>
-                  <div className="text-sm text-slate-400 leading-relaxed">
+                <Card className="bg-card border-border p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">ORIGINAL MESSAGE</h3>
+                  <div className="text-sm text-muted-foreground leading-relaxed">
                     {firstMessage?.bodyPreview || "No message content available"}
                   </div>
                 </Card>
 
                 {/* AI-Generated Response */}
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
+                <Card className="bg-card border-border p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                    <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                       <Send className="h-4 w-4" />
                       AI-GENERATED RESPONSE
                     </h3>
@@ -673,7 +595,7 @@ export default function TriageQueuePage() {
 
                   {selectedConv.aiDraftContent ? (
                     <>
-                      <div className="text-sm text-white leading-relaxed bg-slate-950/50 p-4 rounded-lg border border-slate-700 mb-4 whitespace-pre-wrap">
+                      <div className="text-sm leading-relaxed bg-muted/40 p-4 rounded-lg border border-border mb-4 whitespace-pre-wrap">
                         Dear {selectedConv.primaryCustomerName || "Customer"},
                         {"\n\n"}
                         {selectedConv.aiDraftContent}
@@ -686,7 +608,7 @@ export default function TriageQueuePage() {
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
-                          className="flex-1 border-slate-700 hover:bg-slate-800"
+                          className="flex-1 border-border hover:bg-muted"
                           onClick={() => handleGenerateDraft(selectedConv.id, true)}
                           disabled={generatingDraft}
                         >
@@ -694,48 +616,57 @@ export default function TriageQueuePage() {
                           {generatingDraft ? "Regenerating..." : "Regenerate"}
                         </Button>
 
-                        <Button className="flex-1 bg-teal-500 hover:bg-teal-600 text-black font-medium">
+                        <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
                           <Send className="h-4 w-4 mr-2" />
                           Send Draft
                         </Button>
 
-                        <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
+                        <Button variant="outline" className="border-border hover:bg-muted">
                           <Archive className="h-4 w-4" />
                         </Button>
                       </div>
                     </>
                   ) : (
-                    <Button
-                      className="w-full bg-teal-500 hover:bg-teal-600 text-black font-medium"
-                      onClick={() => handleGenerateDraft(selectedConv.id, false)}
-                      disabled={generatingDraft}
-                    >
-                      {generatingDraft ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Generating Draft...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4 mr-2" />
-                          Generate AI Draft
-                        </>
+                    <div className="space-y-3">
+                      <Button
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                        onClick={() => handleGenerateDraft(selectedConv.id, false)}
+                        disabled={generatingDraft}
+                      >
+                        {generatingDraft ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Generating Draft...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-2" />
+                            Generate AI Draft
+                          </>
+                        )}
+                      </Button>
+                      {generatingDraft && (
+                        <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-11/12" />
+                          <Skeleton className="h-4 w-10/12" />
+                        </div>
                       )}
-                    </Button>
+                    </div>
                   )}
                 </Card>
 
                 {/* Activity Timeline */}
-                <Card className="bg-slate-900/50 border-slate-800 p-4">
+                <Card className="bg-card border-border p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-medium text-slate-300">ACTIVITY TIMELINE</h3>
-                    <span className="text-xs text-slate-500">
+                    <h3 className="text-sm font-medium text-muted-foreground">ACTIVITY TIMELINE</h3>
+                    <span className="text-xs text-muted-foreground">
                       {aiCommentFetching ? "Loading..." : `${aiComments?.length ?? 0} entries`}
                     </span>
                   </div>
 
                   {aiCommentFetching ? (
-                    <div className="text-sm text-slate-500">Loading activity...</div>
+                    <div className="text-sm text-muted-foreground">Loading activity...</div>
                   ) : aiComments && aiComments.length > 0 ? (
                     <div className="space-y-3">
                       {aiComments.map((comment) => {
@@ -749,7 +680,7 @@ export default function TriageQueuePage() {
                         return (
                           <div
                             key={comment.id}
-                            className="rounded-lg border border-slate-800 bg-slate-950/40 p-3"
+                            className="rounded-lg border border-border bg-muted/40 p-3"
                           >
                             <div className="flex items-center justify-between gap-3 mb-2">
                               <div className="flex items-center gap-2 flex-wrap">
@@ -762,20 +693,20 @@ export default function TriageQueuePage() {
                                 {batchId && (
                                   <RouterLink
                                     to={`/customer/support/triage/history?batch=${batchId}`}
-                                    className="text-[11px] text-teal-400 hover:text-teal-300"
+                                    className="text-[11px] text-primary hover:text-primary/80"
                                   >
                                     Batch {batchId}
                                   </RouterLink>
                                 )}
                               </div>
-                              <span className="text-[11px] text-slate-500" title={createdAtLabel}>
+                              <span className="text-[11px] text-muted-foreground" title={createdAtLabel}>
                                 {timeAgo(comment.createdAt)}
                               </span>
                             </div>
-                            <div className="text-xs text-slate-300 whitespace-pre-wrap">
+                            <div className="text-xs text-muted-foreground whitespace-pre-wrap">
                               {comment.content}
                             </div>
-                            <div className="mt-2 text-[11px] text-slate-500">
+                            <div className="mt-2 text-[11px] text-muted-foreground">
                               Source: {sourceLabel}
                               {userLabel ? ` · ${userLabel}` : ""}
                             </div>
@@ -784,7 +715,7 @@ export default function TriageQueuePage() {
                       })}
                     </div>
                   ) : (
-                    <div className="text-sm text-slate-500">No activity logged yet.</div>
+                    <div className="text-sm text-muted-foreground">No activity logged yet.</div>
                   )}
                 </Card>
               </div>
@@ -1034,10 +965,10 @@ export default function TriageQueuePage() {
       />
 
       <AlertDialog open={markNotCustomerDialogOpen} onOpenChange={setMarkNotCustomerDialogOpen}>
-        <AlertDialogContent className="bg-slate-900 border-slate-800">
+        <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
             <AlertDialogTitle>Mark as Not a Customer?</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
+            <AlertDialogDescription className="text-muted-foreground">
               This removes it from triage. You can undo this in Triage History.
             </AlertDialogDescription>
           </AlertDialogHeader>

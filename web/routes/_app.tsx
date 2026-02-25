@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, Outlet, redirect, useLocation, Form } from "react-router";
 import { Route } from "./+types/_app";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,11 @@ import {
   Menu,
   LogOut,
   Settings,
-  Keyboard,
 } from "lucide-react";
+import { useNavigate } from "react-router";
+import { RefinedModuleSwitcher } from "@/components/RefinedModuleSwitcher";
+import { GlobalSearchOverlay } from "@/components/GlobalSearchOverlay";
+import { RefinedNotificationCenter } from "@/components/RefinedNotificationCenter";
 
 export type AuthOutletContext = {
   user: any;
@@ -91,6 +94,7 @@ const modules = [
 export default function AppLayout({ loaderData }: Route.ComponentProps) {
   const { session } = loaderData;
   const location = useLocation();
+  const navigate = useNavigate();
   const user = session.user;
 
   useEffect(() => {
@@ -122,9 +126,51 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
     return mod.activePaths.some((ap) => path.startsWith(ap));
   };
 
+  const activeModule = modules.find((mod) => isModuleActive(mod)) ?? modules[0];
+  const searchItems = useMemo(
+    () => [
+      ...modules.map((mod) => ({
+        id: `module-${mod.id}`,
+        label: mod.label,
+        description: "Module",
+        group: "Modules",
+        path: mod.path,
+      })),
+      {
+        id: "route-triage",
+        label: "Triage Queue",
+        description: "Customer support",
+        group: "Quick Actions",
+        path: "/customer/support/triage-queue",
+      },
+      {
+        id: "route-conversations",
+        label: "Conversations",
+        description: "Customer support",
+        group: "Quick Actions",
+        path: "/customer/support/conversations",
+      },
+      {
+        id: "route-threads",
+        label: "Threads",
+        description: "Customer support",
+        group: "Quick Actions",
+        path: "/customer/support/threads",
+      },
+      {
+        id: "route-newsletter",
+        label: "Newsletter Dashboard",
+        description: "Marketing",
+        group: "Quick Actions",
+        path: "/marketing/newsletter",
+      },
+    ],
+    []
+  );
+
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-slate-50">
-      <header className="h-16 bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+    <div className="flex flex-col h-screen bg-background text-foreground">
+      <header className="h-16 bg-card border-b border-border sticky top-0 z-50">
         <div className="h-full px-6 flex items-center justify-between">
           {/* Left: Logo */}
           <Link to="/customer/support" className="flex items-center gap-2">
@@ -142,85 +188,63 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
               />
             </svg>
             <div className="text-lg font-semibold">
-              <span className="text-white">office</span>
-              <span className="text-teal-400">wizard</span>
+              <span>office</span>
+              <span className="text-primary">wizard</span>
             </div>
           </Link>
 
           {/* Center: Module Buttons */}
-          <nav className="hidden md:flex items-center gap-1">
-            {modules.map((mod) => {
-              const active = isModuleActive(mod);
-              return (
-                <Link key={mod.id} to={mod.path}>
-                  <Button
-                    variant="ghost"
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      active
-                        ? "bg-teal-500/15 text-teal-400 border border-teal-500/30"
-                        : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                    }`}
-                  >
-                    {mod.label}
-                  </Button>
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="hidden md:flex items-center gap-3">
+            <RefinedModuleSwitcher modules={modules} activeModuleId={activeModule.id} onSelect={(mod) => navigate(mod.path)} />
+            <GlobalSearchOverlay items={searchItems} />
+          </div>
 
           {/* Right: Actions and User */}
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden md:flex h-9 w-9 text-slate-400 hover:text-white"
-              title="Keyboard shortcuts"
-            >
-              <Keyboard className="h-4 w-4" />
-            </Button>
+            <RefinedNotificationCenter />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
-                  <Avatar className="h-9 w-9 border border-slate-700">
-                    <AvatarFallback className="bg-teal-600 text-white font-semibold text-sm">
+                  <Avatar className="h-9 w-9 border border-border">
+                    <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-sm">
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent className="w-56 bg-slate-900 border-slate-800" align="end" forceMount>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none text-slate-50">Account</p>
-                    <p className="text-xs leading-none text-slate-400">{user?.email}</p>
+                    <p className="text-sm font-medium leading-none">Account</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
 
-                <DropdownMenuSeparator className="bg-slate-800" />
+                <DropdownMenuSeparator />
 
                 <DropdownMenuItem asChild>
-                  <Link to="/customer/support/settings/profile" className="cursor-pointer text-slate-300 hover:text-slate-50">
+                  <Link to="/customer/support/settings/profile" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Personal</span>
                   </Link>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem asChild>
-                  <Link to="/customer/support/settings" className="cursor-pointer text-slate-300 hover:text-slate-50">
+                  <Link to="/customer/support/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
 
-                <DropdownMenuSeparator className="bg-slate-800" />
+                <DropdownMenuSeparator />
 
                 <DropdownMenuItem asChild>
                   <Form method="post" action="/sign-out" className="w-full">
                     <button
                       type="submit"
-                      className="w-full flex items-center text-left text-slate-300 hover:text-slate-50"
+                      className="w-full flex items-center text-left"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Sign out</span>
@@ -233,22 +257,22 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
             {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-white">
+                <Button variant="ghost" size="icon" className="h-9 w-9">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
 
-              <SheetContent side="right" className="w-64 bg-slate-900 border-slate-800">
+              <SheetContent side="right" className="w-64">
                 <div className="flex flex-col gap-4 mt-8">
-                  <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-800">
-                    <Avatar className="h-10 w-10 border border-slate-700">
-                      <AvatarFallback className="bg-teal-600 text-white font-semibold">
+                  <div className="flex items-center gap-3 px-4 py-2 border-b border-border">
+                    <Avatar className="h-10 w-10 border border-border">
+                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-slate-50">Account</span>
-                      <span className="text-xs text-slate-400">{user?.email}</span>
+                      <span className="text-sm font-medium">Account</span>
+                      <span className="text-xs text-muted-foreground">{user?.email}</span>
                     </div>
                   </div>
 
@@ -261,8 +285,8 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
                           to={mod.path}
                           className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                             active
-                              ? "bg-teal-500/15 text-teal-400"
-                              : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                           }`}
                         >
                           {mod.label}
@@ -271,10 +295,10 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
                     })}
                   </nav>
 
-                  <div className="mt-auto pt-4 border-t border-slate-800">
+                  <div className="mt-auto pt-4 border-t border-border">
                     <Form method="post" action="/sign-out" className="w-full">
                       <Button type="submit" variant="ghost"
-                        className="w-full justify-start text-slate-400 hover:text-white"
+                        className="w-full justify-start"
                       >
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sign out</span>
