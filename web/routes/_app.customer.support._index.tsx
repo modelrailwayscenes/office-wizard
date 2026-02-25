@@ -177,15 +177,15 @@ export default function Dashboard() {
     tone: string;
     subLabel?: string;
   }) => (
-    <Card className="bg-slate-900/50 border-slate-800 p-4">
+    <Card className="bg-card/50 border-border p-4">
       <div className="flex items-center gap-3">
         <div className={`p-2 rounded-lg ${tone}`}>
           <Icon className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <p className="text-xs text-slate-400">{label}</p>
-          <p className="text-2xl font-semibold text-white">{value}</p>
-          {subLabel && <p className="text-xs text-slate-500 mt-1">{subLabel}</p>}
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-2xl font-semibold text-foreground">{value}</p>
+          {subLabel && <p className="text-xs text-muted-foreground mt-1">{subLabel}</p>}
         </div>
       </div>
     </Card>
@@ -196,20 +196,20 @@ export default function Dashboard() {
     high: "bg-orange-500/80",
     medium: "bg-amber-500/70",
     low: "bg-emerald-500/70",
-    unclassified: "bg-slate-600/70",
+    unclassified: "bg-muted/70",
   };
 
   return (
-    <div className="flex flex-1 min-h-0 bg-slate-950 text-white">
+    <div className="flex flex-1 min-h-0 bg-background text-foreground">
       <CustomerSupportSidebar currentPath={location.pathname} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
         {/* Header */}
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-          <h1 className="text-2xl font-semibold text-white">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
+          <h1 className="text-2xl font-semibold text-foreground">
             {welcomeMessage}
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Choose a workflow to get started
           </p>
         </div>
@@ -217,10 +217,10 @@ export default function Dashboard() {
         {/* Content */}
         <div className="p-8 space-y-8">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-slate-400">
-              <span className="text-slate-300 font-medium">Today</span> · {todayLabel}
+            <div className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground font-medium">Today</span> · {todayLabel}
             </div>
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-muted-foreground">
               {conversationsFetching ? "Refreshing metrics..." : "Live from conversation activity"}
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function Dashboard() {
               label="Conversations Today"
               value={total}
               Icon={Mail}
-              tone="bg-slate-500/10 text-slate-300"
+              tone="bg-muted/50 text-muted-foreground"
               subLabel={`${unread} with unread`}
             />
             <KpiCard
@@ -270,10 +270,10 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-slate-900/50 border-slate-800 p-6">
+            <Card className="bg-card/50 border-border p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Priority Mix</h2>
-                <span className="text-xs text-slate-500">{priorityTotal} conversations</span>
+                <h2 className="text-lg font-semibold text-foreground">Priority Mix</h2>
+                <span className="text-xs text-muted-foreground">{priorityTotal} conversations</span>
               </div>
               <ChartContainer
                 config={{
@@ -309,10 +309,10 @@ export default function Dashboard() {
               </ChartContainer>
             </Card>
 
-            <Card className="bg-slate-900/50 border-slate-800 p-6">
+            <Card className="bg-card/50 border-border p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Activity by Hour</h2>
-                <span className="text-xs text-slate-500">Latest message time</span>
+                <h2 className="text-lg font-semibold text-foreground">Activity by Hour</h2>
+                <span className="text-xs text-muted-foreground">Latest message time</span>
               </div>
               <ChartContainer
                 config={{ conversations: { label: "Conversations", color: "hsl(var(--teal-500))" } }}
@@ -333,71 +333,71 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="bg-slate-900/50 border-slate-800 p-6">
+            <Card className="bg-card/50 border-border p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Status Overview</h2>
-                <span className="text-xs text-slate-500">Today</span>
+                <h2 className="text-lg font-semibold text-foreground">Status Overview</h2>
+                <span className="text-xs text-muted-foreground">Today</span>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 {statusOrder.map((status) => (
-                  <div key={status} className="rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-3">
-                    <div className="text-xs text-slate-400 uppercase">{status.replace("_", " ")}</div>
-                    <div className="text-xl font-semibold text-white">{statusCounts[status] || 0}</div>
+                  <div key={status} className="rounded-lg border border-border bg-card/40 px-3 py-3">
+                    <div className="text-xs text-muted-foreground uppercase">{status.replace("_", " ")}</div>
+                    <div className="text-xl font-semibold text-foreground">{statusCounts[status] || 0}</div>
                   </div>
                 ))}
               </div>
             </Card>
 
-            <Card className="bg-slate-900/50 border-slate-800 p-6">
+            <Card className="bg-card/50 border-border p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Automation Coverage</h2>
-                <span className="text-xs text-slate-500">Today</span>
+                <h2 className="text-lg font-semibold text-foreground">Automation Coverage</h2>
+                <span className="text-xs text-muted-foreground">Today</span>
               </div>
               <div className="mt-4 space-y-4">
                 <div>
-                  <div className="flex items-center justify-between text-xs text-slate-400">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Triage coverage</span>
                     <span>{triageRatio}%</span>
                   </div>
-                  <div className="mt-2 h-2 rounded-full bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-teal-500/70" style={{ width: `${triageRatio}%` }} />
+                  <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full bg-primary/70" style={{ width: `${triageRatio}%` }} />
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="text-xs text-muted-foreground mt-2">
                     {triagedCount} triaged · {untriaged} pending
                   </p>
                 </div>
                 <div>
-                  <div className="flex items-center justify-between text-xs text-slate-400">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Drafts created</span>
                     <span>{draftRatio}%</span>
                   </div>
-                  <div className="mt-2 h-2 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
                     <div className="h-full bg-amber-500/70" style={{ width: `${draftRatio}%` }} />
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="text-xs text-muted-foreground mt-2">
                     {drafts} drafts ready
                   </p>
                 </div>
               </div>
             </Card>
 
-            <Card className="bg-slate-900/50 border-slate-800 p-6">
+            <Card className="bg-card/50 border-border p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">System Activity</h2>
-                <span className="text-xs text-slate-500">Live</span>
+                <h2 className="text-lg font-semibold text-foreground">System Activity</h2>
+                <span className="text-xs text-muted-foreground">Live</span>
               </div>
               <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between text-sm text-slate-300">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>Last sync</span>
-                  <span className="text-slate-400">{timeAgo(config?.lastSyncAt)}</span>
+                  <span className="text-muted-foreground">{timeAgo(config?.lastSyncAt)}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm text-slate-300">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>Microsoft</span>
-                  <span className="text-slate-400">{config?.microsoftConnectionStatus || "unknown"}</span>
+                  <span className="text-muted-foreground">{config?.microsoftConnectionStatus || "unknown"}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm text-slate-300">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>Auto-triage</span>
-                  <span className="text-slate-400">{config?.autoTriageEnabled ? "enabled" : "disabled"}</span>
+                  <span className="text-muted-foreground">{config?.autoTriageEnabled ? "enabled" : "disabled"}</span>
                 </div>
               </div>
             </Card>

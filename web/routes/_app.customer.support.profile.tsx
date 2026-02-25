@@ -34,9 +34,9 @@ const tabs = [
 
 function Sidebar({ currentPath }: { currentPath: string }) {
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-white px-3">Settings</h2>
+        <h2 className="text-lg font-semibold text-foreground px-3">Settings</h2>
       </div>
       <nav className="space-y-1">
         {tabs.map(({ id, label, icon: Icon, path }) => (
@@ -45,8 +45,8 @@ function Sidebar({ currentPath }: { currentPath: string }) {
             to={path}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
               currentPath === path
-                ? "bg-teal-600/10 text-teal-400 font-medium"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
@@ -65,12 +65,12 @@ function Section({ icon: Icon, title, description, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden hover:border-slate-600 transition-colors">
-      <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-3">
-        <Icon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+    <div className="bg-muted/50 border border-border rounded-xl overflow-hidden hover:border-border transition-colors">
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="text-sm text-slate-400 mt-0.5">{description}</p>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
       </div>
       <div className="divide-y divide-slate-700/60">{children}</div>
@@ -86,8 +86,8 @@ function SettingRow({ label, description, children }: {
   return (
     <div className="flex items-center justify-between px-6 py-4">
       <div className="flex-1 pr-8">
-        <Label className="text-sm font-medium text-white">{label}</Label>
-        {description && <p className="text-sm text-slate-400 mt-0.5">{description}</p>}
+        <Label className="text-sm font-medium text-foreground">{label}</Label>
+        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
       </div>
       <div className="flex items-center flex-shrink-0">{children}</div>
     </div>
@@ -146,14 +146,14 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar currentPath={location.pathname} />
 
-      <div className="flex-1 overflow-auto bg-slate-950 p-8">
+      <div className="flex-1 overflow-auto bg-background p-8">
 
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-white mb-2">Account</h1>
-          <p className="text-lg text-slate-400">Manage your profile and personal preferences</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Account</h1>
+          <p className="text-lg text-muted-foreground">Manage your profile and personal preferences</p>
         </div>
 
         <div className="space-y-4">
@@ -169,14 +169,14 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-4">
                   <UserIcon user={user} className="h-16 w-16 flex-shrink-0" />
                   <div>
-                    <p className="text-lg font-semibold text-white">{title}</p>
-                    {hasName && <p className="text-sm text-slate-400 mt-0.5">{user.email}</p>}
+                    <p className="text-lg font-semibold text-foreground">{title}</p>
+                    {hasName && <p className="text-sm text-muted-foreground mt-0.5">{user.email}</p>}
                   </div>
                 </div>
                 <Button
                   onClick={() => setIsEditing(true)}
                   variant="outline"
-                  className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+                  className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   Edit profile
                 </Button>
@@ -192,13 +192,13 @@ export default function ProfilePage() {
               description="Update your account password"
             >
               <div className="px-6 py-5 flex items-center justify-between">
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-muted-foreground">
                   Choose a strong password to keep your account secure
                 </p>
                 <Button
                   onClick={() => setIsChangingPassword(true)}
                   variant="outline"
-                  className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white flex-shrink-0 ml-8"
+                  className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground flex-shrink-0 ml-8"
                 >
                   Change password
                 </Button>
@@ -228,14 +228,14 @@ export default function ProfilePage() {
                 value={textSize}
                 onValueChange={(v) => { setTextSize(v); saveUser({ textSize: v }); }}
               >
-                <SelectTrigger className="w-36 bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="w-36 bg-muted border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="small"   className="text-white hover:bg-slate-700">Small</SelectItem>
-                  <SelectItem value="medium"  className="text-white hover:bg-slate-700">Medium</SelectItem>
-                  <SelectItem value="large"   className="text-white hover:bg-slate-700">Large</SelectItem>
-                  <SelectItem value="x-large" className="text-white hover:bg-slate-700">Extra Large</SelectItem>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="small"   className="text-foreground hover:bg-muted">Small</SelectItem>
+                  <SelectItem value="medium"  className="text-foreground hover:bg-muted">Medium</SelectItem>
+                  <SelectItem value="large"   className="text-foreground hover:bg-muted">Large</SelectItem>
+                  <SelectItem value="x-large" className="text-foreground hover:bg-muted">Extra Large</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
@@ -304,26 +304,26 @@ const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => voi
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900 border-slate-800 text-white">
+      <DialogContent className="bg-card border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white">Edit profile</DialogTitle>
+          <DialogTitle className="text-xl font-semibold text-foreground">Edit profile</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit}>
           <div className="flex flex-col gap-5 py-2">
             <div className="grid gap-2">
-              <Label className="text-slate-300">First Name</Label>
+              <Label className="text-muted-foreground">First Name</Label>
               <Input
                 placeholder="First name"
                 {...register("firstName")}
-                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-slate-300">Last Name</Label>
+              <Label className="text-muted-foreground">Last Name</Label>
               <Input
                 placeholder="Last name"
                 {...register("lastName")}
-                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -332,14 +332,14 @@ const EditProfileModal = ({ open, onClose }: { open: boolean; onClose: () => voi
               variant="outline"
               onClick={onClose}
               type="button"
-              className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+              className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-teal-500 hover:bg-teal-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-foreground"
             >
               {isSubmitting ? "Saving..." : "Save"}
             </Button>
@@ -366,31 +366,31 @@ const ChangePasswordModal = ({ open, onClose }: { open: boolean; onClose: () => 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-slate-900 border-slate-800 text-white">
+      <DialogContent className="bg-card border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white">Change password</DialogTitle>
+          <DialogTitle className="text-xl font-semibold text-foreground">Change password</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit}>
           <div className="flex flex-col gap-5 py-2">
             <div className="grid gap-2">
-              <Label className="text-slate-300">Current Password</Label>
+              <Label className="text-muted-foreground">Current Password</Label>
               <Input
                 type="password"
                 autoComplete="off"
                 {...register("currentPassword")}
-                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
               {errors?.root?.message && (
                 <p className="text-red-400 text-sm">{errors.root.message}</p>
               )}
             </div>
             <div className="grid gap-2">
-              <Label className="text-slate-300">New Password</Label>
+              <Label className="text-muted-foreground">New Password</Label>
               <Input
                 type="password"
                 autoComplete="off"
                 {...register("newPassword")}
-                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
               {errors?.user?.password?.message && (
                 <p className="text-red-400 text-sm">New password {errors.user.password.message}</p>
@@ -402,14 +402,14 @@ const ChangePasswordModal = ({ open, onClose }: { open: boolean; onClose: () => 
               variant="outline"
               onClick={handleClose}
               type="button"
-              className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+              className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-teal-500 hover:bg-teal-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-foreground"
             >
               {isSubmitting ? "Saving..." : "Save"}
             </Button>

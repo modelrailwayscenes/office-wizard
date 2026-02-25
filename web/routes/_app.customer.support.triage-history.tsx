@@ -52,10 +52,10 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Type Badge ──────────────────────────────────────────────────────
 function TypeBadge({ type }: { type: string }) {
   const config: Record<string, { bg: string; text: string; label: string }> = {
-    tracking: { bg: "bg-teal-500/20", text: "text-teal-400", label: "Tracking" },
+    tracking: { bg: "bg-primary/20", text: "text-primary", label: "Tracking" },
     refund: { bg: "bg-amber-500/20", text: "text-amber-400", label: "Refund" },
     product_question: { bg: "bg-blue-500/20", text: "text-blue-400", label: "Product Q" },
-    general: { bg: "bg-slate-500/20", text: "text-slate-400", label: "General" },
+    general: { bg: "bg-slate-500/20", text: "text-muted-foreground", label: "General" },
     draft_send: { bg: "bg-purple-500/20", text: "text-purple-400", label: "Draft Send" },
     resolve: { bg: "bg-emerald-500/20", text: "text-emerald-400", label: "Resolve" },
   };
@@ -70,8 +70,8 @@ function TypeBadge({ type }: { type: string }) {
 // ─── Stat Card ───────────────────────────────────────────────────────
 function StatCard({ label, value, accent }: { label: string; value: string | number; accent?: string }) {
   return (
-    <div className="bg-slate-800/40 border border-slate-700/50 rounded-lg p-4">
-      <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">{label}</p>
+    <div className="bg-muted/40 border border-border/50 rounded-lg p-4">
+      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
       <p className={`text-2xl font-bold ${accent || "text-slate-100"}`}>{value}</p>
     </div>
   );
@@ -83,18 +83,18 @@ function BatchDetail({ batch }: { batch: BatchOperation }) {
     sent: { icon: "✓", color: "text-emerald-400" },
     draft: { icon: "◐", color: "text-amber-400" },
     error: { icon: "✕", color: "text-red-400" },
-    skipped: { icon: "—", color: "text-slate-500" },
+    skipped: { icon: "—", color: "text-muted-foreground" },
   };
 
   return (
-    <div className="px-4 pb-4 border-t border-slate-700/30 mt-2">
+    <div className="px-4 pb-4 border-t border-border/30 mt-2">
       {/* Progress bar */}
       <div className="mt-4 mb-4">
-        <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
           <span>Progress</span>
           <span>{batch.sentCount + batch.savedCount} / {batch.emailCount} processed</span>
         </div>
-        <div className="h-2 bg-slate-800 rounded-full overflow-hidden flex">
+        <div className="h-2 bg-muted rounded-full overflow-hidden flex">
           {batch.sentCount > 0 && (
             <div
               className="bg-emerald-500 h-full transition-all"
@@ -114,7 +114,7 @@ function BatchDetail({ batch }: { batch: BatchOperation }) {
             />
           )}
         </div>
-        <div className="flex items-center gap-4 mt-1.5 text-[10px] text-slate-500">
+        <div className="flex items-center gap-4 mt-1.5 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
             {batch.sentCount} sent
@@ -135,18 +135,18 @@ function BatchDetail({ batch }: { batch: BatchOperation }) {
       {/* Conversation list */}
       {batch.conversations.length > 0 && (
         <div className="space-y-1">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
             Conversations ({batch.conversations.length})
           </p>
           {batch.conversations.map((conv) => {
             const ri = resultIcons[conv.resultStatus] || resultIcons.skipped;
             return (
-              <div key={conv.id} className="flex items-center gap-3 px-3 py-2 bg-slate-900/40 rounded-md text-xs">
+              <div key={conv.id} className="flex items-center gap-3 px-3 py-2 bg-card/40 rounded-md text-xs">
                 <span className={`font-mono font-bold ${ri.color}`}>{ri.icon}</span>
-                <span className="text-slate-300 font-medium">{conv.customerName}</span>
+                <span className="text-muted-foreground font-medium">{conv.customerName}</span>
                 <span className="text-slate-600">{conv.customerEmail}</span>
                 {conv.orderId && (
-                  <span className="text-slate-500 font-mono">{conv.orderId}</span>
+                  <span className="text-muted-foreground font-mono">{conv.orderId}</span>
                 )}
                 <span className={`ml-auto capitalize ${ri.color}`}>{conv.resultStatus}</span>
               </div>
@@ -157,9 +157,9 @@ function BatchDetail({ batch }: { batch: BatchOperation }) {
 
       {/* Notes */}
       {batch.notes && (
-        <div className="mt-3 p-3 bg-slate-900/40 rounded-md">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Notes</p>
-          <p className="text-xs text-slate-400">{batch.notes}</p>
+        <div className="mt-3 p-3 bg-card/40 rounded-md">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Notes</p>
+          <p className="text-xs text-muted-foreground">{batch.notes}</p>
         </div>
       )}
     </div>
@@ -287,7 +287,7 @@ export default function BatchHistoryPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/customer/support/triage")}
-            className="text-slate-400 hover:text-slate-200 transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -295,7 +295,7 @@ export default function BatchHistoryPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-slate-100">Batch History</h1>
-            <p className="text-sm text-slate-400 mt-0.5">Review past batch operations and results</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Review past batch operations and results</p>
           </div>
         </div>
       </div>
@@ -310,15 +310,15 @@ export default function BatchHistoryPage() {
       {/* Filters */}
       <div className="flex items-center gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Type:</span>
+          <span className="text-xs text-muted-foreground">Type:</span>
           {["all", "tracking", "refund", "product_question"].map((t) => (
             <button
               key={t}
               onClick={() => setFilterType(t)}
               className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                 filterType === t
-                  ? "bg-teal-500/20 text-teal-400 font-medium"
-                  : "text-slate-500 hover:text-slate-300 hover:bg-slate-800"
+                  ? "bg-primary/20 text-primary font-medium"
+                  : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"
               }`}
             >
               {t === "all" ? "All" : t === "product_question" ? "Product Q" : t.charAt(0).toUpperCase() + t.slice(1)}
@@ -327,15 +327,15 @@ export default function BatchHistoryPage() {
         </div>
         <span className="text-slate-700">|</span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Status:</span>
+          <span className="text-xs text-muted-foreground">Status:</span>
           {["all", "completed", "partial", "failed"].map((s) => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
               className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                 filterStatus === s
-                  ? "bg-teal-500/20 text-teal-400 font-medium"
-                  : "text-slate-500 hover:text-slate-300 hover:bg-slate-800"
+                  ? "bg-primary/20 text-primary font-medium"
+                  : "text-muted-foreground hover:text-muted-foreground hover:bg-muted"
               }`}
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -346,7 +346,7 @@ export default function BatchHistoryPage() {
 
       {/* Batch List */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 text-slate-500">
+        <div className="flex items-center justify-center py-16 text-muted-foreground">
           <svg className="w-5 h-5 animate-spin mr-2" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -354,7 +354,7 @@ export default function BatchHistoryPage() {
           Loading batch history...
         </div>
       ) : filteredBatches.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 bg-slate-800/20 border border-slate-700/30 rounded-lg">
+        <div className="text-center py-12 text-muted-foreground bg-muted/20 border border-border/30 rounded-lg">
           <p className="text-sm">No batches match your filters</p>
         </div>
       ) : (
@@ -362,7 +362,7 @@ export default function BatchHistoryPage() {
           {filteredBatches.map((batch) => (
             <div
               key={batch.id}
-              className="bg-slate-800/30 border border-slate-700/50 rounded-lg overflow-hidden hover:border-slate-600/50 transition-colors"
+              className="bg-muted/30 border border-border/50 rounded-lg overflow-hidden hover:border-border/50 transition-colors"
             >
               {/* Row Header */}
               <button
@@ -372,11 +372,11 @@ export default function BatchHistoryPage() {
                 {/* Type + Label */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-sm font-semibold text-slate-200">{batch.label}</span>
+                    <span className="text-sm font-semibold text-foreground">{batch.label}</span>
                     <TypeBadge type={batch.type} />
                     <StatusBadge status={batch.status} />
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     {batch.sentCount} sent · {batch.savedCount} drafts
                     {batch.errorCount > 0 && ` · ${batch.errorCount} errors`}
                     {" · "}{formatDate(batch.createdAt)}
@@ -392,7 +392,7 @@ export default function BatchHistoryPage() {
 
                 {/* Expand */}
                 <svg
-                  className={`w-4 h-4 text-slate-500 transition-transform shrink-0 ${
+                  className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${
                     expandedId === batch.id ? "rotate-180" : ""
                   }`}
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}

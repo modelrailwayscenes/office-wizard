@@ -47,10 +47,10 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
 
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6 flex items-center justify-between px-3">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
-        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
+        <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-muted-foreground hover:text-foreground" />
       </div>
       <nav className="space-y-1">
         {visibleTabs.map(({ id, label, icon: Icon, path }) => (
@@ -59,8 +59,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
             to={path}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
               currentPath === path
-                ? "bg-teal-600/10 text-teal-400 font-medium"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
@@ -70,9 +70,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
         {isAdmin && (
           <>
-            <div className="my-4 border-t border-slate-700" />
+            <div className="my-4 border-t border-border" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Admin only</p>
             </div>
             {adminTabs.map(({ id, label, icon: Icon, path }) => (
               <RouterLink
@@ -80,8 +80,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
                 to={path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                   currentPath === path
-                    ? "bg-teal-600/10 text-teal-400 font-medium"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
@@ -102,10 +102,10 @@ function Section({ title, description, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden hover:border-slate-600 transition-colors">
-      <div className="px-6 py-4 border-b border-slate-700">
-        <h2 className="text-base font-semibold text-white">{title}</h2>
-        <p className="text-sm text-slate-400 mt-0.5">{description}</p>
+    <div className="bg-muted/50 border border-border rounded-xl overflow-hidden hover:border-border transition-colors">
+      <div className="px-6 py-4 border-b border-border">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
       </div>
       <div className="divide-y divide-slate-700/60">{children}</div>
     </div>
@@ -121,8 +121,8 @@ function SettingRow({ label, description, children }: {
   return (
     <div className="flex items-center justify-between px-6 py-4">
       <div className="flex-1 pr-8">
-        <Label className="text-sm font-medium text-white">{label}</Label>
-        {description && <p className="text-sm text-slate-400 mt-0.5">{description}</p>}
+        <Label className="text-sm font-medium text-foreground">{label}</Label>
+        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
       </div>
       <div className="flex items-center flex-shrink-0">{children}</div>
     </div>
@@ -202,10 +202,10 @@ export default function AIAutomationSettings() {
   // ── Loading ───────────────────────────────────────────────────────────────
   if (fetching) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8">
-          <div className="text-slate-400">Loading...</div>
+          <div className="text-muted-foreground">Loading...</div>
         </div>
       </div>
     );
@@ -214,7 +214,7 @@ export default function AIAutomationSettings() {
   // ── Error ─────────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8">
           <div className="text-red-400">Error loading settings: {error.message}</div>
@@ -225,15 +225,15 @@ export default function AIAutomationSettings() {
 
   // ── Main ──────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar currentPath={location.pathname} user={user} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+      <div className="flex-1 overflow-auto bg-background">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-white">AI & Automation</h1>
-              <p className="text-sm text-slate-400 mt-1">
+              <h1 className="text-2xl font-semibold text-foreground">AI & Automation</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Configure AI models and automation behaviour
               </p>
             </div>
@@ -243,7 +243,7 @@ export default function AIAutomationSettings() {
                 onCancel={handleCancel}
                 saving={updating || fetching}
               />
-              <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+              <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
             </div>
           </div>
         </div>
@@ -261,13 +261,13 @@ export default function AIAutomationSettings() {
               description="The AI service used to classify incoming emails"
             >
               <Select value={classificationProvider} onValueChange={setClassificationProvider}>
-                <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="w-48 bg-muted border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="openai" className="text-white hover:bg-slate-700">OpenAI</SelectItem>
-                  <SelectItem value="custom" className="text-white hover:bg-slate-700">Custom Model</SelectItem>
-                  <SelectItem value="rules_based" className="text-white hover:bg-slate-700">Rules Based</SelectItem>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="openai" className="text-foreground hover:bg-muted">OpenAI</SelectItem>
+                  <SelectItem value="custom" className="text-foreground hover:bg-muted">Custom Model</SelectItem>
+                  <SelectItem value="rules_based" className="text-foreground hover:bg-muted">Rules Based</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
@@ -277,13 +277,13 @@ export default function AIAutomationSettings() {
               description="The GPT model version to use for drafts and classification"
             >
               <Select value={openaiModel} onValueChange={setOpenaiModel}>
-                <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="w-48 bg-muted border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="gpt-4" className="text-white hover:bg-slate-700">GPT-4</SelectItem>
-                  <SelectItem value="gpt-4-turbo" className="text-white hover:bg-slate-700">GPT-4 Turbo</SelectItem>
-                  <SelectItem value="gpt-3.5-turbo" className="text-white hover:bg-slate-700">GPT-3.5 Turbo</SelectItem>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="gpt-4" className="text-foreground hover:bg-muted">GPT-4</SelectItem>
+                  <SelectItem value="gpt-4-turbo" className="text-foreground hover:bg-muted">GPT-4 Turbo</SelectItem>
+                  <SelectItem value="gpt-3.5-turbo" className="text-foreground hover:bg-muted">GPT-3.5 Turbo</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
@@ -299,7 +299,7 @@ export default function AIAutomationSettings() {
                   min={0} max={1} step={0.1}
                   className="flex-1"
                 />
-                <span className="text-sm font-medium text-white w-8 text-right">
+                <span className="text-sm font-medium text-foreground w-8 text-right">
                   {temperature[0].toFixed(1)}
                 </span>
               </div>
@@ -330,7 +330,7 @@ export default function AIAutomationSettings() {
                   className="flex-1"
                   disabled={!autoSendGlobalEnabled}
                 />
-                <span className={`text-sm font-medium w-8 text-right ${!autoSendGlobalEnabled ? "text-slate-500" : "text-white"}`}>
+                <span className={`text-sm font-medium w-8 text-right ${!autoSendGlobalEnabled ? "text-muted-foreground" : "text-foreground"}`}>
                   {autoSendConfidenceThreshold[0].toFixed(2)}
                 </span>
               </div>
@@ -433,7 +433,7 @@ export default function AIAutomationSettings() {
                 variant="outline"
                 size="sm"
                 onClick={() => toast.info("Learning data reset — feature coming soon")}
-                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 Reset
               </Button>
@@ -443,7 +443,7 @@ export default function AIAutomationSettings() {
           </div>
         </div>
 
-        <div className="border-t border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-t border-border bg-card/50 px-8 py-6">
           <SettingsButtonGroup
             onSave={handleSave}
             onCancel={handleCancel}

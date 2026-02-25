@@ -156,17 +156,17 @@ export default function SignaturesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-        <h1 className="text-2xl font-semibold text-white">Email Signatures</h1>
-        <p className="text-sm text-slate-400 mt-1">Manage signature templates for your emails</p>
+    <div className="min-h-screen bg-background">
+      <div className="border-b border-border bg-card/50 px-8 py-6">
+        <h1 className="text-2xl font-semibold text-foreground">Email Signatures</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage signature templates for your emails</p>
       </div>
 
       <div className="px-8 pb-8">
         <div className="space-y-6">
           <div className="flex justify-end mb-6">
             <Button
-              className="bg-amber-500 text-black hover:bg-amber-600"
+              className="bg-amber-500 text-primary-foreground hover:bg-amber-600"
               onClick={() => setIsCreateOpen(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -294,7 +294,7 @@ export default function SignaturesPage() {
               <Button
                 type="submit"
                 disabled={isCreating}
-                className="bg-amber-500 text-black hover:bg-amber-600"
+                className="bg-amber-500 text-primary-foreground hover:bg-amber-600"
               >
                 Save
               </Button>
@@ -330,7 +330,7 @@ export default function SignaturesPage() {
               <Button
                 type="submit"
                 disabled={isUpdating}
-                className="bg-amber-500 text-black hover:bg-amber-600"
+                className="bg-amber-500 text-primary-foreground hover:bg-amber-600"
               >
                 Update
               </Button>

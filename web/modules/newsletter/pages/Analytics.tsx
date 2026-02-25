@@ -38,7 +38,7 @@ export default function Analytics() {
   const newsletters = getNewsletters();
 
   return (
-    <div className="p-8 max-w-6xl mx-auto bg-background min-h-full animate-fade-in">
+    <div className="p-8 bg-background min-h-full animate-fade-in">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
         <p className="text-muted-foreground mt-1">Track newsletter performance and revenue impact</p>

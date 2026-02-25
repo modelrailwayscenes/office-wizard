@@ -41,10 +41,10 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
 
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6 flex items-center justify-between px-3">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
-        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
+        <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-muted-foreground hover:text-foreground" />
       </div>
       <nav className="space-y-1">
         {visibleTabs.map(({ id, label, icon: Icon, path }) => (
@@ -53,8 +53,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
             to={path}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
               currentPath === path
-                ? "bg-teal-600/10 text-teal-400 font-medium"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
@@ -64,9 +64,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
         {isAdmin && (
           <>
-            <div className="my-4 border-t border-slate-700" />
+            <div className="my-4 border-t border-border" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Admin only</p>
             </div>
             {adminTabs.map(({ id, label, icon: Icon, path }) => (
               <RouterLink
@@ -74,8 +74,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
                 to={path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                   currentPath === path
-                    ? "bg-teal-600/10 text-teal-400 font-medium"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
@@ -97,12 +97,12 @@ function Section({ icon: Icon, title, description, children, faded = false }: {
   faded?: boolean;
 }) {
   return (
-    <div className={`bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden transition-colors ${faded ? "opacity-50 pointer-events-none" : "hover:border-slate-600"}`}>
-      <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-3">
-        <Icon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+    <div className={`bg-muted/50 border border-border rounded-xl overflow-hidden transition-colors ${faded ? "opacity-50 pointer-events-none" : "hover:border-border"}`}>
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="text-sm text-slate-400 mt-0.5">{description}</p>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
       </div>
       <div className="divide-y divide-slate-700/60">{children}</div>
@@ -118,8 +118,8 @@ function SettingRow({ label, description, children }: {
   return (
     <div className="flex items-center justify-between px-6 py-4">
       <div className="flex-1 pr-8">
-        <Label className="text-sm font-medium text-white">{label}</Label>
-        {description && <p className="text-sm text-slate-400 mt-0.5">{description}</p>}
+        <Label className="text-sm font-medium text-foreground">{label}</Label>
+        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
       </div>
       <div className="flex items-center flex-shrink-0">{children}</div>
     </div>
@@ -211,16 +211,16 @@ export default function AlertsSettings() {
 
   if (fetching) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
-        <div className="flex-1 p-8 text-slate-400">Loading...</div>
+        <div className="flex-1 p-8 text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8 text-red-400">Error loading settings: {error.message}</div>
       </div>
@@ -228,16 +228,16 @@ export default function AlertsSettings() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar currentPath={location.pathname} user={user} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
         {/* HEADER with buttons */}
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-white">Alerts & Notifications</h1>
-              <p className="text-sm text-slate-400 mt-1">
+              <h1 className="text-2xl font-semibold text-foreground">Alerts & Notifications</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Configure when and how you get notified
               </p>
             </div>
@@ -247,7 +247,7 @@ export default function AlertsSettings() {
                 onCancel={handleCancel}
                 saving={updating}
               />
-              <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+              <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
             </div>
           </div>
         </div>
@@ -300,15 +300,15 @@ export default function AlertsSettings() {
             description="Latest alert events captured by the system"
           >
             {alertFetching ? (
-              <div className="px-6 py-4 text-sm text-slate-400">Loading alerts...</div>
+              <div className="px-6 py-4 text-sm text-muted-foreground">Loading alerts...</div>
             ) : (alertLogs && alertLogs.length > 0) ? (
               <div className="divide-y divide-slate-700/60">
                 {alertLogs.map((log: any) => (
                   <div key={log.id} className="px-6 py-4 flex items-start justify-between gap-6">
                     <div>
-                      <div className="text-sm font-medium text-white">{log.actionDescription}</div>
+                      <div className="text-sm font-medium text-foreground">{log.actionDescription}</div>
                       {log.conversation?.subject && (
-                        <div className="text-xs text-slate-400 mt-0.5">
+                        <div className="text-xs text-muted-foreground mt-0.5">
                           {log.conversation.subject}
                         </div>
                       )}
@@ -316,7 +316,7 @@ export default function AlertsSettings() {
                         <div className="text-xs text-red-400 mt-1">{log.errorMessage}</div>
                       )}
                     </div>
-                    <div className="text-xs text-slate-400 whitespace-nowrap">
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">
                       {log.performedAt ? new Date(log.performedAt).toLocaleString("en-GB") : "—"}
                       {log.success === false && (
                         <span className="ml-2 text-red-400">Failed</span>
@@ -326,7 +326,7 @@ export default function AlertsSettings() {
                 ))}
               </div>
             ) : (
-              <div className="px-6 py-4 text-sm text-slate-400">No alerts yet.</div>
+              <div className="px-6 py-4 text-sm text-muted-foreground">No alerts yet.</div>
             )}
           </Section>
 
@@ -365,14 +365,14 @@ export default function AlertsSettings() {
               />
             </SettingRow>
             {settings.dailyDigestEnabled && settings.emailNotificationsEnabled && (
-              <div className="flex items-center gap-4 px-6 py-4 border-t border-slate-700/60">
-                <Label className="text-sm text-slate-400 whitespace-nowrap">Send digest at</Label>
+              <div className="flex items-center gap-4 px-6 py-4 border-t border-border/60">
+                <Label className="text-sm text-muted-foreground whitespace-nowrap">Send digest at</Label>
                 <Input
                   type="time"
                   value={settings.dailyDigestTime}
                   onChange={(e) => handleTimeChange(e.target.value)}
                   disabled={updating}
-                  className="max-w-[140px] bg-slate-800 border-slate-700 text-white"
+                  className="max-w-[140px] bg-muted border-border text-foreground"
                 />
               </div>
             )}
@@ -404,7 +404,7 @@ export default function AlertsSettings() {
                     }
                   });
                 }}
-                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 Enable
               </Button>
@@ -415,7 +415,7 @@ export default function AlertsSettings() {
       </div>
 
       {/* FOOTER with buttons */}
-      <div className="border-t border-slate-800 bg-slate-900/50 px-8 py-6">
+      <div className="border-t border-border bg-card/50 px-8 py-6">
         <SettingsButtonGroup
           onSave={handleSave}
           onCancel={handleCancel}

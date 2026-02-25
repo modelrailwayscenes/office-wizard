@@ -11,6 +11,21 @@ import type { GadgetConfig } from "gadget-server";
 import type { Route } from "./+types/root";
 
 const isProduction = process.env.NODE_ENV === "production";
+const themeBootstrapScript = `
+(() => {
+  try {
+    const key = "ow:theme";
+    const stored = localStorage.getItem(key);
+    const pref = stored === "light" || stored === "dark" || stored === "system" ? stored : "dark";
+    const resolved = pref === "system"
+      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : pref;
+    document.documentElement.classList.toggle("dark", resolved === "dark");
+  } catch (_) {
+    document.documentElement.classList.add("dark");
+  }
+})();
+`;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,8 +60,9 @@ export default function App({ loaderData }: Route.ComponentProps) {
   const { gadgetConfig } = loaderData;
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
         <Meta />
         <Links />
         {!isProduction && <script type="module" src="/@vite/client" async />}

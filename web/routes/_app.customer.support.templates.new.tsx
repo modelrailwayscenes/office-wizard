@@ -24,12 +24,12 @@ export default function NewTemplatePage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-xl font-semibold text-white">Create New Template</h2>
+        <h2 className="text-xl font-semibold text-foreground">Create New Template</h2>
       </div>
 
       <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader>
-            <CardTitle className="text-white">Template Details</CardTitle>
+            <CardTitle className="text-foreground">Template Details</CardTitle>
             <CardDescription className="text-zinc-400">
               Fill in the information below to create a new email template
             </CardDescription>

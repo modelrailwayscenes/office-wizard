@@ -277,10 +277,10 @@ export default function ConversationsIndex() {
     switch (priority) {
       case "urgent": return "bg-red-500/20 text-red-400 border-red-500/30";
       case "high": return "bg-orange-500/20 text-orange-400 border-orange-500/30";
-      case "medium": return "bg-teal-500/20 text-teal-400 border-teal-500/30";
+      case "medium": return "bg-primary/20 text-primary border-primary/30";
       case "low": return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "unclassified": return "bg-slate-500/20 text-slate-400 border-slate-500/30";
-      default: return "bg-slate-500/20 text-slate-400 border-slate-500/30";
+      case "unclassified": return "bg-muted/50 text-muted-foreground border-border";
+      default: return "bg-muted/50 text-muted-foreground border-border";
     }
   };
 
@@ -302,9 +302,9 @@ export default function ConversationsIndex() {
       waiting_customer: { label: "WAITING CUSTOMER", color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
       waiting_internal: { label: "WAITING INTERNAL", color: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30" },
       resolved:         { label: "RESOLVED",         color: "bg-green-500/20 text-green-400 border-green-500/30" },
-      archived:         { label: "ARCHIVED",         color: "bg-slate-500/20 text-slate-400 border-slate-500/30" },
+      archived:         { label: "ARCHIVED",         color: "bg-muted/50 text-muted-foreground border-border" },
     };
-    return cfg[status || ""] ?? { label: "UNKNOWN", color: "bg-slate-500/20 text-slate-400 border-slate-500/30" };
+    return cfg[status || ""] ?? { label: "UNKNOWN", color: "bg-muted/50 text-muted-foreground border-border" };
   };
 
   const buildFilter = () => listFilter;
@@ -321,10 +321,10 @@ export default function ConversationsIndex() {
   }, [conversationListData, fetchingList, hasLoaded]);
 
   return (
-    <div className="flex flex-1 min-h-0 bg-slate-950 text-white">
+    <div className="flex flex-1 min-h-0 bg-background text-foreground">
       <CustomerSupportSidebar currentPath={location.pathname} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
         <PageHeader
           title="Conversations"
           subtitle="View and manage all email conversations"
@@ -363,21 +363,21 @@ export default function ConversationsIndex() {
 
             {/* Search bar */}
             <div className="relative flex-1 min-w-[280px]">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder="Search by customer, order ID, subject, or keywords..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-11 h-11 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 rounded-lg"
+                className="pl-11 h-11 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30 rounded-lg"
               />
             </div>
 
             {/* Status filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[175px] h-11 bg-slate-800/50 border-slate-700 text-slate-300 rounded-lg">
+              <SelectTrigger className="w-[175px] h-11 bg-muted/50 border-border text-muted-foreground rounded-lg">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="new">New</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
@@ -390,10 +390,10 @@ export default function ConversationsIndex() {
 
             {/* Priority filter */}
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-[165px] h-11 bg-slate-800/50 border-slate-700 text-slate-300 rounded-lg">
+              <SelectTrigger className="w-[165px] h-11 bg-muted/50 border-border text-muted-foreground rounded-lg">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="all">All Priorities</SelectItem>
                 <SelectItem value="urgent">Urgent</SelectItem>
                 <SelectItem value="high">High</SelectItem>
@@ -413,7 +413,7 @@ export default function ConversationsIndex() {
               onAction={handleFetchEmails}
             />
           ) : (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="bg-muted/50 border border-border rounded-xl overflow-hidden">
               <AutoTable
                 model={api.conversation}
                 searchable={false}
@@ -429,7 +429,7 @@ export default function ConversationsIndex() {
                 {
                   header: "Subject",
                   render: ({ record }) => (
-                    <span className="truncate max-w-sm text-slate-100 text-sm font-medium">
+                    <span className="truncate max-w-sm text-foreground text-sm font-medium">
                       {(record as any).subject || "—"}
                     </span>
                   ),
@@ -437,7 +437,7 @@ export default function ConversationsIndex() {
                 {
                   header: "Customer",
                   render: ({ record }) => (
-                    <span className="text-slate-300 text-sm">{(record as any).primaryCustomerEmail || "—"}</span>
+                    <span className="text-muted-foreground text-sm">{(record as any).primaryCustomerEmail || "—"}</span>
                   ),
                 },
                 {
@@ -478,13 +478,13 @@ export default function ConversationsIndex() {
                 {
                   header: "Messages",
                   render: ({ record }) => (
-                    <span className="text-slate-400 text-sm">{(record as any).messageCount ?? "—"}</span>
+                    <span className="text-muted-foreground text-sm">{(record as any).messageCount ?? "—"}</span>
                   ),
                 },
                 {
                   header: "Last Activity",
                   render: ({ record }) => (
-                    <span className="text-slate-400 text-sm">
+                    <span className="text-muted-foreground text-sm">
                       {(record as any).latestMessageAt
                         ? new Date((record as any).latestMessageAt).toLocaleDateString("en-GB", {
                             day: "2-digit",
@@ -525,12 +525,12 @@ export default function ConversationsIndex() {
           )}
         </div>
             </ResizablePanel>
-            <ResizableHandle withHandle className="bg-slate-800 data-[panel-group-direction=vertical]:hidden" />
+            <ResizableHandle withHandle className="bg-muted data-[panel-group-direction=vertical]:hidden" />
             <ResizablePanel defaultSize={50} minSize={30} className="hidden lg:block min-w-0">
               {/* Desktop: inline detail panel */}
-              <div className="h-full overflow-auto border-l border-slate-800 bg-slate-900/30">
+              <div className="h-full overflow-auto border-l border-border bg-card/30">
                 {!selectedConversationId ? (
-                  <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-slate-500 p-8">
+                  <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-muted-foreground p-8">
                     <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
                     <p className="text-sm font-medium">Select a conversation</p>
                     <p className="text-xs mt-1">Click a row to view details</p>
@@ -538,8 +538,8 @@ export default function ConversationsIndex() {
                 ) : (
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold text-white">Conversation Details</h2>
-                      <Button variant="ghost" size="icon" onClick={handleCloseDrawer} className="text-slate-400 hover:text-white">
+                      <h2 className="text-xl font-semibold text-foreground">Conversation Details</h2>
+                      <Button variant="ghost" size="icon" onClick={handleCloseDrawer} className="text-muted-foreground hover:text-foreground">
                         <X className="h-5 w-5" />
                       </Button>
                     </div>
@@ -567,14 +567,14 @@ export default function ConversationsIndex() {
         {/* Conversation Details Drawer - Mobile only (Vaul Drawer, hidden on lg via wrapper) */}
         <div className="lg:hidden">
         <Drawer open={drawerOpen} onOpenChange={(open) => !open && handleCloseDrawer()} direction="right">
-          <DrawerContent direction="right" hideHandle className="w-full sm:max-w-2xl bg-slate-900 border-slate-800 overflow-y-auto p-0">
-            <div className="border-b border-slate-800 bg-slate-900/50 px-6 py-5 sticky top-0 z-10">
+          <DrawerContent direction="right" hideHandle className="w-full sm:max-w-2xl bg-card border-border overflow-y-auto p-0">
+            <div className="border-b border-border bg-card/50 px-6 py-5 sticky top-0 z-10">
               <div className="flex items-start justify-between">
                 <div>
-                  <DrawerTitle className="text-xl font-semibold text-white">Conversation Details</DrawerTitle>
-                  {conversationData?.subject && <p className="text-sm text-slate-400 mt-1 line-clamp-1 pr-8">{conversationData.subject}</p>}
+                  <DrawerTitle className="text-xl font-semibold text-foreground">Conversation Details</DrawerTitle>
+                  {conversationData?.subject && <p className="text-sm text-muted-foreground mt-1 line-clamp-1 pr-8">{conversationData.subject}</p>}
                 </div>
-                <Button variant="ghost" size="icon" onClick={handleCloseDrawer} className="text-slate-400 hover:text-white flex-shrink-0">
+                <Button variant="ghost" size="icon" onClick={handleCloseDrawer} className="text-muted-foreground hover:text-foreground flex-shrink-0">
                   <X className="h-5 w-5" />
                 </Button>
               </div>
@@ -602,10 +602,10 @@ export default function ConversationsIndex() {
         </div>
 
         <AlertDialog open={markNotCustomerDialogOpen} onOpenChange={setMarkNotCustomerDialogOpen}>
-          <AlertDialogContent className="bg-slate-900 border-slate-800">
+          <AlertDialogContent className="bg-card border-border">
             <AlertDialogHeader>
               <AlertDialogTitle>Mark as Not a Customer?</AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-400">
+              <AlertDialogDescription className="text-muted-foreground">
                 This removes it from triage. You can undo this in Triage History.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -613,7 +613,7 @@ export default function ConversationsIndex() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleMarkNotCustomer}
-                className="bg-amber-500 hover:bg-amber-600 text-black"
+                className="bg-amber-500 hover:bg-amber-600 text-primary-foreground"
                 disabled={markNotCustomerLoading}
               >
                 {markNotCustomerLoading ? "Marking..." : "Mark Not a Customer"}

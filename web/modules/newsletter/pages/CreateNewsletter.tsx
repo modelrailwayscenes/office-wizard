@@ -73,7 +73,7 @@ export default function CreateNewsletter() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto bg-background min-h-full animate-fade-in">
+    <div className="p-8 bg-background min-h-full animate-fade-in">
       {/* Progress */}
       <div className="mb-8">
         <div className="flex items-center gap-1 mb-6">
@@ -101,7 +101,7 @@ export default function CreateNewsletter() {
       {/* Step Content */}
       <div className="min-h-[400px]">
         {state.step === 1 && (
-          <div className="space-y-6 max-w-xl">
+          <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold mb-1 text-foreground">Newsletter Details</h2>
               <p className="text-sm text-muted-foreground">Set up the basic information</p>
@@ -205,7 +205,7 @@ export default function CreateNewsletter() {
         )}
 
         {state.step === 4 && (
-          <div className="space-y-6 max-w-xl">
+          <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold mb-1 text-foreground">Content</h2>
               <p className="text-sm text-muted-foreground">Add your newsletter content</p>
@@ -273,7 +273,7 @@ export default function CreateNewsletter() {
           <div>
             <h2 className="text-2xl font-bold mb-1 text-foreground">Layout Density</h2>
             <p className="text-sm text-muted-foreground mb-6">Control spacing and visual rhythm</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {DENSITY_OPTIONS.map(opt => {
                 const isSelected = state.layoutDensity === opt.id;
                 return (

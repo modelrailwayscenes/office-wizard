@@ -121,7 +121,7 @@ export default function QuarantinePage() {
   };
 
   return (
-    <div className="flex flex-1 min-h-0 bg-slate-950 text-white">
+    <div className="flex flex-1 min-h-0 bg-background text-foreground">
       <CustomerSupportSidebar currentPath={location.pathname} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -146,8 +146,8 @@ export default function QuarantinePage() {
                 onClick={() => setStatusFilter(status)}
                 className={`text-xs uppercase tracking-wide px-3 py-1 rounded-full border ${
                   statusFilter === status
-                    ? "border-teal-500/40 text-teal-300 bg-teal-500/10"
-                    : "border-slate-700 text-slate-400 hover:text-white"
+                    ? "border-primary/40 text-primary/80 bg-primary/10"
+                    : "border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {status.replace("_", " ")}
@@ -158,7 +158,7 @@ export default function QuarantinePage() {
 
         <div className="flex-1 overflow-hidden flex mt-4">
           {/* Left list */}
-          <div className="w-1/3 border-r border-slate-800 flex flex-col bg-slate-900/30">
+          <div className="w-1/3 border-r border-border flex flex-col bg-card/30">
             <div className="flex-1 overflow-y-auto">
               {fetching ? (
                 <EmptyState title="Loading quarantined emails..." />
@@ -174,15 +174,15 @@ export default function QuarantinePage() {
                         key={item.id}
                         onClick={() => setSelectedId(item.id)}
                         className={`w-full text-left p-4 transition-colors ${
-                          isSelected ? "bg-slate-800/80 border-l-2 border-teal-500" : "hover:bg-slate-800/40"
+                          isSelected ? "bg-muted/80 border-l-2 border-primary" : "hover:bg-muted/40"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="text-sm font-semibold text-slate-100 truncate">
+                            <div className="text-sm font-semibold text-foreground truncate">
                               {item.subject || "(No subject)"}
                             </div>
-                            <div className="text-xs text-slate-400 mt-1 truncate">
+                            <div className="text-xs text-muted-foreground mt-1 truncate">
                               {item.fromName || item.fromAddress || "Unknown sender"}
                             </div>
                           </div>
@@ -192,7 +192,7 @@ export default function QuarantinePage() {
                             {item.status}
                           </span>
                         </div>
-                        <div className="mt-2 text-[11px] text-slate-500">
+                        <div className="mt-2 text-[11px] text-muted-foreground">
                           {timeAgo(item.receivedAt)}
                         </div>
                       </button>
@@ -204,9 +204,9 @@ export default function QuarantinePage() {
           </div>
 
           {/* Right detail */}
-          <div className="flex-1 overflow-y-auto bg-slate-950">
+          <div className="flex-1 overflow-y-auto bg-background">
             {!selectedItem ? (
-              <div className="h-full flex items-center justify-center text-slate-500">
+              <div className="h-full flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <ShieldAlert className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p className="text-sm">Select a quarantined email to review</p>
@@ -215,13 +215,13 @@ export default function QuarantinePage() {
             ) : (
               <div className="p-8">
                 <div className="max-w-3xl mx-auto space-y-6">
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+                  <div className="rounded-xl border border-border bg-card/50 p-6">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h2 className="text-2xl font-semibold text-white">
+                        <h2 className="text-2xl font-semibold text-foreground">
                           {selectedItem.subject || "(No subject)"}
                         </h2>
-                        <div className="text-sm text-slate-400 mt-1">
+                        <div className="text-sm text-muted-foreground mt-1">
                           {selectedItem.fromName || selectedItem.fromAddress || "Unknown sender"}
                         </div>
                       </div>
@@ -235,40 +235,40 @@ export default function QuarantinePage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-2">
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 flex items-center gap-2">
                           <User className="h-3 w-3" />
                           Sender
                         </div>
-                        <div className="text-sm text-slate-200">{selectedItem.fromAddress || "—"}</div>
+                        <div className="text-sm text-foreground">{selectedItem.fromAddress || "—"}</div>
                       </div>
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-2">
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 flex items-center gap-2">
                           <Mail className="h-3 w-3" />
                           Received
                         </div>
-                        <div className="text-sm text-slate-200">{formatDateTime(selectedItem.receivedAt)}</div>
+                        <div className="text-sm text-foreground">{formatDateTime(selectedItem.receivedAt)}</div>
                       </div>
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-2">
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 flex items-center gap-2">
                           <AlertTriangle className="h-3 w-3" />
                           Reason
                         </div>
-                        <div className="text-sm text-slate-200">
+                        <div className="text-sm text-foreground">
                           {selectedItem.classificationReason || "Manual review"}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Message ID</div>
-                        <div className="text-xs text-slate-300 break-all">
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Message ID</div>
+                        <div className="text-xs text-muted-foreground break-all">
                           {selectedItem.providerMessageId || "—"}
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-5 rounded-lg border border-slate-800 bg-slate-950/40 p-4">
-                      <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Preview</div>
-                      <div className="text-sm text-slate-300 whitespace-pre-wrap">
+                    <div className="mt-5 rounded-lg border border-border bg-background/40 p-4">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Preview</div>
+                      <div className="text-sm text-muted-foreground whitespace-pre-wrap">
                         {selectedItem.bodyPreview || "No preview available."}
                       </div>
                     </div>
@@ -293,12 +293,12 @@ export default function QuarantinePage() {
                   </div>
 
                   {selectedItem.approvedAt && (
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-muted-foreground">
                       Approved {formatDateTime(selectedItem.approvedAt)}
                     </div>
                   )}
                   {selectedItem.rejectedAt && (
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-muted-foreground">
                       Rejected {formatDateTime(selectedItem.rejectedAt)}
                     </div>
                   )}
@@ -311,15 +311,15 @@ export default function QuarantinePage() {
 
       {/* Reject confirmation dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={(open) => !open && closeRejectDialog()}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-md">
+        <DialogContent className="bg-card border-border text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle>Reject quarantined email?</DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogDescription className="text-muted-foreground">
               This email will be marked as rejected and will not be imported. You can optionally add a reason below.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-4">
-            <Label htmlFor="reject-reason" className="text-slate-300">
+            <Label htmlFor="reject-reason" className="text-muted-foreground">
               Reason (optional)
             </Label>
             <Textarea
@@ -327,7 +327,7 @@ export default function QuarantinePage() {
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="e.g. Spam, wrong address, duplicate"
-              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 min-h-[80px]"
+              className="bg-muted border-border text-foreground placeholder:text-muted-foreground min-h-[80px]"
               disabled={rejecting}
             />
           </div>

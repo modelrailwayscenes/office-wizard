@@ -44,10 +44,10 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
 
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6 flex items-center justify-between px-3">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
-        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
+        <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-muted-foreground hover:text-foreground" />
       </div>
       <nav className="space-y-1">
         {visibleTabs.map(({ id, label, icon: Icon, path }) => (
@@ -56,8 +56,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
             to={path}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
               currentPath === path
-                ? "bg-teal-600/10 text-teal-400 font-medium"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
@@ -67,9 +67,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
         {isAdmin && (
           <>
-            <div className="my-4 border-t border-slate-700" />
+            <div className="my-4 border-t border-border" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Admin only</p>
             </div>
             {adminTabs.map(({ id, label, icon: Icon, path }) => (
               <RouterLink
@@ -77,8 +77,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
                 to={path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                   currentPath === path
-                    ? "bg-teal-600/10 text-teal-400 font-medium"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
@@ -99,12 +99,12 @@ function Section({ icon: Icon, title, description, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden hover:border-slate-600 transition-colors">
-      <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-3">
-        <Icon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+    <div className="bg-muted/50 border border-border rounded-xl overflow-hidden hover:border-border transition-colors">
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="text-sm text-slate-400 mt-0.5">{description}</p>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
       </div>
       <div className="divide-y divide-slate-700/60">{children}</div>
@@ -120,8 +120,8 @@ function SettingRow({ label, description, children }: {
   return (
     <div className="flex items-center justify-between px-6 py-4">
       <div className="flex-1 pr-8">
-        <Label className="text-sm font-medium text-white">{label}</Label>
-        {description && <p className="text-sm text-slate-400 mt-0.5">{description}</p>}
+        <Label className="text-sm font-medium text-foreground">{label}</Label>
+        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
       </div>
       <div className="flex items-center flex-shrink-0">{children}</div>
     </div>
@@ -154,16 +154,16 @@ function PriorityCard({ level, label, color, value, onChange }: {
   }[color];
 
   return (
-    <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 space-y-3">
+    <div className="bg-card/60 border border-border rounded-xl p-4 space-y-3">
       <Badge className={`${badge} font-semibold text-xs px-2 py-0.5`}>{level}</Badge>
-      <p className="text-sm text-slate-400">{label}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
+        <SelectTrigger className="w-full bg-muted border-border text-foreground">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="bg-slate-800 border-slate-700">
+        <SelectContent className="bg-muted border-border">
           {SLA_OPTIONS.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-slate-700">
+            <SelectItem key={opt.value} value={opt.value} className="text-foreground hover:bg-muted">
               {opt.label}
             </SelectItem>
           ))}
@@ -258,16 +258,16 @@ export default function TriageSettings() {
 
   if (fetching) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
-        <div className="flex-1 p-8 text-slate-400">Loading...</div>
+        <div className="flex-1 p-8 text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8 text-red-400">Error loading settings: {error.message}</div>
       </div>
@@ -275,16 +275,16 @@ export default function TriageSettings() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar currentPath={location.pathname} user={user} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
         {/* HEADER with buttons */}
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-white">Triage & Workflow</h1>
-              <p className="text-sm text-slate-400 mt-1">
+              <h1 className="text-2xl font-semibold text-foreground">Triage & Workflow</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Configure how emails are prioritised and processed
               </p>
             </div>
@@ -294,7 +294,7 @@ export default function TriageSettings() {
                 onCancel={handleCancel}
                 saving={saving}
               />
-              <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+              <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
             </div>
           </div>
         </div>
@@ -317,8 +317,8 @@ export default function TriageSettings() {
               </SettingRow>
 
               <div className="px-6 py-4">
-                <Label className="text-sm font-medium text-white">Confidence Threshold</Label>
-                <p className="text-sm text-slate-400 mt-0.5 mb-4">
+                <Label className="text-sm font-medium text-foreground">Confidence Threshold</Label>
+                <p className="text-sm text-muted-foreground mt-0.5 mb-4">
                   Only auto-classify emails with {confidenceThreshold[0]}% or higher confidence
                 </p>
                 <div className="flex items-center gap-4">
@@ -329,7 +329,7 @@ export default function TriageSettings() {
                     disabled={!autoTriageEnabled}
                     className="flex-1"
                   />
-                  <span className="w-12 text-sm font-semibold text-white text-right">
+                  <span className="w-12 text-sm font-semibold text-foreground text-right">
                     {confidenceThreshold[0]}%
                   </span>
                 </div>
@@ -403,9 +403,9 @@ export default function TriageSettings() {
                     value={ageWeightPointsPerDay}
                     onChange={(e) => setAgeWeightPointsPerDay(e.target.value)}
                     min={0} max={10}
-                    className="w-20 bg-slate-800 border-slate-700 text-white text-center"
+                    className="w-20 bg-muted border-border text-foreground text-center"
                   />
-                  <span className="text-sm text-slate-400 whitespace-nowrap">points per day</span>
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">points per day</span>
                 </div>
               </SettingRow>
             </Section>
@@ -440,7 +440,7 @@ export default function TriageSettings() {
         </div>
 
         {/* FOOTER with buttons */}
-        <div className="border-t border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-t border-border bg-card/50 px-8 py-6">
           <SettingsButtonGroup
             onSave={handleSave}
             onCancel={handleCancel}

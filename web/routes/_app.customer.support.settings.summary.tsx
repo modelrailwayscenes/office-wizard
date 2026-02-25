@@ -34,10 +34,10 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
 
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6 flex items-center justify-between px-3">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
-        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
+        <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-muted-foreground hover:text-foreground" />
       </div>
       <nav className="space-y-1">
         {visibleTabs.map(({ id, label, icon: Icon, path }) => (
@@ -46,8 +46,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
             to={path}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
               currentPath === path
-                ? "bg-teal-600/10 text-teal-400 font-medium"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
@@ -57,9 +57,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
         {isAdmin && (
           <>
-            <div className="my-4 border-t border-slate-700" />
+            <div className="my-4 border-t border-border" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Admin only</p>
             </div>
             {adminTabs.map(({ id, label, icon: Icon, path }) => (
               <RouterLink
@@ -67,8 +67,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
                 to={path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                   currentPath === path
-                    ? "bg-teal-600/10 text-teal-400 font-medium"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
@@ -105,20 +105,20 @@ function SettingsBlock({
   const badgeLabel = (statusLabel || toneStyle.label).toUpperCase();
 
   return (
-    <div className={`bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition-all group ${toneStyle.borderClass}`}>
+    <div className={`bg-muted/50 border border-border rounded-xl p-6 hover:border-border transition-all group ${toneStyle.borderClass}`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-700/50 rounded-lg">
-            <Icon className="h-5 w-5 text-teal-400" />
+          <div className="p-2 bg-muted/70 rounded-lg">
+            <Icon className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
-            <p className="text-sm text-slate-400 mt-0.5">{description}</p>
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
           </div>
         </div>
         <RouterLink
           to={path}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-teal-400 hover:bg-slate-700 hover:text-teal-300 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/70 text-primary hover:bg-muted hover:text-primary/80 transition-colors"
         >
           <SettingsIcon className="h-4 w-4" />
           <span className="text-sm font-medium">Edit</span>
@@ -135,8 +135,8 @@ function SettingsBlock({
       {details && details.length > 0 && (
         <ul className="space-y-1.5 mb-4">
           {details.map((detail, idx) => (
-            <li key={idx} className="text-sm text-slate-400 flex items-center gap-2">
-              <span className="text-slate-600">•</span>
+            <li key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
+              <span className="text-muted-foreground">•</span>
               {detail}
             </li>
           ))}
@@ -255,24 +255,24 @@ export default function SettingsSummaryPage() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar currentPath={location.pathname} user={user} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
 
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-white">Settings</h1>
-              <p className="text-sm text-slate-400 mt-1">Manage your Office Wizard configuration</p>
+              <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
+              <p className="text-sm text-muted-foreground mt-1">Manage your Office Wizard configuration</p>
             </div>
-            <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+            <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>
         </div>
 
         <div className="p-8">
         {riskItems.length > 0 && (
-          <div className="mb-6 rounded-xl border border-slate-700 bg-slate-900/40 px-5 py-4">
+          <div className="mb-6 rounded-xl border border-border bg-card/40 px-5 py-4">
             <div className="flex items-center gap-2">
               {(() => {
                 const tone = riskItems.some((item) => item.tone === "misconfigured")
@@ -298,8 +298,8 @@ export default function SettingsSummaryPage() {
                   <div key={`${item.label}-${idx}`} className="flex items-start gap-2">
                     <ItemIcon className={`h-4 w-4 mt-0.5 ${toneStyle.textClass}`} />
                     <div>
-                      <div className="text-sm text-slate-200">{item.label}</div>
-                      {item.detail && <div className="text-xs text-slate-400 mt-0.5">{item.detail}</div>}
+                      <div className="text-sm text-foreground">{item.label}</div>
+                      {item.detail && <div className="text-xs text-muted-foreground mt-0.5">{item.detail}</div>}
                     </div>
                   </div>
                 );

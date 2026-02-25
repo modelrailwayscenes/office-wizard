@@ -5,7 +5,7 @@ export default function SignaturesLayout() {
   const location = useLocation();
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-slate-950 text-white">
+    <div className="flex h-[calc(100vh-4rem)] bg-background text-foreground">
       <CustomerSupportSidebar currentPath={location.pathname} />
       <div className="flex-1 overflow-auto">
         <Outlet />

@@ -3,6 +3,8 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { TemplatesList } from "@/components/TemplatesList";
 import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
 
+const BASE = "/customer/support";
+
 export default function TemplatesLayout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -13,7 +15,7 @@ export default function TemplatesLayout() {
   const isSignaturesSection = path.startsWith(`${BASE}/signatures`);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-slate-950 text-white">
+    <div className="flex h-[calc(100vh-4rem)] bg-background text-foreground">
       <CustomerSupportSidebar currentPath={location.pathname} />
       <div className="flex-1 overflow-auto">
         {isSignaturesSection ? (
@@ -25,7 +27,7 @@ export default function TemplatesLayout() {
               <Sheet open onOpenChange={(open) => !open && navigate(`${BASE}/templates`)}>
                 <SheetContent
                   side="right"
-                  className="w-full sm:max-w-2xl overflow-y-auto bg-zinc-950 border-zinc-800 p-0"
+                  className="w-full sm:max-w-2xl overflow-y-auto bg-card border-border p-0"
                 >
                   <div className="p-6">
                     <Outlet />

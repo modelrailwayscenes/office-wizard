@@ -58,10 +58,10 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
 
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6 flex items-center justify-between px-3">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
-        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
+        <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-muted-foreground hover:text-foreground" />
       </div>
       <nav className="space-y-1">
         {visibleTabs.map((tab) => {
@@ -73,8 +73,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
               to={tab.path}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                 isActive
-                  ? "bg-teal-600/10 text-teal-400 font-medium"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
@@ -85,9 +85,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
         {isAdmin && (
           <>
-            <div className="my-4 border-t border-slate-700" />
+            <div className="my-4 border-t border-border" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Admin only</p>
             </div>
             {adminTabs.map((tab) => {
               const Icon = tab.icon;
@@ -98,8 +98,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
                   to={tab.path}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? "bg-teal-600/10 text-teal-400 font-medium"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
@@ -155,12 +155,12 @@ function SecretInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`pr-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 ${className}`}
+        className={`pr-10 bg-muted border-border text-foreground placeholder:text-muted-foreground ${className}`}
       />
       <button
         type="button"
         onClick={() => setVisible(!visible)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
       >
         {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>
@@ -399,16 +399,16 @@ export default function IntegrationsSettings() {
   // ── Loading / Error ────────────────────────────────────────────────────────
   if (fetching) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
-        <div className="flex-1 p-8 text-slate-400">Loading...</div>
+        <div className="flex-1 p-8 text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8 text-red-400">Error loading configuration: {error.toString()}</div>
       </div>
@@ -417,18 +417,18 @@ export default function IntegrationsSettings() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar currentPath={location.pathname} user={user} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
         {/* Header band */}
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-white">Integrations</h1>
-              <p className="text-sm text-slate-400 mt-1">Connect your email and third-party services</p>
+              <h1 className="text-2xl font-semibold text-foreground">Integrations</h1>
+              <p className="text-sm text-muted-foreground mt-1">Connect your email and third-party services</p>
             </div>
-            <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+            <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>
         </div>
 
@@ -438,19 +438,19 @@ export default function IntegrationsSettings() {
           {/* ═══════════════════════════════════════════════════════════════════
               Microsoft 365
               ═══════════════════════════════════════════════════════════════════ */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition-colors">
+          <div className="bg-muted/50 border border-border rounded-xl p-6 hover:border-border transition-colors">
             <div className="flex items-start gap-4">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                 msConnected
-                  ? "bg-teal-500/15 border border-teal-500/30"
-                  : "bg-slate-700/60 border border-slate-600"
+                  ? "bg-primary/15 border border-primary/30"
+                  : "bg-muted/60 border border-border"
               }`}>
-                <Inbox className={`w-6 h-6 ${msConnected ? "text-teal-400" : "text-slate-400"}`} />
+                <Inbox className={`w-6 h-6 ${msConnected ? "text-primary" : "text-muted-foreground"}`} />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="text-xl font-semibold text-white">Microsoft 365</h3>
+                  <h3 className="text-xl font-semibold text-foreground">Microsoft 365</h3>
                   <UnifiedBadge
                     type={config?.microsoftConnectionStatus || "disconnected"}
                     label={getStatusLabel(config?.microsoftConnectionStatus)}
@@ -459,14 +459,14 @@ export default function IntegrationsSettings() {
 
                 {msConnected ? (
                   <>
-                    <p className="text-slate-400 mb-3 text-sm">{config?.connectedMailbox}</p>
-                    <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                    <p className="text-muted-foreground mb-3 text-sm">{config?.connectedMailbox}</p>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                       <Clock className="w-3.5 h-3.5" />
                       <span>Last verified {getTimeAgo(config?.microsoftLastVerifiedAt)}</span>
                     </div>
                   </>
                 ) : (
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Connect your Microsoft 365 account to enable email synchronisation and management.
                   </p>
                 )}
@@ -479,7 +479,7 @@ export default function IntegrationsSettings() {
                       onClick={handleMsVerify}
                       disabled={verifyingMs}
                       variant="outline"
-                      className="border-slate-700 hover:bg-slate-800"
+                      className="border-border hover:bg-muted"
                     >
                       <RefreshCw className={`h-4 w-4 mr-2 ${verifyingMs ? "animate-spin" : ""}`} />
                       {verifyingMs ? "Verifying..." : "Verify"}
@@ -498,7 +498,7 @@ export default function IntegrationsSettings() {
                   <Button
                     onClick={handleMsConnect}
                     disabled={connectingFetching}
-                    className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                   >
                     {connectingFetching ? "Connecting..." : "Connect"}
                   </Button>
@@ -507,35 +507,35 @@ export default function IntegrationsSettings() {
             </div>
 
             {/* Microsoft 365 config form */}
-            <div className="border-t border-slate-700 pt-5 mt-6 space-y-4">
+            <div className="border-t border-border pt-5 mt-6 space-y-4">
               <div className="grid gap-4 max-w-xl">
                 <div>
-                  <Label className="text-sm font-medium text-slate-300 mb-1.5 block">Tenant ID</Label>
+                  <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">Tenant ID</Label>
                   <Input
                     value={msTenantId}
                     onChange={(e) => { setMsTenantId(e.target.value); setMsDirty(true); }}
                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-muted border-border text-foreground"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-slate-300 mb-1.5 block">Client ID</Label>
+                  <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">Client ID</Label>
                   <Input
                     value={msClientId}
                     onChange={(e) => { setMsClientId(e.target.value); setMsDirty(true); }}
                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-muted border-border text-foreground"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-slate-300 mb-1.5 block">Client Secret</Label>
+                  <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">Client Secret</Label>
                   <SecretInput
                     value={msClientSecret}
                     onChange={(v) => { setMsClientSecret(v); setMsDirty(true); }}
                     placeholder="••••••••••••••••"
                   />
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-muted-foreground">
                   Redirect URI: {typeof window !== "undefined" ? `${window.location.origin}/authorize` : "/authorize"}
                 </div>
               </div>
@@ -544,7 +544,7 @@ export default function IntegrationsSettings() {
                 <Button
                   onClick={handleMsSave}
                   disabled={!msDirty || updatingConfig}
-                  className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {updatingConfig ? "Saving..." : "Save Credentials"}
@@ -556,31 +556,31 @@ export default function IntegrationsSettings() {
           {/* ═══════════════════════════════════════════════════════════════════
               Shopify
               ═══════════════════════════════════════════════════════════════════ */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition-colors">
+          <div className="bg-muted/50 border border-border rounded-xl p-6 hover:border-border transition-colors">
             <div className="flex items-start gap-4 mb-5">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                 shopifyConnected
-                  ? "bg-teal-500/15 border border-teal-500/30"
-                  : "bg-slate-700/60 border border-slate-600"
+                  ? "bg-primary/15 border border-primary/30"
+                  : "bg-muted/60 border border-border"
               }`}>
-                <ShoppingBag className={`w-6 h-6 ${shopifyConnected ? "text-teal-400" : "text-slate-400"}`} />
+                <ShoppingBag className={`w-6 h-6 ${shopifyConnected ? "text-primary" : "text-muted-foreground"}`} />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="text-xl font-semibold text-white">Shopify</h3>
+                  <h3 className="text-xl font-semibold text-foreground">Shopify</h3>
                   <UnifiedBadge
                     type={config?.shopifyConnectionStatus || "disconnected"}
                     label={getStatusLabel(config?.shopifyConnectionStatus)}
                   />
                 </div>
-                <p className="text-slate-400 text-sm">
+                <p className="text-muted-foreground text-sm">
                   {shopifyConnected
                     ? `Connected to ${config?.shopifyStoreDomain || "store"}`
                     : "Connect your Shopify store to sync orders, customers, and fulfilment data."}
                 </p>
                 {shopifyConnected && config?.shopifyLastVerifiedAt && (
-                  <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-1">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
                     <Clock className="w-3.5 h-3.5" />
                     <span>Last verified {getTimeAgo(config.shopifyLastVerifiedAt)}</span>
                   </div>
@@ -593,7 +593,7 @@ export default function IntegrationsSettings() {
                     onClick={handleShopifyVerify}
                     disabled={verifyingShopify}
                     variant="outline"
-                    className="border-slate-700 hover:bg-slate-800"
+                    className="border-border hover:bg-muted"
                   >
                     <RefreshCw className={`h-4 w-4 mr-2 ${verifyingShopify ? "animate-spin" : ""}`} />
                     {verifyingShopify ? "Verifying..." : "Verify"}
@@ -612,33 +612,33 @@ export default function IntegrationsSettings() {
             </div>
 
             {/* Shopify config form */}
-            <div className="border-t border-slate-700 pt-5 space-y-4">
+            <div className="border-t border-border pt-5 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-slate-300 mb-1.5 block">Store Domain</Label>
+                  <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">Store Domain</Label>
                   <Input
                     value={shopifyDomain}
                     onChange={(e) => { setShopifyDomain(e.target.value); setShopifyDirty(true); }}
                     placeholder="your-store.myshopify.com"
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                    className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
                   />
-                  <p className="text-xs text-slate-500 mt-1">e.g. my-shop.myshopify.com</p>
+                  <p className="text-xs text-muted-foreground mt-1">e.g. my-shop.myshopify.com</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-slate-300 mb-1.5 block">Admin API Access Token</Label>
+                  <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">Admin API Access Token</Label>
                   <SecretInput
                     value={shopifyToken}
                     onChange={(v) => { setShopifyToken(v); setShopifyDirty(true); }}
                     placeholder="shpat_xxxxxxxxxxxxxxxxxxxxx"
                   />
-                  <p className="text-xs text-slate-500 mt-1">From Shopify Admin → Settings → Apps → Develop apps</p>
+                  <p className="text-xs text-muted-foreground mt-1">From Shopify Admin → Settings → Apps → Develop apps</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button
                   onClick={handleShopifySave}
                   disabled={!shopifyDirty || updatingConfig}
-                  className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {updatingConfig ? "Saving..." : "Save Credentials"}
@@ -648,7 +648,7 @@ export default function IntegrationsSettings() {
                     onClick={handleShopifyVerify}
                     disabled={verifyingShopify}
                     variant="outline"
-                    className="border-slate-700 hover:bg-slate-800"
+                    className="border-border hover:bg-muted"
                   >
                     <RefreshCw className={`h-4 w-4 mr-2 ${verifyingShopify ? "animate-spin" : ""}`} />
                     {verifyingShopify ? "Verifying..." : "Test Connection"}
@@ -661,31 +661,31 @@ export default function IntegrationsSettings() {
           {/* ═══════════════════════════════════════════════════════════════════
               monday.com
               ═══════════════════════════════════════════════════════════════════ */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition-colors">
+          <div className="bg-muted/50 border border-border rounded-xl p-6 hover:border-border transition-colors">
             <div className="flex items-start gap-4 mb-5">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                 mondayConnected
-                  ? "bg-teal-500/15 border border-teal-500/30"
-                  : "bg-slate-700/60 border border-slate-600"
+                  ? "bg-primary/15 border border-primary/30"
+                  : "bg-muted/60 border border-border"
               }`}>
-                <CalendarCheck className={`w-6 h-6 ${mondayConnected ? "text-teal-400" : "text-slate-400"}`} />
+                <CalendarCheck className={`w-6 h-6 ${mondayConnected ? "text-primary" : "text-muted-foreground"}`} />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="text-xl font-semibold text-white">monday.com</h3>
+                  <h3 className="text-xl font-semibold text-foreground">monday.com</h3>
                   <UnifiedBadge
                     type={config?.mondayConnectionStatus || "disconnected"}
                     label={getStatusLabel(config?.mondayConnectionStatus)}
                   />
                 </div>
-                <p className="text-slate-400 text-sm">
+                <p className="text-muted-foreground text-sm">
                   {mondayConnected
                     ? "Connected — sync projects, tasks, and workflows"
                     : "Connect your monday.com workspace for unified project management."}
                 </p>
                 {mondayConnected && config?.mondayLastVerifiedAt && (
-                  <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-1">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
                     <Clock className="w-3.5 h-3.5" />
                     <span>Last verified {getTimeAgo(config.mondayLastVerifiedAt)}</span>
                   </div>
@@ -698,7 +698,7 @@ export default function IntegrationsSettings() {
                     onClick={handleMondayVerify}
                     disabled={verifyingMonday}
                     variant="outline"
-                    className="border-slate-700 hover:bg-slate-800"
+                    className="border-border hover:bg-muted"
                   >
                     <RefreshCw className={`h-4 w-4 mr-2 ${verifyingMonday ? "animate-spin" : ""}`} />
                     {verifyingMonday ? "Verifying..." : "Verify"}
@@ -717,15 +717,15 @@ export default function IntegrationsSettings() {
             </div>
 
             {/* monday.com config form */}
-            <div className="border-t border-slate-700 pt-5 space-y-4">
+            <div className="border-t border-border pt-5 space-y-4">
               <div className="max-w-md">
-                <Label className="text-sm font-medium text-slate-300 mb-1.5 block">Personal API Token</Label>
+                <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">Personal API Token</Label>
                 <SecretInput
                   value={mondayToken}
                   onChange={(v) => { setMondayToken(v); setMondayDirty(true); }}
                   placeholder="eyJhbGciOiJIUzI1NiJ9..."
                 />
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   From monday.com → Avatar → Developers → Personal API Token
                 </p>
               </div>
@@ -733,7 +733,7 @@ export default function IntegrationsSettings() {
                 <Button
                   onClick={handleMondaySave}
                   disabled={!mondayDirty || updatingConfig}
-                  className="bg-teal-500 hover:bg-teal-600 text-black font-medium"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {updatingConfig ? "Saving..." : "Save Credentials"}
@@ -743,7 +743,7 @@ export default function IntegrationsSettings() {
                     onClick={handleMondayVerify}
                     disabled={verifyingMonday}
                     variant="outline"
-                    className="border-slate-700 hover:bg-slate-800"
+                    className="border-border hover:bg-muted"
                   >
                     <RefreshCw className={`h-4 w-4 mr-2 ${verifyingMonday ? "animate-spin" : ""}`} />
                     {verifyingMonday ? "Verifying..." : "Test Connection"}
@@ -756,24 +756,24 @@ export default function IntegrationsSettings() {
           {/* ═══════════════════════════════════════════════════════════════════
               Slack (coming soon)
               ═══════════════════════════════════════════════════════════════════ */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 opacity-50 pointer-events-none">
+          <div className="bg-muted/50 border border-border rounded-xl p-6 opacity-50 pointer-events-none">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-slate-700/60 border border-slate-600">
-                <MessageSquare className="w-6 h-6 text-slate-400" />
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-muted/60 border border-border">
+                <MessageSquare className="w-6 h-6 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="text-xl font-semibold text-white">Slack Integration</h3>
+                  <h3 className="text-xl font-semibold text-foreground">Slack Integration</h3>
                   <UnifiedBadge type="coming_soon" label="COMING SOON" />
                 </div>
-                <p className="text-slate-400 text-sm">Send notifications to Slack channels — coming soon.</p>
+                <p className="text-muted-foreground text-sm">Send notifications to Slack channels — coming soon.</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
                   variant="outline"
                   size="sm"
                   disabled
-                  className="border-slate-700 bg-slate-800/50 text-slate-500 cursor-not-allowed"
+                  className="border-border bg-muted/50 text-muted-foreground cursor-not-allowed"
                 >
                   Connect
                 </Button>
@@ -784,11 +784,11 @@ export default function IntegrationsSettings() {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-t border-border bg-card/50 px-8 py-6">
           <Button
             onClick={() => navigate(-1)}
             variant="outline"
-            className="border-slate-700 hover:bg-slate-800"
+            className="border-border hover:bg-muted"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back

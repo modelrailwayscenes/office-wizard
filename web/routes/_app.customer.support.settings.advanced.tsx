@@ -41,10 +41,10 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
 
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6 flex items-center justify-between px-3">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
-        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
+        <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-muted-foreground hover:text-foreground" />
       </div>
       <nav className="space-y-1">
         {visibleTabs.map(({ id, label, icon: Icon, path }) => (
@@ -53,8 +53,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
             to={path}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
               currentPath === path
-                ? "bg-teal-600/10 text-teal-400 font-medium"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
@@ -64,9 +64,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
         {isAdmin && (
           <>
-            <div className="my-4 border-t border-slate-700" />
+            <div className="my-4 border-t border-border" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Advanced</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Advanced</p>
             </div>
             {adminTabs.map(({ id, label, icon: Icon, path }) => (
               <RouterLink
@@ -74,8 +74,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
                 to={path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                   currentPath === path
-                    ? "bg-teal-600/10 text-teal-400 font-medium"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
@@ -99,12 +99,12 @@ function Section({ icon: Icon, title, description, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden hover:border-slate-600 transition-colors">
-      <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-3">
-        <Icon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+    <div className="bg-muted/50 border border-border rounded-xl overflow-hidden hover:border-border transition-colors">
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="text-sm text-slate-400 mt-0.5">{description}</p>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
       </div>
       <div className="divide-y divide-slate-700/60">{children}</div>
@@ -120,8 +120,8 @@ function SettingRow({ label, description, children }: {
   return (
     <div className="flex items-center justify-between px-6 py-4">
       <div className="flex-1 pr-8">
-        <Label className="text-sm font-medium text-white">{label}</Label>
-        {description && <p className="text-sm text-slate-400 mt-0.5">{description}</p>}
+        <Label className="text-sm font-medium text-foreground">{label}</Label>
+        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
       </div>
       <div className="flex items-center flex-shrink-0">{children}</div>
     </div>
@@ -205,16 +205,16 @@ function AdvancedSettings() {
   // ── Loading / error ────────────────────────────────────────────────────────
   if (configFetching) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
-        <div className="flex-1 p-8 text-slate-400">Loading...</div>
+        <div className="flex-1 p-8 text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   if (configError) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8 text-red-400">Error loading settings: {configError.message}</div>
       </div>
@@ -222,18 +222,18 @@ function AdvancedSettings() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar currentPath={location.pathname} user={user} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
 
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-white">Advanced</h1>
-              <p className="text-sm text-slate-400 mt-1">Localisation, backups, performance, and developer options</p>
+              <h1 className="text-2xl font-semibold text-foreground">Advanced</h1>
+              <p className="text-sm text-muted-foreground mt-1">Localisation, backups, performance, and developer options</p>
             </div>
-            <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+            <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>
         </div>
 
@@ -243,47 +243,47 @@ function AdvancedSettings() {
           <Section icon={Globe} title="Localisation" description="Language, timezone, and regional settings">
             <SettingRow label="Language">
               <Select value={language} onValueChange={(v) => { setLanguage(v); saveConfig({ language: v }); }}>
-                <SelectTrigger className="w-52 bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="en" className="text-white hover:bg-slate-700">English</SelectItem>
-                  <SelectItem value="es" className="text-white hover:bg-slate-700">Spanish</SelectItem>
-                  <SelectItem value="fr" className="text-white hover:bg-slate-700">French</SelectItem>
-                  <SelectItem value="de" className="text-white hover:bg-slate-700">German</SelectItem>
-                  <SelectItem value="ja" className="text-white hover:bg-slate-700">Japanese</SelectItem>
+                <SelectTrigger className="w-52 bg-muted border-border text-foreground"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="en" className="text-foreground hover:bg-muted">English</SelectItem>
+                  <SelectItem value="es" className="text-foreground hover:bg-muted">Spanish</SelectItem>
+                  <SelectItem value="fr" className="text-foreground hover:bg-muted">French</SelectItem>
+                  <SelectItem value="de" className="text-foreground hover:bg-muted">German</SelectItem>
+                  <SelectItem value="ja" className="text-foreground hover:bg-muted">Japanese</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
             <SettingRow label="Timezone">
               <Select value={timezone} onValueChange={(v) => { setTimezone(v); saveConfig({ timezone: v }); }}>
-                <SelectTrigger className="w-52 bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="gmt" className="text-white hover:bg-slate-700">London (GMT+0)</SelectItem>
-                  <SelectItem value="utc" className="text-white hover:bg-slate-700">UTC (GMT+0)</SelectItem>
-                  <SelectItem value="est" className="text-white hover:bg-slate-700">Eastern Time (GMT-5)</SelectItem>
-                  <SelectItem value="pst" className="text-white hover:bg-slate-700">Pacific Time (GMT-8)</SelectItem>
-                  <SelectItem value="cet" className="text-white hover:bg-slate-700">Central European (GMT+1)</SelectItem>
-                  <SelectItem value="jst" className="text-white hover:bg-slate-700">Japan Standard (GMT+9)</SelectItem>
+                <SelectTrigger className="w-52 bg-muted border-border text-foreground"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="gmt" className="text-foreground hover:bg-muted">London (GMT+0)</SelectItem>
+                  <SelectItem value="utc" className="text-foreground hover:bg-muted">UTC (GMT+0)</SelectItem>
+                  <SelectItem value="est" className="text-foreground hover:bg-muted">Eastern Time (GMT-5)</SelectItem>
+                  <SelectItem value="pst" className="text-foreground hover:bg-muted">Pacific Time (GMT-8)</SelectItem>
+                  <SelectItem value="cet" className="text-foreground hover:bg-muted">Central European (GMT+1)</SelectItem>
+                  <SelectItem value="jst" className="text-foreground hover:bg-muted">Japan Standard (GMT+9)</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
             <SettingRow label="Date Format">
               <Select value={dateFormat} onValueChange={(v) => { setDateFormat(v); saveConfig({ dateFormat: v }); }}>
-                <SelectTrigger className="w-52 bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="dmy" className="text-white hover:bg-slate-700">DD/MM/YYYY</SelectItem>
-                  <SelectItem value="mdy" className="text-white hover:bg-slate-700">MM/DD/YYYY</SelectItem>
-                  <SelectItem value="ymd" className="text-white hover:bg-slate-700">YYYY-MM-DD</SelectItem>
+                <SelectTrigger className="w-52 bg-muted border-border text-foreground"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="dmy" className="text-foreground hover:bg-muted">DD/MM/YYYY</SelectItem>
+                  <SelectItem value="mdy" className="text-foreground hover:bg-muted">MM/DD/YYYY</SelectItem>
+                  <SelectItem value="ymd" className="text-foreground hover:bg-muted">YYYY-MM-DD</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
             <SettingRow label="Currency">
               <Select value={currency} onValueChange={(v) => { setCurrency(v); saveConfig({ currency: v }); }}>
-                <SelectTrigger className="w-52 bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="gbp" className="text-white hover:bg-slate-700">GBP (&pound;)</SelectItem>
-                  <SelectItem value="usd" className="text-white hover:bg-slate-700">USD ($)</SelectItem>
-                  <SelectItem value="eur" className="text-white hover:bg-slate-700">EUR (&euro;)</SelectItem>
-                  <SelectItem value="jpy" className="text-white hover:bg-slate-700">JPY (&yen;)</SelectItem>
+                <SelectTrigger className="w-52 bg-muted border-border text-foreground"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="gbp" className="text-foreground hover:bg-muted">GBP (&pound;)</SelectItem>
+                  <SelectItem value="usd" className="text-foreground hover:bg-muted">USD ($)</SelectItem>
+                  <SelectItem value="eur" className="text-foreground hover:bg-muted">EUR (&euro;)</SelectItem>
+                  <SelectItem value="jpy" className="text-foreground hover:bg-muted">JPY (&yen;)</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
@@ -292,12 +292,12 @@ function AdvancedSettings() {
                 <Input type="time" value={hoursFrom}
                   onChange={(e) => setHoursFrom(e.target.value)}
                   onBlur={handleBlur("businessHoursFrom", hoursFrom)}
-                  className="w-32 bg-slate-800 border-slate-700 text-white" />
-                <span className="text-slate-400 text-sm">to</span>
+                  className="w-32 bg-muted border-border text-foreground" />
+                <span className="text-muted-foreground text-sm">to</span>
                 <Input type="time" value={hoursTo}
                   onChange={(e) => setHoursTo(e.target.value)}
                   onBlur={handleBlur("businessHoursTo", hoursTo)}
-                  className="w-32 bg-slate-800 border-slate-700 text-white" />
+                  className="w-32 bg-muted border-border text-foreground" />
               </div>
             </SettingRow>
           </Section>
@@ -306,12 +306,12 @@ function AdvancedSettings() {
           <Section icon={HardDrive} title="Backup & Recovery" description="Manage data backups and recovery options">
             <SettingRow label="Backup Schedule">
               <Select value={backupSchedule} onValueChange={(v) => { setBackupSchedule(v); saveConfig({ backupSchedule: v }); }}>
-                <SelectTrigger className="w-40 bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="hourly"  className="text-white hover:bg-slate-700">Hourly</SelectItem>
-                  <SelectItem value="daily"   className="text-white hover:bg-slate-700">Daily</SelectItem>
-                  <SelectItem value="weekly"  className="text-white hover:bg-slate-700">Weekly</SelectItem>
-                  <SelectItem value="monthly" className="text-white hover:bg-slate-700">Monthly</SelectItem>
+                <SelectTrigger className="w-40 bg-muted border-border text-foreground"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="hourly"  className="text-foreground hover:bg-muted">Hourly</SelectItem>
+                  <SelectItem value="daily"   className="text-foreground hover:bg-muted">Daily</SelectItem>
+                  <SelectItem value="weekly"  className="text-foreground hover:bg-muted">Weekly</SelectItem>
+                  <SelectItem value="monthly" className="text-foreground hover:bg-muted">Monthly</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
@@ -320,31 +320,31 @@ function AdvancedSettings() {
                 onChange={(e) => setBackupRetentionDays(e.target.value)}
                 onBlur={handleBlur("backupRetentionDays", backupRetentionDays, true)}
                 min={1} max={365}
-                className="w-24 bg-slate-800 border-slate-700 text-white text-center" />
+                className="w-24 bg-muted border-border text-foreground text-center" />
             </SettingRow>
             <div className="px-6 py-4">
-              <div className="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 flex items-center justify-between mb-4">
+              <div className="bg-card/60 border border-border rounded-lg px-4 py-3 flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-sm font-medium text-white">Last Backup</p>
-                  <p className="text-sm text-slate-400 mt-0.5">January 15, 2025 at 3:00 AM</p>
-                  <p className="text-xs text-slate-500 mt-1">Next: January 16, 2025 at 3:00 AM</p>
+                  <p className="text-sm font-medium text-foreground">Last Backup</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">January 15, 2025 at 3:00 AM</p>
+                  <p className="text-xs text-muted-foreground mt-1">Next: January 16, 2025 at 3:00 AM</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-teal-400" />
-                  <span className="text-sm text-teal-400 font-medium">Success</span>
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                  <span className="text-sm text-primary font-medium">Success</span>
                 </div>
               </div>
               <div className="flex gap-2">
                 <Button onClick={() => toast.info("Download starting...")}
-                  className="bg-teal-500 hover:bg-teal-600 text-white">
+                  className="bg-primary hover:bg-primary/90 text-foreground">
                   Download Backup
                 </Button>
                 <Button variant="outline" onClick={() => toast.info("Restore coming soon")}
-                  className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">
+                  className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground">
                   Restore from Backup
                 </Button>
                 <Button variant="outline" onClick={() => toast.success("Backup started")}
-                  className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">
+                  className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground">
                   Backup Now
                 </Button>
               </div>
@@ -358,7 +358,7 @@ function AdvancedSettings() {
                 onChange={(e) => setCacheDurationMinutes(e.target.value)}
                 onBlur={handleBlur("cacheDurationMinutes", cacheDurationMinutes, true)}
                 min={0} max={1440}
-                className="w-24 bg-slate-800 border-slate-700 text-white text-center" />
+                className="w-24 bg-muted border-border text-foreground text-center" />
             </SettingRow>
             <SettingRow label="Real-time Updates" description="Enable live data synchronisation">
               <Switch checked={realTimeUpdatesEnabled}
@@ -385,7 +385,7 @@ function AdvancedSettings() {
                 onChange={(e) => setApiRateLimitPerMinute(e.target.value)}
                 onBlur={handleBlur("apiRateLimitPerMinute", apiRateLimitPerMinute, true)}
                 min={1} max={1000}
-                className="w-24 bg-slate-800 border-slate-700 text-white text-center" />
+                className="w-24 bg-muted border-border text-foreground text-center" />
             </SettingRow>
             <SettingRow label="Debug Mode" description="Enable verbose logging and detailed error messages">
               <Switch checked={debugModeEnabled}
@@ -413,13 +413,13 @@ function AdvancedSettings() {
               />
             </SettingRow>
             <div className="px-6 py-4">
-              <div className="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 flex items-center justify-between">
+              <div className="bg-card/60 border border-border rounded-lg px-4 py-3 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-white">API Documentation</p>
-                  <p className="text-sm text-slate-400 mt-0.5">Comprehensive API reference and usage examples</p>
+                  <p className="text-sm font-medium text-foreground">API Documentation</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">Comprehensive API reference and usage examples</p>
                 </div>
                 <Button variant="outline" onClick={() => toast.info("Opening docs...")}
-                  className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">
+                  className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground">
                   View Docs
                 </Button>
               </div>

@@ -42,11 +42,11 @@ const statusStyles: Record<string, string> = {
 const resultStyles: Record<string, string> = {
   sent: "text-emerald-300 bg-emerald-500/10 border-emerald-500/30",
   draft: "text-amber-300 bg-amber-500/10 border-amber-500/30",
-  archived: "text-slate-300 bg-slate-700/40 border-slate-600",
+  archived: "text-muted-foreground bg-muted/40 border-border",
   resolved: "text-sky-300 bg-sky-500/10 border-sky-500/30",
   rejected: "text-rose-300 bg-rose-500/10 border-rose-500/30",
   moved: "text-indigo-300 bg-indigo-500/10 border-indigo-500/30",
-  assigned: "text-teal-300 bg-teal-500/10 border-teal-500/30",
+  assigned: "text-primary/80 bg-primary/10 border-primary/30",
   error: "text-red-300 bg-red-500/10 border-red-500/30",
   draft_override_applied: "text-indigo-300 bg-indigo-500/10 border-indigo-500/30",
 };
@@ -164,7 +164,7 @@ export default function TriageHistoryPage() {
   };
 
   return (
-    <div className="flex flex-1 min-h-0 bg-slate-950 text-white">
+    <div className="flex flex-1 min-h-0 bg-background text-foreground">
       <CustomerSupportSidebar currentPath={location.pathname} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -178,8 +178,8 @@ export default function TriageHistoryPage() {
                   onClick={() => setSearchParams((prev) => ({ ...Object.fromEntries(prev), view: "batches" }))}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     viewMode !== "non_customer"
-                      ? "bg-teal-500/20 text-teal-400 border border-teal-500/40"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                      ? "bg-primary/20 text-primary border border-primary/40"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
                   Batches
@@ -189,7 +189,7 @@ export default function TriageHistoryPage() {
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     viewMode === "non_customer"
                       ? "bg-amber-500/20 text-amber-400 border border-amber-500/40"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
                   Non-customer
@@ -208,7 +208,7 @@ export default function TriageHistoryPage() {
 
         <div className="flex-1 overflow-hidden flex">
           {/* Left: Batch list or Non-customer list */}
-          <div className="w-1/3 border-r border-slate-800 flex flex-col bg-slate-900/30">
+          <div className="w-1/3 border-r border-border flex flex-col bg-card/30">
             <div className="flex-1 overflow-y-auto">
               {viewMode === "non_customer" ? (
                 fetchingNonCustomer ? (
@@ -223,30 +223,30 @@ export default function TriageHistoryPage() {
                     {nonCustomerConvs.map((conv: any) => (
                       <div
                         key={conv.id}
-                        className="p-4 hover:bg-slate-800/40 transition-colors"
+                        className="p-4 hover:bg-muted/40 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="text-sm font-medium text-slate-100 line-clamp-2">
+                          <span className="text-sm font-medium text-foreground line-clamp-2">
                             {conv.subject || "(No subject)"}
                           </span>
                           <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400 shrink-0">
                             NOT A CUSTOMER
                           </span>
                         </div>
-                        <div className="text-xs text-slate-400 mb-2">
+                        <div className="text-xs text-muted-foreground mb-2">
                           {conv.primaryCustomerEmail || conv.primaryCustomerName || "—"}
                         </div>
                         <div className="flex items-center gap-2">
                           <RouterLink
                             to={`/customer/support/conversations/${conv.id}`}
-                            className="text-[11px] text-teal-400 hover:text-teal-300"
+                            className="text-[11px] text-primary hover:text-primary/80"
                           >
                             View
                           </RouterLink>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-7 text-xs border-teal-600 text-teal-400 hover:bg-teal-600/10"
+                            className="h-7 text-xs border-teal-600 text-primary hover:bg-primary/10"
                             onClick={() => handleUndoNotCustomer(conv.id)}
                             disabled={undoing}
                           >
@@ -272,15 +272,15 @@ export default function TriageHistoryPage() {
                         key={batch.id}
                         onClick={() => setSearchParams({ batch: batch.id })}
                         className={`w-full text-left p-4 transition-colors ${
-                          isSelected ? "bg-slate-800/80 border-l-2 border-teal-500" : "hover:bg-slate-800/40"
+                          isSelected ? "bg-muted/80 border-l-2 border-primary" : "hover:bg-muted/40"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="text-sm font-semibold text-slate-100">
+                            <div className="text-sm font-semibold text-foreground">
                               {batch.label || "Batch operation"}
                             </div>
-                            <div className="text-xs text-slate-400 mt-1">
+                            <div className="text-xs text-muted-foreground mt-1">
                               {batch.action || "action"} · {batch.type || "general"}
                             </div>
                           </div>
@@ -290,10 +290,10 @@ export default function TriageHistoryPage() {
                             {batch.status || "completed"}
                           </span>
                         </div>
-                        <div className="mt-3 text-xs text-slate-400">
+                        <div className="mt-3 text-xs text-muted-foreground">
                           {batch.sentCount ?? 0} sent · {batch.savedCount ?? 0} drafts · {batch.errorCount ?? 0} errors
                         </div>
-                        <div className="mt-1 text-[11px] text-slate-500">
+                        <div className="mt-1 text-[11px] text-muted-foreground">
                           {formatDateTime(batch.createdAt)}
                         </div>
                       </button>
@@ -305,26 +305,26 @@ export default function TriageHistoryPage() {
           </div>
 
           {/* Right: Batch detail or Non-customer info */}
-          <div className="flex-1 overflow-y-auto bg-slate-950">
+          <div className="flex-1 overflow-y-auto bg-background">
             {viewMode === "non_customer" ? (
               <div className="p-8">
                 <div className="max-w-xl mx-auto">
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+                  <div className="rounded-xl border border-border bg-card/50 p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <UserX className="h-8 w-8 text-amber-400" />
-                      <h3 className="text-lg font-semibold text-white">Non-customer conversations</h3>
+                      <h3 className="text-lg font-semibold text-foreground">Non-customer conversations</h3>
                     </div>
-                    <p className="text-sm text-slate-400 mb-4">
-                      These conversations were marked as Not a Customer and removed from the triage queue. Use <strong className="text-slate-300">Return to Queue</strong> to undo and restore them.
+                    <p className="text-sm text-muted-foreground mb-4">
+                      These conversations were marked as Not a Customer and removed from the triage queue. Use <strong className="text-muted-foreground">Return to Queue</strong> to undo and restore them.
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {nonCustomerConvs.length} conversation{nonCustomerConvs.length !== 1 ? "s" : ""} marked
                     </p>
                   </div>
                 </div>
               </div>
             ) : !selectedBatch ? (
-              <div className="h-full flex items-center justify-center text-slate-500">
+              <div className="h-full flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Layers className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p className="text-sm">Select a batch to view details</p>
@@ -333,13 +333,13 @@ export default function TriageHistoryPage() {
             ) : (
               <div className="p-8">
                 <div className="max-w-4xl mx-auto space-y-6">
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+                  <div className="rounded-xl border border-border bg-card/50 p-6">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h2 className="text-2xl font-semibold text-white">
+                        <h2 className="text-2xl font-semibold text-foreground">
                           {selectedBatch.label || "Batch operation"}
                         </h2>
-                        <div className="text-sm text-slate-400 mt-1">
+                        <div className="text-sm text-muted-foreground mt-1">
                           {selectedBatch.action || "action"} · {selectedBatch.type || "general"}
                         </div>
                       </div>
@@ -353,69 +353,69 @@ export default function TriageHistoryPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-2">
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 flex items-center gap-2">
                           <Users className="h-3 w-3" />
                           Created by
                         </div>
-                        <div className="text-sm text-slate-200">
+                        <div className="text-sm text-foreground">
                           {selectedBatch.user?.email || selectedBatch.createdBy || "system"}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-2">
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 flex items-center gap-2">
                           <Calendar className="h-3 w-3" />
                           Created at
                         </div>
-                        <div className="text-sm text-slate-200">{formatDateTime(selectedBatch.createdAt)}</div>
+                        <div className="text-sm text-foreground">{formatDateTime(selectedBatch.createdAt)}</div>
                       </div>
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-2">
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 flex items-center gap-2">
                           <Tag className="h-3 w-3" />
                           Batch ID
                         </div>
-                        <div className="text-sm text-slate-200">{selectedBatch.batchId || selectedBatch.id}</div>
+                        <div className="text-sm text-foreground">{selectedBatch.batchId || selectedBatch.id}</div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Emails</div>
-                        <div className="text-lg font-semibold text-slate-100">{selectedBatch.emailCount ?? 0}</div>
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Emails</div>
+                        <div className="text-lg font-semibold text-foreground">{selectedBatch.emailCount ?? 0}</div>
                       </div>
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Sent</div>
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Sent</div>
                         <div className="text-lg font-semibold text-emerald-300">{selectedBatch.sentCount ?? 0}</div>
                       </div>
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Drafts</div>
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Drafts</div>
                         <div className="text-lg font-semibold text-amber-300">{selectedBatch.savedCount ?? 0}</div>
                       </div>
-                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Errors</div>
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Errors</div>
                         <div className="text-lg font-semibold text-red-300">{selectedBatch.errorCount ?? 0}</div>
                       </div>
                     </div>
 
                     {selectedBatch.notes && (
-                      <div className="mt-4 rounded-lg border border-slate-800 bg-slate-950/40 p-3 text-sm text-slate-300">
+                      <div className="mt-4 rounded-lg border border-border bg-background/40 p-3 text-sm text-muted-foreground">
                         {selectedBatch.notes}
                       </div>
                     )}
                   </div>
 
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+                  <div className="rounded-xl border border-border bg-card/50 p-6">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-white">Results</h3>
-                      <span className="text-xs text-slate-500">
+                      <h3 className="text-lg font-semibold text-foreground">Results</h3>
+                      <span className="text-xs text-muted-foreground">
                         {fetchingComments ? "Loading..." : `${parsedComments.length} entries`}
                       </span>
                     </div>
 
                     {fetchingComments ? (
-                      <div className="text-sm text-slate-500">Loading results...</div>
+                      <div className="text-sm text-muted-foreground">Loading results...</div>
                     ) : parsedComments.length === 0 ? (
-                      <div className="text-sm text-slate-500">No result entries logged for this batch.</div>
+                      <div className="text-sm text-muted-foreground">No result entries logged for this batch.</div>
                     ) : (
                       <div className="space-y-3">
                         {parsedComments.map((comment) => {
@@ -426,7 +426,7 @@ export default function TriageHistoryPage() {
                           return (
                             <div
                               key={comment.id}
-                              className="rounded-lg border border-slate-800 bg-slate-950/40 p-3"
+                              className="rounded-lg border border-border bg-background/40 p-3"
                             >
                               <div className="flex items-center justify-between gap-3 mb-2">
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -439,7 +439,7 @@ export default function TriageHistoryPage() {
                                   {status && (
                                     <span
                                       className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                                        statusClass || "text-slate-300 bg-slate-700/40 border-slate-600"
+                                        statusClass || "text-muted-foreground bg-muted/40 border-border"
                                       }`}
                                     >
                                       {status}
@@ -447,22 +447,22 @@ export default function TriageHistoryPage() {
                                   )}
                                 </div>
                                 <span
-                                  className="text-[11px] text-slate-500"
+                                  className="text-[11px] text-muted-foreground"
                                   title={comment.createdAt ? new Date(comment.createdAt).toLocaleString() : "Unknown"}
                                 >
                                   {timeAgo(comment.createdAt)}
                                 </span>
                               </div>
 
-                              <div className="text-xs text-slate-300 whitespace-pre-wrap">
+                              <div className="text-xs text-muted-foreground whitespace-pre-wrap">
                                 {comment.content}
                               </div>
 
-                              <div className="mt-2 text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
+                              <div className="mt-2 text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
                                 {conversationId ? (
                                   <RouterLink
                                     to={`/customer/support/conversations/${conversationId}`}
-                                    className="text-teal-400 hover:text-teal-300"
+                                    className="text-primary hover:text-primary/80"
                                   >
                                     {comment.conversation?.subject || "View conversation"}
                                   </RouterLink>

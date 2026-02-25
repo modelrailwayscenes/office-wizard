@@ -23,7 +23,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto bg-background min-h-full animate-fade-in">
+    <div className="p-8 bg-background min-h-full animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

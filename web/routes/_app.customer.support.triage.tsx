@@ -449,7 +449,7 @@ export default function TriageQueuePage() {
                 variant={activeTab === "urgent" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setActiveTab("urgent")}
-                className={activeTab === "urgent" ? "bg-destructive hover:bg-destructive/90 text-white" : ""}
+                className={activeTab === "urgent" ? "bg-destructive hover:bg-destructive/90 text-foreground" : ""}
               >
                 URGENT ({criticalCount})
               </Button>
@@ -458,7 +458,7 @@ export default function TriageQueuePage() {
                 variant={activeTab === "pending" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setActiveTab("pending")}
-                className={activeTab === "pending" ? "bg-amber-500 hover:bg-amber-600 text-black" : "text-muted-foreground"}
+                className={activeTab === "pending" ? "bg-amber-500 hover:bg-amber-600 text-primary-foreground" : "text-muted-foreground"}
               >
                 PENDING
               </Button>
@@ -976,7 +976,7 @@ export default function TriageQueuePage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleMarkNotCustomer}
-              className="bg-amber-500 hover:bg-amber-600 text-black"
+              className="bg-amber-500 hover:bg-amber-600 text-primary-foreground"
               disabled={markNotCustomerLoading}
             >
               {markNotCustomerLoading ? "Marking..." : "Mark Not a Customer"}

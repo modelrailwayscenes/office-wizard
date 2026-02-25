@@ -6,8 +6,8 @@ import BatchReviewModal from "../components/BatchReviewModal";
  * Triage Landing Page
  * 
  * Layout matches conversations page pattern:
- * - min-h-screen bg-slate-950
- * - Header: border-b border-slate-800 bg-slate-900/50 px-8 py-6
+ * - min-h-screen bg-background
+ * - Header: border-b border-border bg-card/50 px-8 py-6
  * - Content: p-8
  * - Full width, no max-w constraint
  * 
@@ -43,7 +43,7 @@ interface RecentBatch {
 function QueueIcon() {
   return (
     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-teal-500/20">
-      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-6 h-6 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L12 12.75 6.43 9.75m11.14 0l4.179 2.25L12 17.25 2.25 12l4.179-2.25m11.142 0l4.179 2.25-4.179 2.25M6.43 14.25L2.25 16.5 12 21.75l9.75-5.25-4.179-2.25" />
       </svg>
     </div>
@@ -53,7 +53,7 @@ function QueueIcon() {
 function WorkflowIcon() {
   return (
     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-6 h-6 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
       </svg>
     </div>
@@ -62,7 +62,7 @@ function WorkflowIcon() {
 
 function CheckBullet({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-slate-400">
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
       <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
@@ -81,7 +81,7 @@ function BatchOpportunityCard({
 }) {
   const typeIcons: Record<string, React.ReactNode> = {
     tracking: (
-      <svg className="w-5 h-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
       </svg>
@@ -97,7 +97,7 @@ function BatchOpportunityCard({
       </svg>
     ),
     general: (
-      <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <svg className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
       </svg>
     ),
@@ -106,23 +106,23 @@ function BatchOpportunityCard({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-4 bg-slate-800/50 border border-slate-700 rounded-xl p-4 hover:bg-slate-800/70 hover:border-teal-500/30 transition-all group text-left"
+      className="w-full flex items-center gap-4 bg-muted/50 border border-border rounded-xl p-4 hover:bg-muted/70 hover:border-primary/30 transition-all group text-left"
     >
-      <div className="w-10 h-10 bg-slate-800 border border-slate-700/50 rounded-lg flex items-center justify-center shrink-0 group-hover:border-teal-500/30">
+      <div className="w-10 h-10 bg-muted border border-border/50 rounded-lg flex items-center justify-center shrink-0 group-hover:border-primary/30">
         {typeIcons[opportunity.type] || typeIcons.general}
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-slate-100 text-sm">{opportunity.label}</p>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5">
           {opportunity.emailCount} similar emails detected – review each before sending
         </p>
       </div>
       <div className="text-right shrink-0 flex items-center gap-3">
         <div>
-          <p className="text-[10px] text-slate-500 uppercase tracking-wide">Time Saved</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Time Saved</p>
           <p className="text-lg font-bold text-emerald-400">{opportunity.estimatedTimeSaved} minutes</p>
         </div>
-        <svg className="w-5 h-5 text-slate-600 group-hover:text-teal-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <svg className="w-5 h-5 text-slate-600 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
       </div>
@@ -157,15 +157,15 @@ function RecentBatchRow({ batch }: { batch: RecentBatch }) {
   }
 
   return (
-    <div className="flex items-center gap-4 px-4 py-3 border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+    <div className="flex items-center gap-4 px-4 py-3 border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-200">{batch.label}</span>
+          <span className="text-sm font-medium text-foreground">{batch.label}</span>
           <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${statusColors[batch.status]}`}>
             {statusLabels[batch.status]}
           </span>
         </div>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5">
           {batch.sentCount} sent · {batch.savedCount} saved as draft
           {batch.errorCount > 0 && ` · ${batch.errorCount} errors`}
           {" · "}{formatDate(batch.completedAt)}
@@ -360,11 +360,11 @@ export default function TriageLandingPage() {
   const historicalTimeSaved = recentBatches.reduce((sum, b) => sum + b.timeSaved, 0);
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-background">
       {/* Header - matches Dashboard and Settings Summary styling */}
-      <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
-        <h1 className="text-2xl font-semibold text-white">Triage</h1>
-        <p className="text-sm text-slate-400 mt-1">
+      <div className="border-b border-border bg-card/50 px-8 py-6">
+        <h1 className="text-2xl font-semibold text-foreground">Triage</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Choose your workflow and get started
         </p>
       </div>
@@ -376,11 +376,11 @@ export default function TriageLandingPage() {
           {/* Queue View */}
           <button
             onClick={() => navigate("/customer/support/triage-queue")}
-            className="text-left p-6 bg-slate-800/50 border border-slate-700 rounded-xl hover:bg-slate-800/70 hover:border-teal-500/30 transition-all group"
+            className="text-left p-6 bg-muted/50 border border-border rounded-xl hover:bg-muted/70 hover:border-primary/30 transition-all group"
           >
             <QueueIcon />
             <h3 className="text-lg font-bold text-slate-100 mt-4 mb-1">Queue View</h3>
-            <p className="text-sm text-slate-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Browse, search, and manage all emails with full flexibility
             </p>
             <div className="space-y-2">
@@ -393,11 +393,11 @@ export default function TriageLandingPage() {
           {/* Workflow Mode */}
           <button
             onClick={() => navigate("/customer/support/triage?mode=workflow")}
-            className="text-left p-6 bg-slate-800/50 border border-slate-700 rounded-xl hover:bg-slate-800/70 hover:border-purple-500/30 transition-all group"
+            className="text-left p-6 bg-muted/50 border border-border rounded-xl hover:bg-muted/70 hover:border-purple-500/30 transition-all group"
           >
             <WorkflowIcon />
             <h3 className="text-lg font-bold text-slate-100 mt-4 mb-1">Workflow Mode</h3>
-            <p className="text-sm text-slate-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Guided session to power through your queue efficiently
             </p>
             <div className="space-y-2">
@@ -412,9 +412,9 @@ export default function TriageLandingPage() {
         <div className="mb-10">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-2xl font-semibold text-white">Batch Opportunities</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Batch Opportunities</h2>
               {totalOpportunities > 0 && (
-                <p className="text-sm text-slate-400 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {totalOpportunities} emails across {batchOpportunities.length} groups · Est. {totalTimeSaved} minutes saved
                 </p>
               )}
@@ -422,7 +422,7 @@ export default function TriageLandingPage() {
             {recentBatches.length > 0 && (
               <button
                 onClick={() => navigate("/customer/support/triage/history")}
-                className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                className="text-xs text-primary hover:text-primary/80 transition-colors"
               >
                 View history →
               </button>
@@ -430,7 +430,7 @@ export default function TriageLandingPage() {
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-12 text-slate-500">
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
               <svg className="w-5 h-5 animate-spin mr-2" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -448,7 +448,7 @@ export default function TriageLandingPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-slate-500 bg-slate-800/50 border border-slate-700 rounded-xl">
+            <div className="text-center py-8 text-muted-foreground bg-muted/50 border border-border rounded-xl">
               <svg className="w-8 h-8 mx-auto mb-2 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -466,12 +466,12 @@ export default function TriageLandingPage() {
         {recentBatches.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-2xl font-semibold text-white">Recent Batches</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Recent Batches</h2>
               <span className="text-xs text-emerald-400 font-medium">
                 {historicalTimeSaved}m total saved
               </span>
             </div>
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="bg-muted/50 border border-border rounded-xl overflow-hidden">
               {recentBatches.map((batch) => (
                 <RecentBatchRow key={batch.id} batch={batch} />
               ))}

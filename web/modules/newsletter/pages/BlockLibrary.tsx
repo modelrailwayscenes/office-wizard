@@ -194,7 +194,7 @@ export default function BlockLibrary() {
   const previewDef = previewBlock ? BLOCK_LIBRARY.find(b => b.type === previewBlock) : null;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto bg-background min-h-full animate-fade-in">
+    <div className="p-8 bg-background min-h-full animate-fade-in">
       <h1 className="text-3xl font-bold mb-2 text-foreground">Block Library</h1>
       <p className="text-muted-foreground mb-8">Modular content blocks for your newsletters</p>
 

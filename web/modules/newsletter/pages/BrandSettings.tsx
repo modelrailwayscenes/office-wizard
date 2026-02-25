@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 
 export default function BrandSettings() {
   return (
-    <div className="p-8 max-w-6xl mx-auto bg-background min-h-full animate-fade-in">
+    <div className="p-8 bg-background min-h-full animate-fade-in">
       <h1 className="text-3xl font-bold mb-2 text-foreground">Brand Settings</h1>
       <p className="text-muted-foreground mb-8">Manage colour palettes and typography for consistent branding</p>
 

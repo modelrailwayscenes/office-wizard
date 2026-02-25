@@ -16,9 +16,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import {
+  ThemePreference,
+  applyTheme,
+  getStoredThemePreference,
+  persistThemePreference,
+} from "@/lib/theme";
+import {
   User2, Users as UsersIcon, Link as LinkIcon, Layers,
   Sparkles, FileText, Bell, Shield, Settings as SettingsIcon,
-  UserCircle, Lock, Accessibility,
+  UserCircle, Lock, Accessibility, Sun, Moon, Monitor,
 } from "lucide-react";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
 
@@ -68,10 +74,10 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
   
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6 flex items-center justify-between px-3">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
-        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
+        <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-muted-foreground hover:text-foreground" />
       </div>
       <nav className="space-y-1">
         {visibleTabs.map(({ id, label, icon: Icon, path }) => (
@@ -80,8 +86,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
             to={path}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
               currentPath === path
-                ? "bg-teal-600/10 text-teal-400 font-medium"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
@@ -92,9 +98,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
         {/* Admin-only section */}
         {isAdmin && (
           <>
-            <div className="my-4 border-t border-slate-700" />
+            <div className="my-4 border-t border-border" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Admin only</p>
             </div>
             {adminTabs.map(({ id, label, icon: Icon, path }) => (
               <RouterLink
@@ -102,8 +108,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
                 to={path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                   currentPath === path
-                    ? "bg-teal-600/10 text-teal-400 font-medium"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
@@ -124,12 +130,12 @@ function Section({ icon: Icon, title, description, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden hover:border-slate-600 transition-colors">
-      <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-3">
-        <Icon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+    <div className="bg-muted/50 border border-border rounded-xl overflow-hidden hover:border-border transition-colors">
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="text-sm text-slate-400 mt-0.5">{description}</p>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
       </div>
       <div className="divide-y divide-slate-700/60">{children}</div>
@@ -145,8 +151,8 @@ function SettingRow({ label, description, children }: {
   return (
     <div className="flex items-center justify-between px-6 py-4">
       <div className="flex-1 pr-8">
-        <Label className="text-sm font-medium text-white">{label}</Label>
-        {description && <p className="text-sm text-slate-400 mt-0.5">{description}</p>}
+        <Label className="text-sm font-medium text-foreground">{label}</Label>
+        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
       </div>
       <div className="flex items-center flex-shrink-0">{children}</div>
     </div>
@@ -154,7 +160,7 @@ function SettingRow({ label, description, children }: {
 }
 
 export default function ProfilePage() {
-  const { user: contextUser } = useOutletContext<AuthOutletContext>();
+  const { user: contextUser } = useOutletContext<AuthOutletContext>() ?? {};
   const loggedInUser = useUser(api, {
     select: {
       id: true,
@@ -212,9 +218,10 @@ export default function ProfilePage() {
   });
 
   // User preferences
-  const [highContrastMode, setHighContrastMode] = useState(user.highContrastMode ?? false);
-  const [reduceMotion, setReduceMotion]         = useState(user.reduceMotion ?? false);
-  const [textSize, setTextSize]                 = useState(user.textSize || "medium");
+  const [highContrastMode, setHighContrastMode] = useState((user as any)?.highContrastMode ?? false);
+  const [reduceMotion, setReduceMotion]         = useState((user as any)?.reduceMotion ?? false);
+  const [textSize, setTextSize]                 = useState((user as any)?.textSize || "medium");
+  const [themePreference, setThemePreference]   = useState<ThemePreference>("dark");
 
   useEffect(() => {
     if (!loggedInUser) return; // Wait for user data to load
@@ -230,6 +237,12 @@ export default function ProfilePage() {
       role: primaryRoleKey || "signed-in",
     });
   }, [loggedInUser]);
+
+  useEffect(() => {
+    const preference = getStoredThemePreference();
+    setThemePreference(preference);
+    applyTheme(preference);
+  }, []);
 
   const handleUserToggle = (field: string, setter: (v: boolean) => void) => async (value: boolean) => {
     setter(value);
@@ -263,22 +276,29 @@ export default function ProfilePage() {
     }
   };
 
+  const handleThemePreferenceChange = (value: ThemePreference) => {
+    setThemePreference(value);
+    persistThemePreference(value);
+    applyTheme(value);
+    toast.success("Theme updated");
+  };
+
   // Use loggedInUser for display to ensure consistent server/client rendering
   const displayUser = loggedInUser || contextUser;
-  const hasName = Boolean(displayUser.firstName || displayUser.lastName);
+  const hasName = Boolean(displayUser?.firstName || displayUser?.lastName);
   const title = hasName
-    ? [displayUser.firstName, displayUser.lastName].filter(Boolean).join(" ")
-    : displayUser.email;
+    ? [displayUser?.firstName, displayUser?.lastName].filter(Boolean).join(" ")
+    : displayUser?.email;
 
   // Show loading state if user data isn't loaded yet
   if (!loggedInUser) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={displayUser} />
-        <div className="flex-1 overflow-auto bg-slate-950 flex items-center justify-center">
+        <div className="flex-1 overflow-auto bg-background flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-slate-400">Loading profile...</p>
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading profile...</p>
           </div>
         </div>
       </div>
@@ -286,20 +306,20 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar currentPath={location.pathname} user={displayUser} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
         {/* HEADER */}
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-white">Profile</h1>
-              <p className="text-sm text-slate-400 mt-1">
+              <h1 className="text-2xl font-semibold text-foreground">Profile</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Manage your profile and personal preferences
               </p>
             </div>
-            <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+            <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>
         </div>
 
@@ -320,14 +340,14 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-4">
                       <UserIcon user={displayUser} className="h-16 w-16 flex-shrink-0" />
                       <div>
-                        <p className="text-lg font-semibold text-white">{title}</p>
-                        {hasName && <p className="text-sm text-slate-400 mt-0.5">{displayUser.email}</p>}
+                        <p className="text-lg font-semibold text-foreground">{title}</p>
+                        {hasName && <p className="text-sm text-muted-foreground mt-0.5">{displayUser.email}</p>}
                       </div>
                     </div>
                     <Button
                       onClick={() => setIsEditing(true)}
                       variant="ghost"
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-teal-400 hover:bg-slate-700 hover:text-teal-300 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/70 text-primary hover:bg-muted hover:text-primary/80 transition-colors"
                     >
                       <SettingsIcon className="h-4 w-4" />
                       <span className="text-sm font-medium">Edit</span>
@@ -344,13 +364,13 @@ export default function ProfilePage() {
                   description="Update your account password"
                 >
                   <div className="px-6 py-6 flex items-center justify-between">
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-muted-foreground">
                       Choose a strong password to keep your account secure
                     </p>
                     <Button
                       onClick={() => setIsChangingPassword(true)}
                       variant="ghost"
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-teal-400 hover:bg-slate-700 hover:text-teal-300 transition-colors flex-shrink-0 ml-4"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/70 text-primary hover:bg-muted hover:text-primary/80 transition-colors flex-shrink-0 ml-4"
                     >
                       <Lock className="h-4 w-4" />
                       <span className="text-sm font-medium">Change</span>
@@ -382,14 +402,48 @@ export default function ProfilePage() {
                   value={textSize}
                   onValueChange={(v) => { setTextSize(v); saveUser({ textSize: v }); }}
                 >
-                  <SelectTrigger className="w-36 bg-slate-800 border-slate-700 text-white">
+                  <SelectTrigger className="w-36 bg-muted border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="small" className="text-white hover:bg-slate-700">Small</SelectItem>
-                    <SelectItem value="medium" className="text-white hover:bg-slate-700">Medium</SelectItem>
-                    <SelectItem value="large" className="text-white hover:bg-slate-700">Large</SelectItem>
-                    <SelectItem value="x-large" className="text-white hover:bg-slate-700">Extra Large</SelectItem>
+                  <SelectContent className="bg-muted border-border">
+                    <SelectItem value="small" className="text-foreground hover:bg-muted">Small</SelectItem>
+                    <SelectItem value="medium" className="text-foreground hover:bg-muted">Medium</SelectItem>
+                    <SelectItem value="large" className="text-foreground hover:bg-muted">Large</SelectItem>
+                    <SelectItem value="x-large" className="text-foreground hover:bg-muted">Extra Large</SelectItem>
+                  </SelectContent>
+                </Select>
+              </SettingRow>
+
+              <SettingRow
+                label="Color Theme"
+                description="Choose how this app looks for your account"
+              >
+                <Select
+                  value={themePreference}
+                  onValueChange={(v) => handleThemePreferenceChange(v as ThemePreference)}
+                >
+                  <SelectTrigger className="w-40 bg-muted border-border text-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-muted border-border">
+                    <SelectItem value="light" className="text-foreground hover:bg-muted">
+                      <span className="flex items-center gap-2">
+                        <Sun className="h-3.5 w-3.5" />
+                        Light
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="dark" className="text-foreground hover:bg-muted">
+                      <span className="flex items-center gap-2">
+                        <Moon className="h-3.5 w-3.5" />
+                        Dark
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="system" className="text-foreground hover:bg-muted">
+                      <span className="flex items-center gap-2">
+                        <Monitor className="h-3.5 w-3.5" />
+                        System
+                      </span>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </SettingRow>
@@ -413,10 +467,10 @@ export default function ProfilePage() {
       {/* Edit Profile Dialog */}
       {isEditing && (
         <Dialog open={isEditing} onOpenChange={setIsEditing}>
-          <DialogContent className="bg-slate-900 border-slate-700 max-w-md">
+          <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader className="pb-4">
-              <DialogTitle className="text-xl font-semibold text-white">Edit Profile</DialogTitle>
-              <p className="text-sm text-slate-400 mt-1">Update your account information</p>
+              <DialogTitle className="text-xl font-semibold text-foreground">Edit Profile</DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">Update your account information</p>
             </DialogHeader>
             <Form {...profileForm}>
               <form onSubmit={profileForm.handleSubmit(handleProfileSave)} className="space-y-5 py-2">
@@ -425,11 +479,11 @@ export default function ProfilePage() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-200">First Name</FormLabel>
+                      <FormLabel className="text-foreground">First Name</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500"
+                          className="h-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
                           placeholder="Enter first name"
                         />
                       </FormControl>
@@ -442,11 +496,11 @@ export default function ProfilePage() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-200">Last Name</FormLabel>
+                      <FormLabel className="text-foreground">Last Name</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500"
+                          className="h-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
                           placeholder="Enter last name"
                         />
                       </FormControl>
@@ -459,12 +513,12 @@ export default function ProfilePage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-200">Email Address</FormLabel>
+                      <FormLabel className="text-foreground">Email Address</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="email"
-                          className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500"
+                          className="h-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
                           placeholder="your.email@example.com"
                         />
                       </FormControl>
@@ -478,17 +532,17 @@ export default function ProfilePage() {
                     name="role"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-200">Account Role</FormLabel>
+                        <FormLabel className="text-foreground">Account Role</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-10 bg-slate-800/50 border-slate-700 text-white focus:border-teal-500">
+                            <SelectTrigger className="h-10 bg-muted/50 border-border text-foreground focus:border-primary">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="bg-slate-800 border-slate-700">
-                            <SelectItem value="signed-in" className="text-white hover:bg-slate-700">Standard User</SelectItem>
-                            <SelectItem value="system-admin" className="text-white hover:bg-slate-700">Administrator (system-admin)</SelectItem>
-                            <SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Administrator (sysadmin)</SelectItem>
+                          <SelectContent className="bg-muted border-border">
+                            <SelectItem value="signed-in" className="text-foreground hover:bg-muted">Standard User</SelectItem>
+                            <SelectItem value="system-admin" className="text-foreground hover:bg-muted">Administrator (system-admin)</SelectItem>
+                            <SelectItem value="sysadmin" className="text-foreground hover:bg-muted">Administrator (sysadmin)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage className="text-destructive" />
@@ -496,11 +550,11 @@ export default function ProfilePage() {
                     )}
                   />
                 )}
-                <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
-                  <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={updatingUser} className="border-slate-700 hover:bg-slate-800 hover:text-white">
+                <div className="flex justify-end gap-3 pt-6 border-t border-border">
+                  <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={updatingUser} className="border-border hover:bg-muted hover:text-foreground">
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={updatingUser} className="bg-teal-500 hover:bg-teal-600 text-black font-medium">
+                  <Button type="submit" disabled={updatingUser} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
                     {updatingUser ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
@@ -513,10 +567,10 @@ export default function ProfilePage() {
       {/* Change Password Dialog */}
       {isChangingPassword && (
         <Dialog open={isChangingPassword} onOpenChange={(open) => { if (!open) passwordForm.reset(); setIsChangingPassword(open); }}>
-          <DialogContent className="bg-slate-900 border-slate-700 max-w-md">
+          <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader className="pb-4">
-              <DialogTitle className="text-xl font-semibold text-white">Change Password</DialogTitle>
-              <p className="text-sm text-slate-400 mt-1">Update your account password</p>
+              <DialogTitle className="text-xl font-semibold text-foreground">Change Password</DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">Update your account password</p>
             </DialogHeader>
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit(async (values) => {
@@ -529,9 +583,9 @@ export default function ProfilePage() {
                   name="currentPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-200">Current Password</FormLabel>
+                      <FormLabel className="text-foreground">Current Password</FormLabel>
                       <FormControl>
-                        <Input {...field} type="password" className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500" placeholder="Enter current password" />
+                        <Input {...field} type="password" className="h-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary" placeholder="Enter current password" />
                       </FormControl>
                       <FormMessage className="text-destructive" />
                     </FormItem>
@@ -542,11 +596,11 @@ export default function ProfilePage() {
                   name="newPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-200">New Password</FormLabel>
+                      <FormLabel className="text-foreground">New Password</FormLabel>
                       <FormControl>
-                        <Input {...field} type="password" className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500" placeholder="Enter new password" />
+                        <Input {...field} type="password" className="h-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary" placeholder="Enter new password" />
                       </FormControl>
-                      <p className="text-xs text-slate-500">Must be at least 8 characters long</p>
+                      <p className="text-xs text-muted-foreground">Must be at least 8 characters long</p>
                       <FormMessage className="text-destructive" />
                     </FormItem>
                   )}
@@ -556,17 +610,17 @@ export default function ProfilePage() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-200">Confirm New Password</FormLabel>
+                      <FormLabel className="text-foreground">Confirm New Password</FormLabel>
                       <FormControl>
-                        <Input {...field} type="password" className="h-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-teal-500" placeholder="Confirm new password" />
+                        <Input {...field} type="password" className="h-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary" placeholder="Confirm new password" />
                       </FormControl>
                       <FormMessage className="text-destructive" />
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
-                  <Button type="button" variant="outline" onClick={() => setIsChangingPassword(false)} className="border-slate-700 hover:bg-slate-800 hover:text-white">Cancel</Button>
-                  <Button type="submit" className="bg-teal-500 hover:bg-teal-600 text-black font-medium">Update Password</Button>
+                <div className="flex justify-end gap-3 pt-6 border-t border-border">
+                  <Button type="button" variant="outline" onClick={() => setIsChangingPassword(false)} className="border-border hover:bg-muted hover:text-foreground">Cancel</Button>
+                  <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium">Update Password</Button>
                 </div>
               </form>
             </Form>

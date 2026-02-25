@@ -65,10 +65,10 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
 
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6 flex items-center justify-between px-3">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
-        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
+        <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-muted-foreground hover:text-foreground" />
       </div>
       <nav className="space-y-1">
         {visibleTabs.map((tab) => {
@@ -80,8 +80,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
               to={tab.path}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                 isActive
-                  ? "bg-teal-600/10 text-teal-400 font-medium"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
@@ -92,9 +92,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
         {isAdmin && (
           <>
-            <div className="my-4 border-t border-slate-700" />
+            <div className="my-4 border-t border-border" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Admin only</p>
             </div>
             {adminTabs.map((tab) => {
               const Icon = tab.icon;
@@ -105,8 +105,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
                   to={tab.path}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? "bg-teal-600/10 text-teal-400 font-medium"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
@@ -220,8 +220,8 @@ export default function TeamPage() {
       case "system-admin":
       case "sysadmin":
         return "bg-purple-500/10 text-purple-400 border-purple-500/20";
-      case "signed-in":    return "bg-teal-500/10 text-teal-400 border-teal-500/20";
-      default:             return "bg-slate-500/10 text-slate-400 border-slate-500/20";
+      case "signed-in":    return "bg-primary/10 text-primary border-primary/20";
+      default:             return "bg-muted/50 text-muted-foreground border-border";
     }
   };
 
@@ -252,7 +252,7 @@ export default function TeamPage() {
 
   if (error) {
     return (
-      <div className="flex-1 overflow-auto bg-slate-950 p-8">
+      <div className="flex-1 overflow-auto bg-background p-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-red-400">Error loading users: {error.toString()}</div>
         </div>
@@ -261,17 +261,17 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Sidebar */}
       <Sidebar currentPath={location.pathname} user={user} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
         {/* HEADER with buttons */}
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-white">Users</h1>
-              <p className="text-sm text-slate-400 mt-1">
+              <h1 className="text-2xl font-semibold text-foreground">Users</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 {showDeleted ? "Manage deleted users and restore them if needed" : "Manage users and their roles"}
               </p>
             </div>
@@ -279,18 +279,18 @@ export default function TeamPage() {
               <Button
                 onClick={() => setShowDeleted(!showDeleted)}
                 variant="outline"
-                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 {showDeleted ? "Show Active Users" : "Show Deleted Users"}
               </Button>
               <Button
                 onClick={() => navigate("/customer/support/settings/users?addMember=1")}
-                className="bg-teal-500 text-white hover:bg-teal-600"
+                className="bg-primary text-foreground hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add User
               </Button>
-              <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+              <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
             </div>
           </div>
         </div>
@@ -298,23 +298,23 @@ export default function TeamPage() {
         {/* CONTENT */}
         <div className="p-8">
           {fetching && !users ? (
-            <div className="text-slate-400">Loading users...</div>
+            <div className="text-muted-foreground">Loading users...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {users?.map((user) => (
                 <div
                   key={user.id}
-                  className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 hover:border-slate-600 transition-colors"
+                  className="bg-muted/50 border border-border rounded-xl p-4 hover:border-border transition-colors"
                 >
                   <div className="flex flex-col justify-between h-full min-h-[160px]">
                     <div>
                       <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-foreground font-semibold text-lg flex-shrink-0">
                           {user.firstName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "?"}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h3 className="text-lg font-semibold text-white truncate">
+                            <h3 className="text-lg font-semibold text-foreground truncate">
                               {user.firstName} {user.lastName}
                             </h3>
                             <UnifiedBadge 
@@ -322,15 +322,15 @@ export default function TeamPage() {
                               label={getRoleDisplayName(getPrimaryRoleKey(user.roleList) || "")} 
                             />
                           </div>
-                          <p className="text-slate-400 text-sm truncate">{user.email}</p>
+                          <p className="text-muted-foreground text-sm truncate">{user.email}</p>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2 text-sm text-slate-500 mt-3 min-h-[36px]">
+                      <div className="flex flex-col gap-2 text-sm text-muted-foreground mt-3 min-h-[36px]">
                         <span>
                           {user.emailVerified ? (
-                            <span className="text-teal-400">✓ Verified</span>
+                            <span className="text-primary">✓ Verified</span>
                           ) : (
-                            <span className="text-slate-500">Not verified</span>
+                            <span className="text-muted-foreground">Not verified</span>
                           )}
                         </span>
                         {user.lastSignedIn && (
@@ -357,7 +357,7 @@ export default function TeamPage() {
                           }}
                           variant="ghost"
                           disabled={!canModifyUser(user)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/70 text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="text-sm font-medium">Delete</span>
@@ -380,7 +380,7 @@ export default function TeamPage() {
                           }}
                           variant="ghost"
                           disabled={!canModifyUser(user)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-green-400 hover:bg-green-900/20 hover:text-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/70 text-green-400 hover:bg-green-900/20 hover:text-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <RotateCcw className="h-4 w-4" />
                           <span className="text-sm font-medium">Restore</span>
@@ -396,7 +396,7 @@ export default function TeamPage() {
                         }}
                         variant="ghost"
                         disabled={!canModifyUser(user)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-teal-400 hover:bg-slate-700 hover:text-teal-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/70 text-primary hover:bg-muted hover:text-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <EditIcon className="h-4 w-4" />
                         <span className="text-sm font-medium">Edit</span>
@@ -411,27 +411,27 @@ export default function TeamPage() {
 
         {/* Edit User Dialog */}
         <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
-          <DialogContent className="bg-slate-900 border-slate-800 text-white">
+          <DialogContent className="bg-card border-border text-foreground">
             <DialogHeader>
               <DialogTitle className="text-2xl">Edit User</DialogTitle>
             </DialogHeader>
             <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit(handleSave)} className="space-y-4 py-4">
                 <FormField control={editForm.control} name="email" render={({ field }) => (
-                  <FormItem><FormLabel className="text-slate-300">Email</FormLabel><FormControl><Input {...field} type="email" className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                  <FormItem><FormLabel className="text-muted-foreground">Email</FormLabel><FormControl><Input {...field} type="email" className="bg-muted border-border text-foreground" /></FormControl><FormMessage className="text-destructive" /></FormItem>
                 )} />
                 <FormField control={editForm.control} name="firstName" render={({ field }) => (
-                  <FormItem><FormLabel className="text-slate-300">First Name</FormLabel><FormControl><Input {...field} className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                  <FormItem><FormLabel className="text-muted-foreground">First Name</FormLabel><FormControl><Input {...field} className="bg-muted border-border text-foreground" /></FormControl><FormMessage className="text-destructive" /></FormItem>
                 )} />
                 <FormField control={editForm.control} name="lastName" render={({ field }) => (
-                  <FormItem><FormLabel className="text-slate-300">Last Name</FormLabel><FormControl><Input {...field} className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                  <FormItem><FormLabel className="text-muted-foreground">Last Name</FormLabel><FormControl><Input {...field} className="bg-muted border-border text-foreground" /></FormControl><FormMessage className="text-destructive" /></FormItem>
                 )} />
                 <FormField control={editForm.control} name="role" render={({ field }) => (
-                  <FormItem><FormLabel className="text-slate-300">Role</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="signed-in" className="text-white hover:bg-slate-700">Standard user</SelectItem><SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin (system-admin)</SelectItem><SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Admin (sysadmin)</SelectItem></SelectContent></Select><FormMessage className="text-destructive" /></FormItem>
+                  <FormItem><FormLabel className="text-muted-foreground">Role</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-muted border-border text-foreground"><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-muted border-border"><SelectItem value="signed-in" className="text-foreground hover:bg-muted">Standard user</SelectItem><SelectItem value="system-admin" className="text-foreground hover:bg-muted">Admin (system-admin)</SelectItem><SelectItem value="sysadmin" className="text-foreground hover:bg-muted">Admin (sysadmin)</SelectItem></SelectContent></Select><FormMessage className="text-destructive" /></FormItem>
                 )} />
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setEditingUser(null)} className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">Cancel</Button>
-                  <Button type="submit" disabled={updating} className="bg-teal-500 text-white hover:bg-teal-600">{updating ? "Saving..." : "Save"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setEditingUser(null)} className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground">Cancel</Button>
+                  <Button type="submit" disabled={updating} className="bg-primary text-foreground hover:bg-primary/90">{updating ? "Saving..." : "Save"}</Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -440,30 +440,30 @@ export default function TeamPage() {
 
         {/* Add User Dialog */}
         <Dialog open={isAddMemberOpen} onOpenChange={(open) => { if (!open) { newUserForm.reset(); navigate("/customer/support/settings/users"); } }}>
-          <DialogContent className="bg-slate-900 border-slate-800 text-white">
+          <DialogContent className="bg-card border-border text-foreground">
             <DialogHeader>
               <DialogTitle className="text-2xl">Add New User</DialogTitle>
             </DialogHeader>
             <Form {...newUserForm}>
               <form onSubmit={newUserForm.handleSubmit(handleAddUser)} className="space-y-4 py-4">
                 <FormField control={newUserForm.control} name="email" render={({ field }) => (
-                  <FormItem><FormLabel className="text-slate-300">Email</FormLabel><FormControl><Input {...field} type="email" className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                  <FormItem><FormLabel className="text-muted-foreground">Email</FormLabel><FormControl><Input {...field} type="email" className="bg-muted border-border text-foreground" /></FormControl><FormMessage className="text-destructive" /></FormItem>
                 )} />
                 <FormField control={newUserForm.control} name="firstName" render={({ field }) => (
-                  <FormItem><FormLabel className="text-slate-300">First Name</FormLabel><FormControl><Input {...field} className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                  <FormItem><FormLabel className="text-muted-foreground">First Name</FormLabel><FormControl><Input {...field} className="bg-muted border-border text-foreground" /></FormControl><FormMessage className="text-destructive" /></FormItem>
                 )} />
                 <FormField control={newUserForm.control} name="lastName" render={({ field }) => (
-                  <FormItem><FormLabel className="text-slate-300">Last Name</FormLabel><FormControl><Input {...field} className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                  <FormItem><FormLabel className="text-muted-foreground">Last Name</FormLabel><FormControl><Input {...field} className="bg-muted border-border text-foreground" /></FormControl><FormMessage className="text-destructive" /></FormItem>
                 )} />
                 <FormField control={newUserForm.control} name="password" render={({ field }) => (
-                  <FormItem><FormLabel className="text-slate-300">Password</FormLabel><FormControl><Input {...field} type="password" className="bg-slate-800 border-slate-700 text-white" /></FormControl><FormMessage className="text-destructive" /></FormItem>
+                  <FormItem><FormLabel className="text-muted-foreground">Password</FormLabel><FormControl><Input {...field} type="password" className="bg-muted border-border text-foreground" /></FormControl><FormMessage className="text-destructive" /></FormItem>
                 )} />
                 <FormField control={newUserForm.control} name="role" render={({ field }) => (
-                  <FormItem><FormLabel className="text-slate-300">Role</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-slate-800 border-slate-700"><SelectItem value="signed-in" className="text-white hover:bg-slate-700">Standard user</SelectItem><SelectItem value="system-admin" className="text-white hover:bg-slate-700">Admin (system-admin)</SelectItem><SelectItem value="sysadmin" className="text-white hover:bg-slate-700">Admin (sysadmin)</SelectItem></SelectContent></Select><FormMessage className="text-destructive" /></FormItem>
+                  <FormItem><FormLabel className="text-muted-foreground">Role</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-muted border-border text-foreground"><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-muted border-border"><SelectItem value="signed-in" className="text-foreground hover:bg-muted">Standard user</SelectItem><SelectItem value="system-admin" className="text-foreground hover:bg-muted">Admin (system-admin)</SelectItem><SelectItem value="sysadmin" className="text-foreground hover:bg-muted">Admin (sysadmin)</SelectItem></SelectContent></Select><FormMessage className="text-destructive" /></FormItem>
                 )} />
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => navigate("/customer/support/settings/users")} className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white">Cancel</Button>
-                  <Button type="submit" disabled={creating} className="bg-teal-500 text-white hover:bg-teal-600">{creating ? "Adding..." : "Add User"}</Button>
+                  <Button type="button" variant="outline" onClick={() => navigate("/customer/support/settings/users")} className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground">Cancel</Button>
+                  <Button type="submit" disabled={creating} className="bg-primary text-foreground hover:bg-primary/90">{creating ? "Adding..." : "Add User"}</Button>
                 </DialogFooter>
               </form>
             </Form>

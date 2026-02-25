@@ -42,10 +42,10 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const visibleTabs = isAdmin ? tabs : tabs.filter((tab) => tab.id === "profile");
 
   return (
-    <div className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 flex-shrink-0">
+    <div className="w-64 bg-card/50 border-r border-border p-4 flex-shrink-0">
       <div className="mb-6 flex items-center justify-between px-3">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
-        <SettingsCloseButton className="h-8 w-8 text-slate-400 hover:text-white" />
+        <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+        <SettingsCloseButton className="h-8 w-8 text-muted-foreground hover:text-foreground" />
       </div>
       <nav className="space-y-1">
         {visibleTabs.map(({ id, label, icon: Icon, path }) => (
@@ -54,8 +54,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
             to={path}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
               currentPath === path
-                ? "bg-teal-600/10 text-teal-400 font-medium"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
@@ -65,9 +65,9 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
 
         {isAdmin && (
           <>
-            <div className="my-4 border-t border-slate-700" />
+            <div className="my-4 border-t border-border" />
             <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Admin only</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Admin only</p>
             </div>
             {adminTabs.map(({ id, label, icon: Icon, path }) => (
               <RouterLink
@@ -75,8 +75,8 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
                 to={path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                   currentPath === path
-                    ? "bg-teal-600/10 text-teal-400 font-medium"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
@@ -97,12 +97,12 @@ function Section({ icon: Icon, title, description, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden hover:border-slate-600 transition-colors">
-      <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-3">
-        <Icon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+    <div className="bg-muted/50 border border-border rounded-xl overflow-hidden hover:border-border transition-colors">
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="text-sm text-slate-400 mt-0.5">{description}</p>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
       </div>
       <div className="divide-y divide-slate-700/60">{children}</div>
@@ -119,8 +119,8 @@ function SettingRow({ label, description, children, indent = false }: {
   return (
     <div className={`flex items-center justify-between py-4 ${indent ? "pl-12 pr-6" : "px-6"}`}>
       <div className="flex-1 pr-8">
-        <Label className={`text-sm font-medium ${indent ? "text-slate-300" : "text-white"}`}>{label}</Label>
-        {description && <p className="text-sm text-slate-400 mt-0.5">{description}</p>}
+        <Label className={`text-sm font-medium ${indent ? "text-muted-foreground" : "text-foreground"}`}>{label}</Label>
+        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
       </div>
       <div className="flex items-center flex-shrink-0">{children}</div>
     </div>
@@ -130,10 +130,10 @@ function SettingRow({ label, description, children, indent = false }: {
 function StatusRow({ label, description }: { label: string; description: string }) {
   return (
     <div className="flex items-start gap-4 px-6 py-4">
-      <CheckCircle2 className="h-5 w-5 text-teal-400 flex-shrink-0 mt-0.5" />
+      <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
       <div>
-        <p className="text-sm font-medium text-white">{label}</p>
-        <p className="text-sm text-slate-400 mt-0.5">{description}</p>
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
       </div>
     </div>
   );
@@ -234,16 +234,16 @@ export default function SecuritySettings() {
 
   if (fetching) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
-        <div className="flex-1 p-8 text-slate-400">Loading...</div>
+        <div className="flex-1 p-8 text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar currentPath={location.pathname} user={user} />
         <div className="flex-1 p-8 text-red-400">Error loading settings: {error.message}</div>
       </div>
@@ -251,18 +251,18 @@ export default function SecuritySettings() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar currentPath={location.pathname} user={user} />
 
-      <div className="flex-1 overflow-auto bg-slate-950">
+      <div className="flex-1 overflow-auto bg-background">
 
-        <div className="border-b border-slate-800 bg-slate-900/50 px-8 py-6">
+        <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-white">Security & Compliance</h1>
-              <p className="text-sm text-slate-400 mt-1">Data protection, access control, and audit settings</p>
+              <h1 className="text-2xl font-semibold text-foreground">Security & Compliance</h1>
+              <p className="text-sm text-muted-foreground mt-1">Data protection, access control, and audit settings</p>
             </div>
-            <SettingsCloseButton className="h-9 w-9 text-slate-300 hover:text-white" />
+            <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>
         </div>
 
@@ -272,25 +272,25 @@ export default function SecuritySettings() {
           <Section icon={Database} title="Data Retention" description="Configure how long data is stored in the system">
             <SettingRow label="Email Retention Period" description="How long emails are kept before becoming eligible for archiving">
               <Select value={retentionDays} onValueChange={handleSelectSave("retentionDays", setRetentionDays)}>
-                <SelectTrigger className="w-40 bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="30"  className="text-white hover:bg-slate-700">30 days</SelectItem>
-                  <SelectItem value="90"  className="text-white hover:bg-slate-700">90 days</SelectItem>
-                  <SelectItem value="180" className="text-white hover:bg-slate-700">180 days</SelectItem>
-                  <SelectItem value="365" className="text-white hover:bg-slate-700">1 year</SelectItem>
-                  <SelectItem value="730" className="text-white hover:bg-slate-700">2 years</SelectItem>
+                <SelectTrigger className="w-40 bg-muted border-border text-foreground"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="30"  className="text-foreground hover:bg-muted">30 days</SelectItem>
+                  <SelectItem value="90"  className="text-foreground hover:bg-muted">90 days</SelectItem>
+                  <SelectItem value="180" className="text-foreground hover:bg-muted">180 days</SelectItem>
+                  <SelectItem value="365" className="text-foreground hover:bg-muted">1 year</SelectItem>
+                  <SelectItem value="730" className="text-foreground hover:bg-muted">2 years</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
             <SettingRow label="Audit Log Retention Period" description="How long audit log entries are retained">
               <Select value={auditLogRetentionDays} onValueChange={handleSelectSave("auditLogRetentionDays", setAuditLogRetentionDays)}>
-                <SelectTrigger className="w-40 bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="90"   className="text-white hover:bg-slate-700">90 days</SelectItem>
-                  <SelectItem value="180"  className="text-white hover:bg-slate-700">180 days</SelectItem>
-                  <SelectItem value="365"  className="text-white hover:bg-slate-700">1 year</SelectItem>
-                  <SelectItem value="730"  className="text-white hover:bg-slate-700">2 years</SelectItem>
-                  <SelectItem value="1095" className="text-white hover:bg-slate-700">3 years</SelectItem>
+                <SelectTrigger className="w-40 bg-muted border-border text-foreground"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="90"   className="text-foreground hover:bg-muted">90 days</SelectItem>
+                  <SelectItem value="180"  className="text-foreground hover:bg-muted">180 days</SelectItem>
+                  <SelectItem value="365"  className="text-foreground hover:bg-muted">1 year</SelectItem>
+                  <SelectItem value="730"  className="text-foreground hover:bg-muted">2 years</SelectItem>
+                  <SelectItem value="1095" className="text-foreground hover:bg-muted">3 years</SelectItem>
                 </SelectContent>
               </Select>
             </SettingRow>
@@ -310,7 +310,7 @@ export default function SecuritySettings() {
                 onChange={(e) => setIpWhitelist(e.target.value)}
                 onBlur={handleBlurSave("ipWhitelist", ipWhitelist)}
                 placeholder="e.g. 192.168.1.1, 10.0.0.0/24"
-                className="w-64 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                className="w-64 bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
             </SettingRow>
             <SettingRow label="Redact Email Addresses" description="Mask customer email addresses in logs and exports">
@@ -326,12 +326,12 @@ export default function SecuritySettings() {
                 onChange={(e) => setSessionTimeoutMinutes(e.target.value)}
                 onBlur={handleBlurSave("sessionTimeoutMinutes", sessionTimeoutMinutes, true)}
                 min={5} max={1440}
-                className="w-24 bg-slate-800 border-slate-700 text-white text-center"
+                className="w-24 bg-muted border-border text-foreground text-center"
               />
             </SettingRow>
             <div className="px-6 py-4">
-              <Label className="text-sm font-medium text-white">Password Requirements</Label>
-              <p className="text-sm text-slate-400 mt-0.5">Rules enforced when users set or update their password</p>
+              <Label className="text-sm font-medium text-foreground">Password Requirements</Label>
+              <p className="text-sm text-muted-foreground mt-0.5">Rules enforced when users set or update their password</p>
             </div>
             <SettingRow label="Minimum length (8 characters)" indent>
               <Switch checked={pwRequireMinLength} onCheckedChange={handleToggle("pwRequireMinLength", setPwRequireMinLength)} disabled={updating} />
@@ -368,7 +368,7 @@ export default function SecuritySettings() {
               <Button
                 variant="outline"
                 onClick={() => toast.info("Audit log export coming soon")}
-                className="border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 Export Audit Logs
               </Button>
