@@ -70,7 +70,7 @@ const BADGE_CONFIGS = {
   },
   unclassified: {
     bg: "#545454",
-    text: "#94a3b8",
+    text: "#ffffff",
   },
   
   // Connection status badges
@@ -94,7 +94,7 @@ const BADGE_CONFIGS = {
   // Default fallback
   default: {
     bg: "#1e293b",  // slate-800
-    text: "#94a3b8",  // slate-400
+    text: "#ffffff",
   },
 };
 

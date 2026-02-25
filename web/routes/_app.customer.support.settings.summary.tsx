@@ -90,6 +90,9 @@ function SettingsBlock({
   healthTone,
   statusLabel,
   details,
+  ctaLabel,
+  lastUpdatedAt,
+  emptyGuidance,
 }: {
   icon: React.ElementType;
   title: string;
@@ -98,6 +101,9 @@ function SettingsBlock({
   healthTone?: HealthTone;
   statusLabel?: string;
   details?: string[];
+  ctaLabel?: string;
+  lastUpdatedAt?: string | Date | null;
+  emptyGuidance?: string[];
 }) {
   const tone = healthTone || "healthy";
   const toneStyle = HEALTH_TONE_STYLES[tone];
@@ -121,7 +127,7 @@ function SettingsBlock({
           className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/70 text-primary hover:bg-muted hover:text-primary/80 transition-colors"
         >
           <SettingsIcon className="h-4 w-4" />
-          <span className="text-sm font-medium">Edit</span>
+          <span className="text-sm font-medium">{ctaLabel || "Edit"}</span>
         </RouterLink>
       </div>
 
@@ -141,6 +147,23 @@ function SettingsBlock({
             </li>
           ))}
         </ul>
+      )}
+
+      {emptyGuidance && emptyGuidance.length > 0 && (
+        <ul className="space-y-1 text-sm text-muted-foreground mb-4">
+          {emptyGuidance.map((step, idx) => (
+            <li key={idx} className="flex items-start gap-2">
+              <span className="text-muted-foreground mt-0.5">•</span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {lastUpdatedAt && (
+        <div className="text-[11px] text-muted-foreground">
+          Last updated {timeAgo(lastUpdatedAt)}
+        </div>
       )}
 
 
@@ -171,11 +194,38 @@ export default function SettingsSummaryPage() {
       autoTriageEnabled: true,
       autoSendGlobalEnabled: true,
       emailNotificationsEnabled: true,
+      openaiModel: true,
+      aiModelVersion: true,
+      slaP0: true,
+      slaP1: true,
+      slaP2: true,
+      slaP3: true,
+      triageSchedule: true,
+      notifyOnP0: true,
+      notifyOnP1: true,
+      notifyOnHighPriority: true,
+      notifyOnNewConversation: true,
+      notifyOnCustomerReply: true,
+      notifyOnAutoSendFailure: true,
+      dailyDigestEnabled: true,
+      teamsWebhookUrl: true,
+      notificationEmail: true,
+      microsoftLastVerifiedAt: true,
     },
   });
 
   const [{ data: usersData }] = useFindMany(api.user, {
     select: { id: true },
+  });
+
+  const [{ data: conversationsData }] = useFindMany(api.conversation, {
+    first: 500,
+    select: {
+      id: true,
+      status: true,
+      requiresHumanReview: true,
+      hasDraft: true,
+    } as any,
   });
 
   const [{ data: triageData }] = useFindMany(api.conversation, {
@@ -206,6 +256,9 @@ export default function SettingsSummaryPage() {
 
   const config = configData as any;
   const userCount = (usersData || []).length;
+  const allConversations = (conversationsData as any[]) || [];
+  const unresolvedQueueSize = allConversations.filter((conv) => !["resolved", "archived", "ignored"].includes(conv?.status)).length;
+  const draftsPending = allConversations.filter((conv) => Boolean(conv?.requiresHumanReview) || Boolean(conv?.hasDraft)).length;
   const lastTriagedAt = (triageData as any)?.[0]?.lastTriagedAt;
   const lastAiAt = (aiCommentData as any)?.[0]?.createdAt;
   const lastTemplateAt = (templateData as any)?.[0]?.updatedAt;
@@ -240,6 +293,20 @@ export default function SettingsSummaryPage() {
     : "disabled";
   const aiTone: HealthTone = config?.autoSendGlobalEnabled ? "healthy" : "disabled";
   const alertsTone: HealthTone = config?.emailNotificationsEnabled ? "healthy" : "warning";
+  const alertRulesCount = [
+    config?.notifyOnP0,
+    config?.notifyOnP1,
+    config?.notifyOnHighPriority,
+    config?.notifyOnNewConversation,
+    config?.notifyOnCustomerReply,
+    config?.notifyOnAutoSendFailure,
+    config?.dailyDigestEnabled,
+  ].filter(Boolean).length;
+  const alertChannels = [
+    config?.notificationEmail ? "email" : null,
+    config?.teamsWebhookUrl ? "teams" : null,
+  ].filter(Boolean) as string[];
+
   const templatesTone: HealthTone = hasTemplates ? "healthy" : "warning";
   const usersTone: HealthTone = userCount > 0 ? "healthy" : "warning";
 
@@ -271,6 +338,42 @@ export default function SettingsSummaryPage() {
         </div>
 
         <div className="p-8">
+        <div className="mb-6 rounded-xl border border-border bg-card px-5 py-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">System status</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Live health snapshot of sync, queue, and draft workload
+              </p>
+            </div>
+            {msError && (
+              <RouterLink to="/customer/support/settings/integrations" className="text-xs font-medium text-primary hover:text-primary/80">
+                Fix Microsoft connection
+              </RouterLink>
+            )}
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="rounded-lg border border-border bg-muted/40 p-3">
+              <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Microsoft connection</div>
+              <div className={`mt-1 text-sm font-semibold ${msError ? "text-red-500" : "text-foreground"}`}>
+                {msError ? "Failed" : config?.microsoftConnectionStatus === "connected" ? "OK" : "Disconnected"}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/40 p-3">
+              <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Last sync</div>
+              <div className="mt-1 text-sm font-semibold text-foreground">{timeAgo(config?.lastSyncAt)}</div>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/40 p-3">
+              <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Queue size</div>
+              <div className="mt-1 text-sm font-semibold text-foreground">{unresolvedQueueSize}</div>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/40 p-3">
+              <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Drafts pending</div>
+              <div className="mt-1 text-sm font-semibold text-foreground">{draftsPending}</div>
+            </div>
+          </div>
+        </div>
+
         {riskItems.length > 0 && (
           <div className="mb-6 rounded-xl border border-border bg-card/40 px-5 py-4">
             <div className="flex items-center gap-2">
@@ -319,6 +422,7 @@ export default function SettingsSummaryPage() {
               user?.email || "No email",
               user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : "Name not set",
             ]}
+            ctaLabel="Manage profile"
           />
 
           {/* Users */}
@@ -333,6 +437,7 @@ export default function SettingsSummaryPage() {
               `${userCount} ${userCount === 1 ? "user" : "users"}`,
               "Manage roles and permissions",
             ]}
+            ctaLabel="Manage users"
           />
 
           {/* Integrations */}
@@ -351,6 +456,13 @@ export default function SettingsSummaryPage() {
                 ? (config?.microsoftLastError ? `Last error: ${config.microsoftLastError}` : "Sync status error")
                 : "Sync status healthy",
             ].filter(Boolean) as string[]}
+            ctaLabel="Manage connections"
+            lastUpdatedAt={config?.lastSyncAt || config?.microsoftLastVerifiedAt}
+            emptyGuidance={
+              config?.connectedMailbox
+                ? undefined
+                : ["Connect a Microsoft mailbox", "Run a manual sync to verify access"]
+            }
           />
 
           {/* Triage & Workflow */}
@@ -366,10 +478,13 @@ export default function SettingsSummaryPage() {
                 ? [
                     `Last triage: ${timeAgo(lastTriagedAt)}`,
                     triageStale ? "Triage overdue (12h threshold)" : "Triage running on schedule",
-                    "Priority scoring active",
+                    `SLA targets: P0 ${config?.slaP0 || "—"}, P1 ${config?.slaP1 || "—"}, P2 ${config?.slaP2 || "—"}, P3 ${config?.slaP3 || "—"}`,
                   ]
                 : ["Auto-triage disabled", "Enable triage to prioritise conversations"]
             }
+            ctaLabel="Configure triage rules"
+            lastUpdatedAt={lastTriagedAt}
+            emptyGuidance={config?.autoTriageEnabled ? undefined : ["Enable auto-triage", "Set SLA targets and triage schedule"]}
           />
 
           {/* AI & Automation */}
@@ -384,11 +499,15 @@ export default function SettingsSummaryPage() {
               config?.autoSendGlobalEnabled
                 ? [
                     `AI last invoked: ${timeAgo(lastAiAt)}`,
+                    `Model: ${config?.openaiModel || config?.aiModelVersion || "Default"}`,
                     "Auto-draft enabled",
                     "AI classification active",
                   ]
                 : ["AI automation disabled", "Enable AI for classification and drafts"]
             }
+            ctaLabel="Configure AI"
+            lastUpdatedAt={lastAiAt}
+            emptyGuidance={config?.autoSendGlobalEnabled ? undefined : ["Enable AI automation", "Select a model and confidence threshold"]}
           />
 
           {/* Templates & Batching */}
@@ -404,6 +523,9 @@ export default function SettingsSummaryPage() {
                 ? [`Last modified: ${timeAgo(lastTemplateAt)}`, "Templates configured"]
                 : ["No templates created yet", "Add templates to speed up responses"]
             }
+            ctaLabel="Manage templates"
+            lastUpdatedAt={lastTemplateAt}
+            emptyGuidance={hasTemplates ? undefined : ["Create at least one response template", "Add signatures for consistency"]}
           />
 
           {/* Alerts & Notifications */}
@@ -416,8 +538,19 @@ export default function SettingsSummaryPage() {
             statusLabel={config?.emailNotificationsEnabled ? "Healthy" : "Warning"}
             details={
               config?.emailNotificationsEnabled
-                ? [`Last alert: ${timeAgo(lastAlertAt)}`, "Configure alert preferences"]
+                ? [
+                    `Alert rules enabled: ${alertRulesCount}`,
+                    `Channels: ${alertChannels.length ? alertChannels.join(", ") : "none configured"}`,
+                    `Last alert: ${timeAgo(lastAlertAt)}`,
+                  ]
                 : ["Alerts disabled", "Enable notifications to receive escalations"]
+            }
+            ctaLabel="Configure alerts"
+            lastUpdatedAt={lastAlertAt}
+            emptyGuidance={
+              config?.emailNotificationsEnabled
+                ? undefined
+                : ["Enable notifications", "Choose at least one alert channel"]
             }
           />
 
@@ -429,6 +562,7 @@ export default function SettingsSummaryPage() {
             path="/customer/support/settings/security"
             healthTone="healthy"
             details={["Configure security policies", "Review audit logs", "Manage access controls"]}
+            ctaLabel="Review security"
           />
 
           {/* Advanced */}
@@ -439,6 +573,7 @@ export default function SettingsSummaryPage() {
             path="/customer/support/settings/advanced"
             healthTone="healthy"
             details={["Developer settings", "System configuration", "Debug options"]}
+            ctaLabel="Open advanced settings"
           />
         </div>
         </div>

@@ -13,11 +13,19 @@ import type { ActionOptions } from "gadget-server";
 export const params = {
   conversationId: { type: "string" },
   reason: { type: "string" },
+  reasonType: { type: "string" },
+  reasonScope: { type: "string" },
+  patternValue: { type: "string" },
+  reasonDetails: { type: "string" },
 };
 
 export const run: ActionRun = async ({ params: actionParams, api, logger, session }) => {
   const conversationId = actionParams.conversationId as string;
   const reason = (actionParams.reason as string) || "";
+  const reasonType = (actionParams.reasonType as string) || "other";
+  const reasonScope = (actionParams.reasonScope as string) || "conversation";
+  const patternValue = (actionParams.patternValue as string) || "";
+  const reasonDetails = (actionParams.reasonDetails as string) || "";
 
   if (!conversationId) throw new Error("conversationId is required");
 
@@ -28,6 +36,7 @@ export const run: ActionRun = async ({ params: actionParams, api, logger, sessio
       currentCategory: true,
       requiresHumanReview: true,
       isCustomer: true,
+      primaryCustomerEmail: true,
     },
   });
 
@@ -70,10 +79,29 @@ export const run: ActionRun = async ({ params: actionParams, api, logger, sessio
       prev,
       next,
       reason: reason || null,
+      reasonType,
+      reasonScope,
+      patternValue: patternValue || null,
+      reasonDetails: reasonDetails || null,
+      learningSignal: {
+        source: "operator_feedback",
+        sender: (conv as any).primaryCustomerEmail ?? null,
+        reasonType,
+        reasonScope,
+        ruleCandidate:
+          reasonScope !== "conversation"
+            ? {
+                scope: reasonScope,
+                value: patternValue || (conv as any).primaryCustomerEmail || null,
+                note: reasonDetails || null,
+              }
+            : null,
+        patternValue: patternValue || null,
+      },
     }),
   } as any);
 
-  logger.info({ conversationId, reason }, "Marked as not a customer");
+  logger.info({ conversationId, reason, reasonType, patternValue }, "Marked as not a customer");
   return { ok: true };
 };
 

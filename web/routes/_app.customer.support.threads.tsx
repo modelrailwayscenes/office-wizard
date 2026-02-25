@@ -40,6 +40,9 @@ export default function ThreadsPage() {
   const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
   const [markNotCustomerDialogOpen, setMarkNotCustomerDialogOpen] = useState(false);
+  const [notCustomerReasonType, setNotCustomerReasonType] = useState("conversation_other");
+  const [notCustomerPatternValue, setNotCustomerPatternValue] = useState("");
+  const [notCustomerReasonDetails, setNotCustomerReasonDetails] = useState("");
 
   const { user } = useOutletContext<AuthOutletContext>() ?? {};
 
@@ -178,14 +181,78 @@ export default function ThreadsPage() {
     }
   };
 
+  const resetNotCustomerForm = () => {
+    setNotCustomerReasonType("conversation_other");
+    setNotCustomerPatternValue("");
+    setNotCustomerReasonDetails("");
+  };
+
+  const reasonConfigByType: Record<
+    string,
+    { label: string; scope: string; placeholder: string; requiresPattern?: boolean }
+  > = {
+    sender_exact: {
+      label: "Never allow this sender address",
+      scope: "sender_exact",
+      placeholder: "sender@example.com",
+      requiresPattern: true,
+    },
+    sender_domain: {
+      label: "Never allow this sender domain",
+      scope: "sender_domain",
+      placeholder: "@example.com",
+      requiresPattern: true,
+    },
+    subject_keyword: {
+      label: "Subject keyword pattern",
+      scope: "subject_keyword",
+      placeholder: "billing reminder, newsletter, promo",
+      requiresPattern: true,
+    },
+    body_keyword: {
+      label: "Body keyword pattern",
+      scope: "body_keyword",
+      placeholder: "unsubscribe, no-reply, do not reply",
+      requiresPattern: true,
+    },
+    conversation_other: {
+      label: "Conversation-specific reason",
+      scope: "conversation",
+      placeholder: "Optional pattern or clue",
+    },
+  };
+
+  const buildNotCustomerReason = () => {
+    const config = reasonConfigByType[notCustomerReasonType] ?? reasonConfigByType.conversation_other;
+    const label = config.label;
+    const parts = [label];
+    if (notCustomerPatternValue.trim()) parts.push(`Pattern: ${notCustomerPatternValue.trim()}`);
+    if (notCustomerReasonDetails.trim()) parts.push(`Notes: ${notCustomerReasonDetails.trim()}`);
+    return parts.join(" | ");
+  };
+
   const handleMarkNotCustomer = async () => {
     if (!selectedConvId) return;
+    const reasonConfig = reasonConfigByType[notCustomerReasonType] ?? reasonConfigByType.conversation_other;
+    if (reasonConfig.requiresPattern && !notCustomerPatternValue.trim()) {
+      toast.error("Please enter a pattern/value for this reason type.");
+      return;
+    }
     setMarkNotCustomerDialogOpen(false);
+    const selectedConversation = conversations.find((c) => c.id === selectedConvId);
     try {
-      await markNotCustomer({ conversationId: selectedConvId, reason: "" });
+      await markNotCustomer({
+        conversationId: selectedConvId,
+        reason: buildNotCustomerReason(),
+        reasonType: notCustomerReasonType,
+        reasonScope: reasonConfig.scope,
+        patternValue: notCustomerPatternValue.trim() || selectedConversation?.primaryCustomerEmail || "",
+        reasonDetails: notCustomerReasonDetails.trim(),
+      } as any);
       toast.success("Marked as Not a Customer");
       await refresh();
       setSelectedConvId(null);
+      resetNotCustomerForm();
     } catch (err: any) {
       toast.error(err?.message || "Failed to mark as Not a Customer");
     }
@@ -625,7 +692,13 @@ export default function ThreadsPage() {
         </div>
       </div>
 
-      <AlertDialog open={markNotCustomerDialogOpen} onOpenChange={setMarkNotCustomerDialogOpen}>
+      <AlertDialog
+        open={markNotCustomerDialogOpen}
+        onOpenChange={(open) => {
+          setMarkNotCustomerDialogOpen(open);
+          if (!open) resetNotCustomerForm();
+        }}
+      >
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
             <AlertDialogTitle>Mark as Not a Customer?</AlertDialogTitle>
@@ -633,6 +706,39 @@ export default function ThreadsPage() {
               This removes it from triage. You can undo this in Triage History.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Reason type</label>
+              <select
+                value={notCustomerReasonType}
+                onChange={(e) => setNotCustomerReasonType(e.target.value)}
+                className="w-full h-10 rounded-xl border border-input bg-background px-3 text-sm"
+              >
+                <option value="sender_exact">Never allow sender address</option>
+                <option value="sender_domain">Never allow sender domain</option>
+                <option value="subject_keyword">Subject keyword pattern</option>
+                <option value="body_keyword">Body keyword pattern</option>
+                <option value="conversation_other">Conversation-specific reason</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Pattern/email/keywords (optional)</label>
+              <Input
+                value={notCustomerPatternValue}
+                onChange={(e) => setNotCustomerPatternValue(e.target.value)}
+                placeholder={(reasonConfigByType[notCustomerReasonType] ?? reasonConfigByType.conversation_other).placeholder}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Notes (optional)</label>
+              <textarea
+                value={notCustomerReasonDetails}
+                onChange={(e) => setNotCustomerReasonDetails(e.target.value)}
+                placeholder="Why should this be treated as not a customer?"
+                className="min-h-[92px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction

@@ -34,7 +34,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useGlobalAction, useFindOne, useFindMany, useFindFirst } from "@gadgetinc/react";
+import { useGlobalAction, useFindOne, useFindMany, useFindFirst, useUser } from "@gadgetinc/react";
 import { useConversationsListQuery, useInvalidateConversations } from "@/hooks/useConversationsQuery";
 import { toast } from "sonner";
 import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard, CircleHelp, ShieldAlert, UserX } from "lucide-react";
@@ -58,6 +58,8 @@ export default function ConversationsIndex() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [workFilter, setWorkFilter] = useState<string>("all");
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
@@ -67,8 +69,20 @@ export default function ConversationsIndex() {
   const [{ fetching: rebuildingConversations }, rebuildConversations] = useGlobalAction(api.rebuildConversations);
   const [{ fetching: markNotCustomerLoading }, markNotCustomer] = useGlobalAction(api.markNotCustomer);
   const [markNotCustomerDialogOpen, setMarkNotCustomerDialogOpen] = useState(false);
+  const [notCustomerReasonType, setNotCustomerReasonType] = useState("conversation_other");
+  const [notCustomerPatternValue, setNotCustomerPatternValue] = useState("");
+  const [notCustomerReasonDetails, setNotCustomerReasonDetails] = useState("");
   const [{ data: configData }] = useFindFirst(api.appConfiguration);
+  const currentUser = useUser(api, { select: { id: true, email: true, roleList: { key: true } } }) as any;
   const telemetryEnabled = (configData as any)?.telemetryBannersEnabled ?? true;
+  const triageDebugModeEnabled = Boolean((configData as any)?.debugModeEnabled) || import.meta.env.DEV;
+
+  const [{ data: latestTriageRun }] = useFindMany(api.conversation, {
+    first: 1,
+    sort: { lastTriagedAt: "Descending" } as any,
+    filter: { lastTriagedAt: { isSet: true } } as any,
+    select: { id: true, lastTriagedAt: true } as any,
+  });
 
   const setTelemetryEvent = (event: Omit<PageTelemetry, "at">) => {
     if (!telemetryEnabled) return;
@@ -79,18 +93,27 @@ export default function ConversationsIndex() {
     const filters: any[] = [];
     if (statusFilter !== "all") filters.push({ status: { equals: statusFilter } });
     if (priorityFilter !== "all") filters.push({ currentPriorityBand: { equals: priorityFilter } });
+    if (workFilter === "urgent") filters.push({ currentPriorityBand: { equals: "urgent" } });
+    if (workFilter === "drafts_ready") filters.push({ hasDraft: { equals: true } });
+    if (workFilter === "overdue") filters.push({ hasDeadline: { equals: true } });
+    if (workFilter === "unassigned") filters.push({ assignedToUser: { isSet: false } });
+    if (workFilter === "assigned_to_me" && currentUser?.id) {
+      filters.push({ assignedToUser: { id: { equals: currentUser.id } } });
+    }
     if (search.trim()) {
       filters.push({
         OR: [
           { subject: { matches: search } },
+          { primaryCustomerName: { matches: search } },
           { primaryCustomerEmail: { matches: search } },
+          { orderValue: { matches: search } },
         ],
       });
     }
     if (filters.length === 0) return undefined;
     if (filters.length === 1) return filters[0];
     return { AND: filters };
-  }, [priorityFilter, search, statusFilter]);
+  }, [priorityFilter, search, statusFilter, workFilter, currentUser?.id]);
 
   const { data: conversationListResult, isLoading: fetchingList } = useConversationsListQuery({
     filter: listFilter,
@@ -198,16 +221,26 @@ export default function ConversationsIndex() {
     const start = Date.now();
     try {
       const result = (await fetchEmails({
-        unreadOnly: true,
+        unreadOnly: false,
         maxEmails: 100,
         maxPages: 10,
         runTriage: true,
       })) as any;
-      toast.success("Emails fetched successfully");
+      invalidateConversations();
+      const totalFetched = result?.sync?.totalFetched ?? 0;
+      const imported = result?.sync?.imported ?? 0;
+      const skipped = result?.sync?.skipped ?? 0;
+      const errors = result?.sync?.errors ?? 0;
+      if (totalFetched === 0 && imported === 0 && skipped === 0) {
+        toast.warning("No emails returned from mailbox. Check Outlook connection and sync window.");
+      } else {
+        toast.success(`Fetched ${totalFetched} emails (${imported} imported, ${skipped} duplicates).`);
+      }
+      setLastRefreshedAt(new Date().toISOString());
       setTelemetryEvent({
         lastAction: "Emails fetched",
-        details: `Fetched ${result?.sync?.totalFetched ?? 0}, imported ${result?.sync?.imported ?? 0}, duplicates ${result?.sync?.skipped ?? 0}, created ${result?.sync?.conversationsCreated ?? 0}, errors ${result?.sync?.errors ?? 0}`,
-        severity: (result?.sync?.errors ?? 0) > 0 ? "warning" : "success",
+        details: `Fetched ${totalFetched}, imported ${imported}, duplicates ${skipped}, created ${result?.sync?.conversationsCreated ?? 0}, errors ${errors}`,
+        severity: errors > 0 ? "warning" : "success",
         durationMs: Date.now() - start,
       });
     } catch (error) {
@@ -225,8 +258,10 @@ export default function ConversationsIndex() {
     const start = Date.now();
     try {
       const result = await rebuildConversations({});
+      invalidateConversations();
       const r = result as any;
       toast.success(`Rebuilt ${r?.created ?? 0} conversations (${r?.skipped ?? 0} skipped)`);
+      setLastRefreshedAt(new Date().toISOString());
       setTelemetryEvent({
         lastAction: "Conversations rebuilt",
         details: `Created ${r?.created ?? 0}, skipped ${r?.skipped ?? 0}`,
@@ -255,14 +290,77 @@ export default function ConversationsIndex() {
   };
 
   const invalidateConversations = useInvalidateConversations();
+  const resetNotCustomerForm = () => {
+    setNotCustomerReasonType("conversation_other");
+    setNotCustomerPatternValue("");
+    setNotCustomerReasonDetails("");
+  };
+
+  const reasonConfigByType: Record<
+    string,
+    { label: string; scope: string; placeholder: string; requiresPattern?: boolean }
+  > = {
+    sender_exact: {
+      label: "Never allow this sender address",
+      scope: "sender_exact",
+      placeholder: "sender@example.com",
+      requiresPattern: true,
+    },
+    sender_domain: {
+      label: "Never allow this sender domain",
+      scope: "sender_domain",
+      placeholder: "@example.com",
+      requiresPattern: true,
+    },
+    subject_keyword: {
+      label: "Subject keyword pattern",
+      scope: "subject_keyword",
+      placeholder: "billing reminder, newsletter, promo",
+      requiresPattern: true,
+    },
+    body_keyword: {
+      label: "Body keyword pattern",
+      scope: "body_keyword",
+      placeholder: "unsubscribe, no-reply, do not reply",
+      requiresPattern: true,
+    },
+    conversation_other: {
+      label: "Conversation-specific reason",
+      scope: "conversation",
+      placeholder: "Optional pattern or clue",
+    },
+  };
+
+  const buildNotCustomerReason = () => {
+    const config = reasonConfigByType[notCustomerReasonType] ?? reasonConfigByType.conversation_other;
+    const label = config.label;
+    const parts = [label];
+    if (notCustomerPatternValue.trim()) parts.push(`Pattern: ${notCustomerPatternValue.trim()}`);
+    if (notCustomerReasonDetails.trim()) parts.push(`Notes: ${notCustomerReasonDetails.trim()}`);
+    return parts.join(" | ");
+  };
+
   const handleMarkNotCustomer = async () => {
     if (!selectedConversationId) return;
+    const reasonConfig = reasonConfigByType[notCustomerReasonType] ?? reasonConfigByType.conversation_other;
+    if (reasonConfig.requiresPattern && !notCustomerPatternValue.trim()) {
+      toast.error("Please enter a pattern/value for this reason type.");
+      return;
+    }
     setMarkNotCustomerDialogOpen(false);
     try {
-      await markNotCustomer({ conversationId: selectedConversationId, reason: "" });
+      await markNotCustomer({
+        conversationId: selectedConversationId,
+        reason: buildNotCustomerReason(),
+        reasonType: notCustomerReasonType,
+        reasonScope: reasonConfig.scope,
+        patternValue: notCustomerPatternValue.trim() || conversationData?.primaryCustomerEmail || "",
+        reasonDetails: notCustomerReasonDetails.trim(),
+      } as any);
       invalidateConversations();
       toast.success("Marked as Not a Customer");
       handleCloseDrawer();
+      resetNotCustomerForm();
     } catch (err: any) {
       toast.error(err?.message || "Failed to mark as Not a Customer");
     }
@@ -309,6 +407,12 @@ export default function ConversationsIndex() {
 
   const buildFilter = () => listFilter;
 
+  const handleRefreshList = async () => {
+    invalidateConversations();
+    setLastRefreshedAt(new Date().toISOString());
+    toast.success("Conversation list refreshed");
+  };
+
   useEffect(() => {
     if (!fetchingList && conversationListData && !hasLoaded) {
       setTelemetryEvent({
@@ -330,6 +434,10 @@ export default function ConversationsIndex() {
           subtitle="View and manage all email conversations"
           actions={
             <>
+              <SecondaryButton onClick={handleRefreshList}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh List
+              </SecondaryButton>
               <SecondaryButton
                 onClick={handleRebuildConversations}
                 disabled={rebuildingConversations}
@@ -351,6 +459,15 @@ export default function ConversationsIndex() {
           </div>
         )}
 
+        {triageDebugModeEnabled && (
+          <div className="px-8 pt-4">
+            <div className="rounded-xl border border-border bg-card/60 px-4 py-3 text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">Dev instrumentation:</span>{" "}
+              last auto-triage {timeAgo((latestTriageRun as any)?.[0]?.lastTriagedAt)} · conversations loaded {(conversationListData || []).length} · drafts generated in view {(conversationListData || []).length > 0 ? "check row markers" : "0"} · last sync {timeAgo((configData as any)?.lastSyncAt)}
+            </div>
+          </div>
+        )}
+
         <StatusBar />
 
         {/* Content - Resizable list + detail on desktop */}
@@ -358,8 +475,32 @@ export default function ConversationsIndex() {
           <ResizablePanelGroup direction="horizontal" className="flex-1">
             <ResizablePanel defaultSize={50} minSize={30} className="min-w-0">
         <div className="px-8 pb-8 h-full overflow-auto">
+          <div className="mt-6 mb-4 flex flex-wrap gap-2">
+            {[
+              { key: "all", label: "All" },
+              { key: "assigned_to_me", label: "Assigned to me" },
+              { key: "unassigned", label: "Unassigned" },
+              { key: "urgent", label: "Urgent" },
+              { key: "drafts_ready", label: "Drafts ready" },
+              { key: "overdue", label: "Overdue" },
+            ].map((item) => (
+              <Button
+                key={item.key}
+                variant={workFilter === item.key ? "default" : "outline"}
+                size="sm"
+                className={workFilter === item.key ? "bg-primary text-primary-foreground" : "border-border text-muted-foreground"}
+                onClick={() => setWorkFilter(item.key)}
+              >
+                {item.label}
+              </Button>
+            ))}
+            <span className="ml-auto text-xs text-muted-foreground self-center">
+              Last refreshed: {timeAgo(lastRefreshedAt)}
+            </span>
+          </div>
+
           {/* Search + Filters */}
-          <div className="flex flex-wrap gap-3 mb-6 mt-6">
+          <div className="flex flex-wrap gap-3 mb-6">
 
             {/* Search bar */}
             <div className="relative flex-1 min-w-[280px]">
@@ -417,12 +558,16 @@ export default function ConversationsIndex() {
               <AutoTable
                 model={api.conversation}
                 searchable={false}
+                sort={{ currentPriorityScore: "Descending", latestMessageAt: "Descending" } as any}
                 columns={[
                 {
-                  header: "Sentiment",
+                  header: "Priority",
                   render: ({ record }) => (
                     <div className="py-1">
-                      <SentimentBadge sentiment={(record as any).sentiment} />
+                      <UnifiedBadge
+                        type={(record as any).currentPriorityBand}
+                        label={getPriorityLabel((record as any).currentPriorityBand)}
+                      />
                     </div>
                   ),
                 },
@@ -437,8 +582,48 @@ export default function ConversationsIndex() {
                 {
                   header: "Customer",
                   render: ({ record }) => (
-                    <span className="text-muted-foreground text-sm">{(record as any).primaryCustomerEmail || "—"}</span>
+                    <div className="text-sm">
+                      <div className="text-foreground truncate">{(record as any).primaryCustomerName || "Unknown customer"}</div>
+                      <div className="text-muted-foreground truncate">{(record as any).primaryCustomerEmail || "—"}</div>
+                    </div>
                   ),
+                },
+                {
+                  header: "Unread",
+                  render: ({ record }) => (
+                    <span className="text-muted-foreground text-sm">{(record as any).unreadCount ?? 0}</span>
+                  ),
+                },
+                {
+                  header: "Assignment",
+                  render: ({ record }) => {
+                    const assignee = (record as any).assignedToUser?.email || (record as any).assignedTo?.email;
+                    return <span className="text-muted-foreground text-sm">{assignee || "Unassigned"}</span>;
+                  },
+                },
+                {
+                  header: "Draft",
+                  render: ({ record }) => {
+                    const draftState = (record as any).hasDraft
+                      ? ((record as any).requiresHumanReview ? "Edited/Review" : "Ready")
+                      : "None";
+                    return (
+                      <UnifiedBadge
+                        type={(record as any).hasDraft ? "connected" : "disconnected"}
+                        label={draftState}
+                      />
+                    );
+                  },
+                },
+                {
+                  header: "SLA",
+                  render: ({ record }) => {
+                    const status = (record as any).timeRemaining
+                      ? ((record as any).timeRemaining?.toLowerCase?.().includes("overdue") ? "error" : "connected")
+                      : "disconnected";
+                    const label = (record as any).timeRemaining || "Not set";
+                    return <UnifiedBadge type={status} label={label} />;
+                  },
                 },
                 {
                   header: "Classification",
@@ -455,12 +640,9 @@ export default function ConversationsIndex() {
                   },
                 },
                 {
-                  header: "Priority",
+                  header: "Sentiment",
                   render: ({ record }) => (
-                    <UnifiedBadge 
-                      type={(record as any).currentPriorityBand} 
-                      label={getPriorityLabel((record as any).currentPriorityBand)} 
-                    />
+                    <SentimentBadge sentiment={(record as any).sentiment} />
                   ),
                 },
                 {
@@ -505,6 +687,16 @@ export default function ConversationsIndex() {
                   currentCategory: true,
                   currentPriorityBand: true,
                   currentPriorityScore: true,
+                  unreadCount: true,
+                  hasDraft: true,
+                  timeRemaining: true,
+                  hasDeadline: true,
+                  deadlineDate: true,
+                  assignedTo: { id: true, email: true },
+                  assignedToUser: { id: true, email: true },
+                  orderValue: true,
+                  primaryCustomerName: true,
+                  requiresHumanReview: true,
                   status: true,
                   messageCount: true,
                   latestMessageAt: true,
@@ -601,7 +793,13 @@ export default function ConversationsIndex() {
         </Drawer>
         </div>
 
-        <AlertDialog open={markNotCustomerDialogOpen} onOpenChange={setMarkNotCustomerDialogOpen}>
+        <AlertDialog
+          open={markNotCustomerDialogOpen}
+          onOpenChange={(open) => {
+            setMarkNotCustomerDialogOpen(open);
+            if (!open) resetNotCustomerForm();
+          }}
+        >
           <AlertDialogContent className="bg-card border-border">
             <AlertDialogHeader>
               <AlertDialogTitle>Mark as Not a Customer?</AlertDialogTitle>
@@ -609,6 +807,39 @@ export default function ConversationsIndex() {
                 This removes it from triage. You can undo this in Triage History.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground">Reason type</label>
+                <select
+                  value={notCustomerReasonType}
+                  onChange={(e) => setNotCustomerReasonType(e.target.value)}
+                  className="w-full h-10 rounded-xl border border-input bg-background px-3 text-sm"
+                >
+                  <option value="sender_exact">Never allow sender address</option>
+                  <option value="sender_domain">Never allow sender domain</option>
+                  <option value="subject_keyword">Subject keyword pattern</option>
+                  <option value="body_keyword">Body keyword pattern</option>
+                  <option value="conversation_other">Conversation-specific reason</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground">Pattern/email/keywords (optional)</label>
+                <Input
+                  value={notCustomerPatternValue}
+                  onChange={(e) => setNotCustomerPatternValue(e.target.value)}
+                  placeholder={(reasonConfigByType[notCustomerReasonType] ?? reasonConfigByType.conversation_other).placeholder}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground">Notes (optional)</label>
+                <textarea
+                  value={notCustomerReasonDetails}
+                  onChange={(e) => setNotCustomerReasonDetails(e.target.value)}
+                  placeholder="Why should this be treated as not a customer?"
+                  className="min-h-[92px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
