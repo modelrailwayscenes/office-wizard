@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { useOutletContext } from "react-router";
-import { useGlobalAction } from "@gadgetinc/react";
+import { useAction, useFindFirst, useGlobalAction } from "@gadgetinc/react";
 import { toast } from "sonner";
 
 import { api } from "../api";
@@ -27,6 +27,11 @@ export default function AdminMaintenancePage() {
   const { user } = useOutletContext<AuthOutletContext>();
   const isAdmin = useMemo(() => isAdminRole(user), [user]);
   const [{ fetching: backfilling }, backfillPlaybooks] = useGlobalAction(api.backfillPlaybooks);
+  const [{ fetching: replenishing }, runProductionReplenishment] = useGlobalAction(api.runProductionReplenishment);
+  const [{ data: appConfig, fetching: configFetching }, refreshConfig] = useFindFirst(api.appConfiguration, {
+    select: { id: true, productionSchedulerEnabled: true } as any,
+  });
+  const [{ fetching: updatingConfig }, updateConfig] = useAction(api.appConfiguration.update);
 
   const handleBackfillPlaybooks = async () => {
     try {
@@ -52,6 +57,34 @@ export default function AdminMaintenancePage() {
       toast.success(`Backfill complete: ${result?.updated ?? 0} updated (scanned ${result?.scanned ?? 0}).`);
     } catch (error) {
       toast.error(`Backfill failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
+  const handleToggleProductionScheduler = async () => {
+    if (!appConfig?.id) return;
+    try {
+      await (updateConfig as any)({
+        id: appConfig.id,
+        productionSchedulerEnabled: !Boolean((appConfig as any).productionSchedulerEnabled),
+      });
+      await refreshConfig();
+      toast.success("Production scheduler feature flag updated");
+    } catch (error) {
+      toast.error(`Failed to update flag: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
+  const handleRunReplenishment = async () => {
+    try {
+      const dryRun = (await runProductionReplenishment({ dryRun: true })) as any;
+      const proceed = window.confirm(
+        `Dry run: ${dryRun?.actions?.length ?? 0} SKU checks, ${dryRun?.created ?? 0} create/upsert, ${dryRun?.closed ?? 0} close. Run live now?`
+      );
+      if (!proceed) return;
+      const result = (await runProductionReplenishment({ dryRun: false })) as any;
+      toast.success(`Replenishment complete: ${result?.created ?? 0} created, ${result?.closed ?? 0} closed.`);
+    } catch (error) {
+      toast.error(`Replenishment failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 
@@ -85,6 +118,25 @@ export default function AdminMaintenancePage() {
         <div className="mt-4">
           <Button variant="outline" onClick={handleBackfillPlaybooks} disabled={backfilling}>
             {backfilling ? "Backfilling..." : "Run Playbook Backfill"}
+          </Button>
+        </div>
+      </RefinedCard>
+
+      <RefinedCard className="p-6">
+        <h2 className="text-base font-semibold text-foreground">Production Scheduler</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Feature flag control and replenishment maintenance actions for the Production module.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={handleToggleProductionScheduler}
+            disabled={configFetching || updatingConfig || !appConfig?.id}
+          >
+            {Boolean((appConfig as any)?.productionSchedulerEnabled) ? "Disable Production Scheduler" : "Enable Production Scheduler"}
+          </Button>
+          <Button variant="outline" onClick={handleRunReplenishment} disabled={replenishing}>
+            {replenishing ? "Running..." : "Run Production Replenishment"}
           </Button>
         </div>
       </RefinedCard>

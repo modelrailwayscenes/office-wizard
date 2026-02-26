@@ -73,11 +73,20 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
   console.log('🔍 DEBUG LOADER - typeof user.roleList:', typeof user?.roleList);
   console.log('🔍 DEBUG LOADER - Array.isArray(user.roleList):', Array.isArray(user?.roleList));
   
-  return { session: { user } };
+  const appConfig = await api.appConfiguration.findFirst({
+    select: { productionSchedulerEnabled: true } as any,
+  });
+
+  return {
+    session: { user },
+    features: {
+      productionScheduler: Boolean((appConfig as any)?.productionSchedulerEnabled),
+    },
+  };
 };
 
 // ── Module definitions ──────────────────────────────────────────────
-const modules = [
+const BASE_MODULES = [
   {
     id: "customer",
     label: "CUSTOMER",
@@ -94,9 +103,18 @@ const modules = [
 
 export default function AppLayout({ loaderData }: Route.ComponentProps) {
   const { session } = loaderData;
+  const productionEnabled = Boolean((loaderData as any)?.features?.productionScheduler);
   const location = useLocation();
   const navigate = useNavigate();
   const user = session.user;
+  const modules = useMemo(
+    () =>
+      BASE_MODULES.filter((mod) => {
+        if (mod.id === "production") return productionEnabled;
+        return true;
+      }),
+    [productionEnabled]
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -119,7 +137,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
     return "U";
   };
 
-  const isModuleActive = (mod: typeof modules[0]) => {
+  const isModuleActive = (mod: (typeof BASE_MODULES)[0]) => {
     const path = location.pathname;
     if (mod.id === "customer") {
       return mod.activePaths.some((ap) => path === ap || path.startsWith(ap + "/"));
@@ -183,7 +201,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
           ]
         : []),
     ],
-    [isAdmin]
+    [isAdmin, modules]
   );
 
   return (

@@ -562,6 +562,14 @@ export const schema: GadgetModel = {
       filterIndex: false,
       searchIndex: false,
     },
+    productionSchedulerEnabled: {
+      type: "boolean",
+      default: false,
+      validations: { required: true },
+      storageKey: "productionSchedulerEnabled",
+      filterIndex: false,
+      searchIndex: false,
+    },
     pwRequireExpiry: {
       type: "boolean",
       default: false,
