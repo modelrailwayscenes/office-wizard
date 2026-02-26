@@ -552,7 +552,7 @@ Start directly with the email content.`;
           customerName,
         },
       }),
-    });
+    } as any);
   } catch (err: any) {
     logger.warn({ conversationId, error: err?.message }, "Failed to write aiComment audit record");
   }

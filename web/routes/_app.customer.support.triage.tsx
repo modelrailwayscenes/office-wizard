@@ -62,6 +62,7 @@ export default function TriageQueuePage() {
   const [activeTab, setActiveTab] = useState<"all" | "urgent" | "pending" | "due" | "starred">("all");
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
+  const [triageRunBanner, setTriageRunBanner] = useState<string | null>(null);
 
   const [selectedEmailIds, setSelectedEmailIds] = useState<string[]>([]);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
@@ -91,6 +92,15 @@ export default function TriageQueuePage() {
     return Array.from(orders);
   };
 
+  const readSelectionMeta = (raw: string | null | undefined): any => {
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  };
+
   const [{ data: conversationsData, fetching }, refresh] = useFindMany(api.conversation, {
     filter: {
       AND: [
@@ -118,6 +128,9 @@ export default function TriageQueuePage() {
       aiDraftContent: true,
       aiDraftGeneratedAt: true,
       aiDraftModel: true,
+      selectedPlaybook: { id: true, scenarioKey: true, name: true },
+      selectedPlaybookConfidence: true,
+      playbookSelectionMetaJson: true,
       messages: {
         edges: {
           node: {
@@ -174,6 +187,7 @@ export default function TriageQueuePage() {
       await generateDraft({ conversationId, regenerate });
       toast.success(regenerate ? "Draft regenerated!" : "Draft generated!");
       await refresh();
+      setTriageRunBanner(`Auto-triage signal: draft ${regenerate ? "regenerated" : "generated"} at ${new Date().toLocaleTimeString()}.`);
       setTelemetryEvent({
         lastAction: regenerate ? "Draft regenerated" : "Draft generated",
         details: `Conversation ${conversationId}`,
@@ -219,6 +233,9 @@ export default function TriageQueuePage() {
         severity: "info",
         durationMs: Date.now() - start,
       });
+      setTriageRunBanner(
+        `Auto-triage status refreshed: ${freshData?.length ?? conversations?.length ?? 0} conversations checked at ${new Date().toLocaleTimeString()}.`
+      );
       toast.success(`Refreshed list (${freshData?.length ?? conversations?.length ?? 0} items)`);
     } catch (err: any) {
       toast.error(`Refresh failed: ${err?.message || String(err)}`);
@@ -486,6 +503,14 @@ export default function TriageQueuePage() {
           </div>
         )}
 
+        {triageRunBanner && (
+          <div className="px-8 pt-4">
+            <div className="rounded-xl border border-border bg-card/60 px-4 py-3 text-xs text-muted-foreground">
+              {triageRunBanner}
+            </div>
+          </div>
+        )}
+
         <StatusBar />
 
         {/* Search Bar */}
@@ -600,6 +625,22 @@ export default function TriageQueuePage() {
                               <span className="text-primary">{getOrderNumbers(conv)[0]}</span>
                             </>
                           )}
+                        </div>
+                        <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <span className="rounded-full border border-border bg-muted/50 px-2 py-0.5">
+                            Playbook: {conv.selectedPlaybook?.scenarioKey || conv.selectedPlaybook?.name || "none"}
+                            {typeof conv.selectedPlaybookConfidence === "number"
+                              ? ` (${conv.selectedPlaybookConfidence.toFixed(2)})`
+                              : ""}
+                          </span>
+                          {(() => {
+                            const changed = readSelectionMeta(conv.playbookSelectionMetaJson)?.changed;
+                            const hasChanged =
+                              changed?.selectedPlaybook || changed?.draftStatus || changed?.category || changed?.priorityBand;
+                            return hasChanged ? (
+                              <span className="rounded-full border border-border bg-muted/50 px-2 py-0.5">changed</span>
+                            ) : null;
+                          })()}
                         </div>
                       </div>
                     </div>

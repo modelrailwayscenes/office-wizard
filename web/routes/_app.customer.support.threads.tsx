@@ -38,6 +38,7 @@ export default function ThreadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
+  const [lastAdminActionSummary, setLastAdminActionSummary] = useState<string | null>(null);
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
   const [markNotCustomerDialogOpen, setMarkNotCustomerDialogOpen] = useState(false);
   const [notCustomerReasonType, setNotCustomerReasonType] = useState("conversation_other");
@@ -142,6 +143,9 @@ export default function ThreadsPage() {
     try {
       const result = (await runTriage({})) as any;
       toast.success(`Triage complete! Processed: ${result.processed}`);
+      setLastAdminActionSummary(
+        `Auto-triage ran at ${new Date().toLocaleTimeString()} · processed ${result?.processed ?? 0}, skipped ${result?.skipped ?? 0}, errors ${result?.errors ?? 0}`
+      );
       setTelemetryEvent({
         lastAction: "Auto-triage ran",
         details: `Processed ${result?.processed ?? 0}, skipped ${result?.skipped ?? 0}, errors ${result?.errors ?? 0}`,
@@ -165,6 +169,9 @@ export default function ThreadsPage() {
     try {
       const result = (await refresh()) as any;
       const count = Array.isArray(result?.data) ? result.data.length : conversations.length;
+      setLastAdminActionSummary(
+        `Threads refreshed at ${new Date().toLocaleTimeString()} · ${count} conversations loaded`
+      );
       setTelemetryEvent({
         lastAction: "Threads refreshed",
         details: `${count} conversations`,
@@ -379,6 +386,14 @@ export default function ThreadsPage() {
         {telemetryEnabled && telemetry && (
           <div className="px-8 pt-4">
             <TelemetryBanner telemetry={telemetry} onDismiss={() => setTelemetry(null)} />
+          </div>
+        )}
+
+        {lastAdminActionSummary && (
+          <div className="px-8 pt-4">
+            <div className="rounded-xl border border-border bg-card/60 px-4 py-3 text-xs text-muted-foreground">
+              {lastAdminActionSummary}
+            </div>
           </div>
         )}
 

@@ -389,6 +389,15 @@ export default function ConversationsIndex() {
     return category.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ").toUpperCase();
   };
 
+  const readSelectionMeta = (raw: string | null | undefined): any => {
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  };
+
   const getPriorityBadgeColor = (priority: string | null | undefined) => {
     switch (priority) {
       case "urgent": return "bg-red-500/20 text-red-400 border-red-500/30";
@@ -783,9 +792,33 @@ export default function ConversationsIndex() {
                 {
                   header: "Subject",
                   render: ({ record }) => (
-                    <span className="truncate max-w-sm text-foreground text-sm font-medium">
-                      {(record as any).subject || "—"}
-                    </span>
+                    <div className="max-w-sm">
+                      <span className="truncate block text-foreground text-sm font-medium">
+                        {(record as any).subject || "—"}
+                      </span>
+                      {(() => {
+                        const meta = readSelectionMeta((record as any).playbookSelectionMetaJson);
+                        const changed = meta?.changed;
+                        const markers: string[] = [];
+                        if (changed?.selectedPlaybook) markers.push("playbook changed");
+                        if (changed?.draftStatus) markers.push("draft status changed");
+                        if (changed?.category) markers.push("category changed");
+                        if (changed?.priorityBand) markers.push("priority changed");
+                        if (markers.length === 0) return null;
+                        return (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {markers.slice(0, 3).map((m) => (
+                              <span
+                                key={m}
+                                className="inline-flex rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"
+                              >
+                                {m}
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   ),
                 },
                 {
@@ -832,6 +865,20 @@ export default function ConversationsIndex() {
                       : "disconnected";
                     const label = (record as any).timeRemaining || "Not set";
                     return <UnifiedBadge type={status} label={label} />;
+                  },
+                },
+                {
+                  header: "Playbook",
+                  render: ({ record }) => {
+                    const scenarioKey =
+                      (record as any).selectedPlaybook?.scenarioKey || (record as any).selectedPlaybook?.name || "none";
+                    const confidence = (record as any).selectedPlaybookConfidence;
+                    return (
+                      <div className="text-xs text-muted-foreground">
+                        <div className="text-foreground">{scenarioKey}</div>
+                        <div>{typeof confidence === "number" ? `Conf ${confidence.toFixed(2)}` : "Conf —"}</div>
+                      </div>
+                    );
                   },
                 },
                 {
@@ -906,6 +953,9 @@ export default function ConversationsIndex() {
                   orderValue: true,
                   primaryCustomerName: true,
                   requiresHumanReview: true,
+                  selectedPlaybookConfidence: true,
+                  playbookSelectionMetaJson: true,
+                  selectedPlaybook: { id: true, scenarioKey: true, name: true },
                   status: true,
                   messageCount: true,
                   latestMessageAt: true,
