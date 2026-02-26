@@ -53,6 +53,7 @@ import { ConversationDetailContent } from "@/components/ConversationDetailConten
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
 import { ListSectionHeader } from "@/components/ListSectionHeader";
+import { inferSlaState, slaStateToBadge } from "@/lib/sla";
 
 // ── Main Page ───────────────────────────────────────────────────────
 export default function ConversationsIndex() {
@@ -114,7 +115,23 @@ export default function ConversationsIndex() {
     if (priorityFilter !== "all") filters.push({ currentPriorityBand: { equals: priorityFilter } });
     if (workFilter === "urgent") filters.push({ currentPriorityBand: { equals: "urgent" } });
     if (workFilter === "drafts_ready") filters.push({ hasDraft: { equals: true } });
-    if (workFilter === "overdue") filters.push({ hasDeadline: { equals: true } });
+    if (workFilter === "overdue") {
+      filters.push({
+        OR: [
+          { timeRemaining: { matches: "overdue" } },
+          { timeRemaining: { matches: "breach" } },
+          { deadlineDate: { lessThan: new Date().toISOString() } },
+        ],
+      });
+    }
+    if (workFilter === "at_risk") {
+      filters.push({
+        OR: [
+          { timeRemaining: { matches: "at risk" } },
+          { timeRemaining: { matches: "risk" } },
+        ],
+      });
+    }
     if (workFilter === "unassigned") filters.push({ assignedToUser: { isSet: false } });
     if (workFilter === "assigned_to_me" && currentUser?.id) {
       filters.push({ assignedToUser: { id: { equals: currentUser.id } } });
@@ -162,6 +179,15 @@ export default function ConversationsIndex() {
         internalNotes: true,
         currentCategory: true,
         assignedToUser: { id: true, email: true },
+        isVerifiedCustomer: true,
+        customerConfidenceScore: true,
+        shopifyCustomerId: true,
+        shopifyOrderNumbers: true,
+        shopifyOrderContext: true,
+        slaTarget: true,
+        timeRemaining: true,
+        deadlineDate: true,
+        hasDeadline: true,
         classifications: {
           edges: {
             node: {
@@ -569,6 +595,7 @@ export default function ConversationsIndex() {
               { key: "assigned_to_me", label: "Assigned to me" },
               { key: "unassigned", label: "Unassigned" },
               { key: "urgent", label: "Urgent" },
+              { key: "at_risk", label: "At risk" },
               { key: "drafts_ready", label: "Drafts ready" },
               { key: "overdue", label: "Overdue" },
             ].map((item) => (
@@ -870,11 +897,17 @@ export default function ConversationsIndex() {
                 {
                   header: "SLA",
                   render: ({ record }) => {
-                    const status = (record as any).timeRemaining
-                      ? ((record as any).timeRemaining?.toLowerCase?.().includes("overdue") ? "error" : "connected")
-                      : "disconnected";
-                    const label = (record as any).timeRemaining || "Not set";
-                    return <UnifiedBadge type={status} label={label} />;
+                    const r = record as any;
+                    const slaState = inferSlaState(r.timeRemaining, r.deadlineDate);
+                    const label = r.timeRemaining || (r.deadlineDate ? `Due ${new Date(r.deadlineDate).toLocaleString()}` : "Not set");
+                    return (
+                      <div className="space-y-1">
+                        <UnifiedBadge type={slaStateToBadge(slaState)} label={label} />
+                        {r.slaTarget ? (
+                          <div className="text-[10px] text-muted-foreground">Target: {r.slaTarget}</div>
+                        ) : null}
+                      </div>
+                    );
                   },
                 },
                 {
@@ -956,6 +989,7 @@ export default function ConversationsIndex() {
                   unreadCount: true,
                   hasDraft: true,
                   timeRemaining: true,
+                  slaTarget: true,
                   hasDeadline: true,
                   deadlineDate: true,
                   assignedTo: { id: true, email: true },

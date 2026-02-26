@@ -23,6 +23,8 @@ import { EmptyState } from "@/shared/ui/EmptyState";
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
 import { ListSectionHeader } from "@/components/ListSectionHeader";
+import { ConversationActionPanel } from "@/components/ConversationActionPanel";
+import { inferSlaState, slaStateToBadge } from "@/lib/sla";
 import {
   Mail,
   Clock,
@@ -118,9 +120,19 @@ export default function TriageQueuePage() {
       currentPriorityBand: true,
       currentPriorityScore: true,
       currentCategory: true,
+      assignedToUser: { id: true, email: true },
       status: true,
       sentiment: true,
       requiresHumanReview: true,
+      isVerifiedCustomer: true,
+      customerConfidenceScore: true,
+      shopifyCustomerId: true,
+      shopifyOrderNumbers: true,
+      shopifyOrderContext: true,
+      slaTarget: true,
+      timeRemaining: true,
+      deadlineDate: true,
+      hasDeadline: true,
       messageCount: true,
       unreadCount: true,
       firstMessageAt: true,
@@ -129,6 +141,7 @@ export default function TriageQueuePage() {
       aiDraftContent: true,
       aiDraftGeneratedAt: true,
       aiDraftModel: true,
+      internalNotes: true,
       selectedPlaybook: { id: true, scenarioKey: true, name: true },
       selectedPlaybookConfidence: true,
       playbookSelectionMetaJson: true,
@@ -439,12 +452,17 @@ export default function TriageQueuePage() {
 
   const showPendingOnly = activeTab === "pending";
   const showUrgentOnly = activeTab === "urgent";
+  const showDueOnly = activeTab === "due";
 
   const filteredConversations =
     conversations
       ?.filter((c: any) => {
         if (showUrgentOnly && c.currentPriorityBand !== "urgent") return false;
         if (showPendingOnly && !c.requiresHumanReview) return false;
+        if (showDueOnly) {
+          const state = inferSlaState(c.timeRemaining, c.deadlineDate);
+          if (state !== "at_risk" && state !== "breached") return false;
+        }
         if (!searchQuery) return true;
         const q = searchQuery.toLowerCase();
         return (
@@ -563,6 +581,14 @@ export default function TriageQueuePage() {
               >
                 PENDING
               </Button>
+              <Button
+                variant={activeTab === "due" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setActiveTab("due")}
+                className={activeTab === "due" ? "bg-red-600 hover:bg-red-700 text-white" : "text-muted-foreground"}
+              >
+                DUE / OVERDUE
+              </Button>
             </div>
 
             {/* Conversation List */}
@@ -625,6 +651,11 @@ export default function TriageQueuePage() {
                           <Separator orientation="vertical" className="h-4" />
                           <Clock className="h-3 w-3 text-muted-foreground" />
                           <span className="text-muted-foreground">{formatTime(conv.latestMessageAt)}</span>
+                          <Separator orientation="vertical" className="h-4" />
+                          <UnifiedBadge
+                            type={slaStateToBadge(inferSlaState(conv.timeRemaining, conv.deadlineDate))}
+                            label={conv.timeRemaining || "SLA n/a"}
+                          />
 
                           {getOrderNumbers(conv).length > 0 && (
                             <>
@@ -835,6 +866,58 @@ export default function TriageQueuePage() {
                     <div className="text-sm text-muted-foreground">No activity logged yet.</div>
                   )}
                 </Card>
+
+                <Card className="bg-card border-border p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">SLA & Verification</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <UnifiedBadge
+                        type={slaStateToBadge(inferSlaState(selectedConv.timeRemaining, selectedConv.deadlineDate))}
+                        label={selectedConv.timeRemaining || "SLA not set"}
+                      />
+                      {selectedConv.slaTarget ? (
+                        <span className="text-xs text-muted-foreground">Target: {selectedConv.slaTarget}</span>
+                      ) : null}
+                    </div>
+                    {selectedConv.deadlineDate ? (
+                      <div className="text-xs text-muted-foreground">
+                        Due: {new Date(selectedConv.deadlineDate).toLocaleString()}
+                      </div>
+                    ) : null}
+                    <Separator className="bg-border" />
+                    <div className="flex items-center gap-2">
+                      <UnifiedBadge
+                        type={selectedConv.isVerifiedCustomer ? "connected" : "warning"}
+                        label={selectedConv.isVerifiedCustomer ? "Verified customer" : "Unverified customer"}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        Confidence: {typeof selectedConv.customerConfidenceScore === "number" ? `${selectedConv.customerConfidenceScore}%` : "—"}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Shopify customer: {selectedConv.shopifyCustomerId || "Not linked"}
+                    </div>
+                    {Array.isArray(selectedConv.shopifyOrderNumbers) && selectedConv.shopifyOrderNumbers.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedConv.shopifyOrderNumbers.slice(0, 6).map((orderId: string) => (
+                          <span
+                            key={orderId}
+                            className="inline-flex rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] text-foreground"
+                          >
+                            {orderId}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </Card>
+
+                <ConversationActionPanel
+                  conversation={selectedConv}
+                  onUpdated={async () => {
+                    await refresh();
+                  }}
+                />
               </div>
             )}
           </div>

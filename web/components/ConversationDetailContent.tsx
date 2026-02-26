@@ -10,6 +10,7 @@ import { getAiCommentStyle } from "@/components/aiCommentUtils";
 import { timeAgo } from "@/components/healthStatus";
 import { EmailMessageBody } from "@/components/EmailMessageBody";
 import { ConversationActionPanel } from "@/components/ConversationActionPanel";
+import { inferSlaState, slaStateToBadge } from "@/lib/sla";
 
 export function ConversationDetailContent({
   conversationData,
@@ -111,6 +112,24 @@ export function ConversationDetailContent({
                   <p className="text-sm">{conversationData.messageCount ?? 0}</p>
                 </div>
               </div>
+              <Separator className="bg-border" />
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">SLA</p>
+                {(() => {
+                  const slaState = inferSlaState(conversationData.timeRemaining, conversationData.deadlineDate);
+                  const label =
+                    conversationData.timeRemaining ||
+                    (conversationData.deadlineDate ? `Due ${formatDateTime(conversationData.deadlineDate)}` : "Not set");
+                  return (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <UnifiedBadge type={slaStateToBadge(slaState)} label={label} />
+                      {conversationData.slaTarget ? (
+                        <span className="text-xs text-muted-foreground">Target: {conversationData.slaTarget}</span>
+                      ) : null}
+                    </div>
+                  );
+                })()}
+              </div>
             </TabsContent>
             <TabsContent value="customer" className="mt-4 space-y-3">
               <div>
@@ -129,6 +148,44 @@ export function ConversationDetailContent({
                   </div>
                 </>
               )}
+              <Separator className="bg-border" />
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Customer verification</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <UnifiedBadge
+                    type={conversationData.isVerifiedCustomer ? "connected" : "warning"}
+                    label={conversationData.isVerifiedCustomer ? "Verified customer" : "Unverified customer"}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Confidence: {typeof conversationData.customerConfidenceScore === "number" ? `${conversationData.customerConfidenceScore}%` : "—"}
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Shopify customer: {conversationData.shopifyCustomerId || "Not linked"}
+                </div>
+                {Array.isArray(conversationData.shopifyOrderNumbers) && conversationData.shopifyOrderNumbers.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {conversationData.shopifyOrderNumbers.slice(0, 6).map((orderId: string) => (
+                      <span
+                        key={orderId}
+                        className="inline-flex rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] text-foreground"
+                      >
+                        {orderId}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground">No order numbers linked</div>
+                )}
+                {conversationData.shopifyOrderContext ? (
+                  <details className="rounded-lg border border-border bg-muted/30 p-2">
+                    <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Order context</summary>
+                    <pre className="mt-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-all">
+                      {JSON.stringify(conversationData.shopifyOrderContext, null, 2)}
+                    </pre>
+                  </details>
+                ) : null}
+              </div>
             </TabsContent>
             <TabsContent value="automation" className="mt-4 space-y-3">
               {conversationData.classifications?.edges?.[0]?.node ? (
