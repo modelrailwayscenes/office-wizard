@@ -46,6 +46,8 @@ const messageSelect = {
   id: true,
   subject: true,
   bodyPreview: true,
+  bodyHtml: true,
+  bodyText: true,
   fromAddress: true,
   fromName: true,
   toAddresses: true,

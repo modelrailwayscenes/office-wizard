@@ -190,6 +190,7 @@ export default function ConversationsIndex() {
         fromAddress: true,
         fromName: true,
         bodyPreview: true,
+        bodyHtml: true,
         bodyText: true,
         receivedDateTime: true,
         hasAttachments: true,
