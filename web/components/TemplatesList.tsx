@@ -23,6 +23,7 @@ export function TemplatesList() {
   });
   const [{ fetching: importing }, importTemplates] = useGlobalAction(api.importTemplates);
   const [{ fetching: seeding }, seedTemplates] = useGlobalAction(api.seedCustomerTemplates);
+  const [{ fetching: backfilling }, backfillPlaybooks] = useGlobalAction(api.backfillPlaybooks);
   const user = useUser(api, { select: { roleList: { key: true } } });
   const roleKeys = Array.isArray(user?.roleList)
     ? user.roleList.map((r: any) => (typeof r === "string" ? r : r?.key)).filter(Boolean)
@@ -61,6 +62,34 @@ export function TemplatesList() {
       void refetch({ requestPolicy: "network-only" });
     } catch (e) {
       toast.error(`Seed failed: ${e instanceof Error ? e.message : "Unknown error"}`);
+    }
+  };
+
+  const handleBackfillPlaybooks = async () => {
+    try {
+      const dryRun = (await backfillPlaybooks({ dryRun: true, first: 1000 })) as
+        | { scanned?: number; updated?: number }
+        | undefined;
+      const scanned = dryRun?.scanned ?? 0;
+      const updateCount = dryRun?.updated ?? 0;
+
+      if (updateCount === 0) {
+        toast.success(`No backfill needed. Checked ${scanned} playbooks.`);
+        return;
+      }
+
+      const proceed = window.confirm(
+        `Backfill will update ${updateCount} of ${scanned} playbooks with missing baseline guidance fields. Continue?`
+      );
+      if (!proceed) return;
+
+      const result = (await backfillPlaybooks({ dryRun: false, first: 1000 })) as
+        | { updated?: number; scanned?: number }
+        | undefined;
+      toast.success(`Backfill complete: ${result?.updated ?? 0} updated (scanned ${result?.scanned ?? 0}).`);
+      void refetch({ requestPolicy: "network-only" });
+    } catch (e) {
+      toast.error(`Backfill failed: ${e instanceof Error ? e.message : "Unknown error"}`);
     }
   };
 
@@ -159,6 +188,15 @@ export function TemplatesList() {
             <Plus className="mr-2 h-4 w-4" />
             New Playbook
           </Button>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              onClick={handleBackfillPlaybooks}
+              disabled={backfilling}
+            >
+              {backfilling ? "Backfilling..." : "Run Playbook Backfill"}
+            </Button>
+          )}
         </div>
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center py-24 bg-card/40 rounded-xl border border-border">
