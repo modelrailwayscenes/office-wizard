@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { api } from "../api";
 import { Button } from "../components/ui/button";
-import { RefinedCard } from "../components/ui/refined-card";
+import { RefinedCard } from "../components/RefinedCard";
 import type { AuthOutletContext } from "./_app";
 
 export async function loader({ request }: LoaderFunctionArgs) {
