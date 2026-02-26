@@ -9,6 +9,7 @@ import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { getAiCommentStyle } from "@/components/aiCommentUtils";
 import { timeAgo } from "@/components/healthStatus";
 import { EmailMessageBody } from "@/components/EmailMessageBody";
+import { ConversationActionPanel } from "@/components/ConversationActionPanel";
 
 export function ConversationDetailContent({
   conversationData,
@@ -23,6 +24,7 @@ export function ConversationDetailContent({
   titleCaseEnum,
   onMarkNotCustomer,
   conversationId,
+  onRefresh,
 }: {
   conversationData: any;
   messagesData: any[] | undefined;
@@ -36,6 +38,7 @@ export function ConversationDetailContent({
   titleCaseEnum: (s: string | null | undefined) => string;
   onMarkNotCustomer: () => void;
   conversationId: string;
+  onRefresh?: () => Promise<void> | void;
 }) {
   if (fetchingConversation) {
     return (
@@ -152,6 +155,8 @@ export function ConversationDetailContent({
           </Tabs>
         </CardContent>
       </Card>
+
+      <ConversationActionPanel conversation={conversationData} onUpdated={onRefresh} />
 
       <Card className="bg-card border-border shadow-sm">
         <CardHeader>

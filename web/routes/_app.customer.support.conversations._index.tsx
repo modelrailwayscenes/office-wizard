@@ -161,6 +161,7 @@ export default function ConversationsIndex() {
         resolvedAt: true,
         internalNotes: true,
         currentCategory: true,
+        assignedToUser: { id: true, email: true },
         classifications: {
           edges: {
             node: {
@@ -1016,6 +1017,10 @@ export default function ConversationsIndex() {
                       titleCaseEnum={titleCaseEnum}
                       onMarkNotCustomer={() => setMarkNotCustomerDialogOpen(true)}
                       conversationId={selectedConversationId!}
+                      onRefresh={async () => {
+                        invalidateConversations();
+                        setLastRefreshedAt(new Date().toISOString());
+                      }}
                     />
                   </div>
                 )}
@@ -1054,6 +1059,10 @@ export default function ConversationsIndex() {
                   titleCaseEnum={titleCaseEnum}
                   onMarkNotCustomer={() => setMarkNotCustomerDialogOpen(true)}
                   conversationId={selectedConversationId}
+                  onRefresh={async () => {
+                    invalidateConversations();
+                    setLastRefreshedAt(new Date().toISOString());
+                  }}
                 />
               )}
             </div>
