@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SentimentBadge } from "@/components/SentimentBadge";
@@ -493,6 +494,17 @@ export default function TriageQueuePage() {
       estimatedTimeSaved: emails.length * 3,
     };
   }, [conversations, selectedEmailIds]);
+  const triageDraftPolicySummary = useMemo(() => {
+    const blocked = (batchForModal.emails || [])
+      .filter((e: any) => e?.draftEligible === false)
+      .map((e: any) => ({
+        id: e.id,
+        subject: e.originalSubject || "(No subject)",
+        reason: e.draftEligibilityReason || "Policy blocked",
+      }));
+    const eligible = Math.max((batchForModal.emails || []).length - blocked.length, 0);
+    return { eligible, blocked };
+  }, [batchForModal]);
 
   const showPendingOnly = activeTab === "pending";
   const showUrgentOnly = activeTab === "urgent";
@@ -584,19 +596,54 @@ export default function TriageQueuePage() {
               </Badge>
 
               {selectedEmailIds.length > 0 && (
-                <SecondaryButton
-                  onClick={() => {
-                    const validEmails = batchForModal.emails.length;
-                    if (validEmails === 0) {
-                      toast.error("No valid emails found in selection");
-                      return;
-                    }
-                    setBatchModalOpen(true);
-                  }}
-                >
-                  <CheckSquare className="h-4 w-4 mr-2" />
-                  Batch Actions ({selectedEmailIds.length})
-                </SecondaryButton>
+                <>
+                  <span className="text-xs text-muted-foreground">
+                    Draft policy: {triageDraftPolicySummary.eligible} eligible
+                    {triageDraftPolicySummary.blocked.length > 0
+                      ? ` • ${triageDraftPolicySummary.blocked.length} blocked`
+                      : ""}
+                  </span>
+                  {triageDraftPolicySummary.blocked.length > 0 ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button size="sm" variant="ghost" className="h-8 px-2 text-xs text-muted-foreground">
+                          Why blocked?
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-96 bg-card border-border">
+                        <div className="space-y-2">
+                          <div className="text-xs font-semibold text-foreground">Blocked by draft policy</div>
+                          <div className="space-y-1 max-h-56 overflow-auto">
+                            {triageDraftPolicySummary.blocked.slice(0, 8).map((b) => (
+                              <div key={b.id} className="rounded-md border border-border bg-muted/40 px-2 py-1.5">
+                                <div className="text-[11px] font-medium text-foreground truncate">{b.subject}</div>
+                                <div className="text-[11px] text-muted-foreground">{b.reason}</div>
+                              </div>
+                            ))}
+                            {triageDraftPolicySummary.blocked.length > 8 ? (
+                              <div className="text-[10px] text-muted-foreground">
+                                +{triageDraftPolicySummary.blocked.length - 8} more blocked item(s)
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : null}
+                  <SecondaryButton
+                    onClick={() => {
+                      const validEmails = batchForModal.emails.length;
+                      if (validEmails === 0) {
+                        toast.error("No valid emails found in selection");
+                        return;
+                      }
+                      setBatchModalOpen(true);
+                    }}
+                  >
+                    <CheckSquare className="h-4 w-4 mr-2" />
+                    Batch Actions ({selectedEmailIds.length})
+                  </SecondaryButton>
+                </>
               )}
 
               <SecondaryButton onClick={handleRefresh} disabled={isRefreshing || fetching}>
