@@ -78,6 +78,10 @@ const BADGE_CONFIGS = {
     bg: "#14532d",  // green-900
     text: "#ffffff",
   },
+  warning: {
+    bg: "#78350f",  // amber-900
+    text: "#ffffff",
+  },
   disconnected: {
     bg: "#1e293b",  // slate-800
     text: "#94a3b8",  // slate-400

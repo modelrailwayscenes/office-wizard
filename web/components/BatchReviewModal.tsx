@@ -93,6 +93,8 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [draftEdits, setDraftEdits] = useState<Record<string, string>>({});
   const [openEmailId, setOpenEmailId] = useState<string | null>(null);
+  const [safeModeEnabled, setSafeModeEnabled] = useState(true);
+  const [ackReadyToSend, setAckReadyToSend] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -100,6 +102,8 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
     setSelectedIds(all);
     setDraftEdits(Object.fromEntries(emails.map((e) => [e.id, e.aiResponse || ""])) as Record<string, string>);
     setOpenEmailId(all[0] || null);
+    setSafeModeEnabled(true);
+    setAckReadyToSend(false);
   }, [isOpen, batch?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const allIds = useMemo(() => emails.map((e) => e.id), [emails]);
@@ -115,6 +119,14 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
     for (const id of selectedIds) out[id] = draftEdits[id] ?? "";
     return out;
   }, [selectedIds, draftEdits]);
+  const selectedMissingDraftCount = useMemo(
+    () => selectedIds.filter((id) => !(selectedDraftsMap[id] || "").trim()).length,
+    [selectedDraftsMap, selectedIds]
+  );
+  const canSend =
+    !loading &&
+    selectedIds.length > 0 &&
+    (!safeModeEnabled || (ackReadyToSend && selectedMissingDraftCount === 0));
 
   const openEmail = emails.find((e) => e.id === openEmailId) || emails[0];
 
@@ -194,6 +206,10 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            <div className="mr-2 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-2 py-1">
+              <Checkbox checked={safeModeEnabled} onCheckedChange={(v) => setSafeModeEnabled(!!v)} />
+              <span className="text-xs text-muted-foreground">Safe mode</span>
+            </div>
             <Button
               variant="outline"
               disabled={loading || selectedIds.length === 0}
@@ -204,7 +220,7 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
             </Button>
 
             <Button
-              disabled={loading || selectedIds.length === 0}
+              disabled={!canSend}
               onClick={() => onSendAll(selectedIds, batch.id, selectedDraftsMap)}
             >
               <Send className="h-4 w-4 mr-2" />
@@ -239,6 +255,28 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
             </Button>
           </div>
         </div>
+        {safeModeEnabled && (
+          <div className="px-6 py-2 border-b border-border bg-amber-500/5 flex flex-wrap items-center gap-3">
+            <span className="text-xs text-amber-500">
+              Safe mode requires non-empty drafts for all selected emails before sending.
+            </span>
+            {selectedMissingDraftCount > 0 ? (
+              <span className="text-xs text-muted-foreground">
+                Missing drafts: {selectedMissingDraftCount}
+              </span>
+            ) : (
+              <span className="text-xs text-emerald-500">All selected drafts are ready.</span>
+            )}
+            <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+              <Checkbox
+                checked={ackReadyToSend}
+                onCheckedChange={(v) => setAckReadyToSend(!!v)}
+                disabled={selectedMissingDraftCount > 0}
+              />
+              I reviewed and approve these drafts for send
+            </label>
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex-1 grid grid-cols-2 overflow-hidden">

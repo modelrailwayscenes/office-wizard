@@ -10,7 +10,7 @@ import { getAiCommentStyle } from "@/components/aiCommentUtils";
 import { timeAgo } from "@/components/healthStatus";
 import { EmailMessageBody } from "@/components/EmailMessageBody";
 import { ConversationActionPanel } from "@/components/ConversationActionPanel";
-import { inferSlaState, slaStateToBadge } from "@/lib/sla";
+import { formatSlaLabel, inferSlaState, slaStateToBadge } from "@/lib/sla";
 
 export function ConversationDetailContent({
   conversationData,
@@ -117,9 +117,7 @@ export function ConversationDetailContent({
                 <p className="text-xs text-muted-foreground mb-2">SLA</p>
                 {(() => {
                   const slaState = inferSlaState(conversationData.timeRemaining, conversationData.deadlineDate);
-                  const label =
-                    conversationData.timeRemaining ||
-                    (conversationData.deadlineDate ? `Due ${formatDateTime(conversationData.deadlineDate)}` : "Not set");
+                  const label = formatSlaLabel(conversationData.timeRemaining, conversationData.deadlineDate);
                   return (
                     <div className="flex flex-wrap items-center gap-2">
                       <UnifiedBadge type={slaStateToBadge(slaState)} label={label} />
@@ -180,7 +178,7 @@ export function ConversationDetailContent({
                 {conversationData.shopifyOrderContext ? (
                   <details className="rounded-lg border border-border bg-muted/30 p-2">
                     <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Order context</summary>
-                    <pre className="mt-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-all">
+                    <pre className="mt-2 max-h-44 overflow-auto text-[11px] text-muted-foreground whitespace-pre-wrap break-all">
                       {JSON.stringify(conversationData.shopifyOrderContext, null, 2)}
                     </pre>
                   </details>

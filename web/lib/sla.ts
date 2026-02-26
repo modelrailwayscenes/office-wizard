@@ -46,3 +46,14 @@ export function slaStateToBadge(state: SlaState): "connected" | "warning" | "err
   if (state === "breached") return "error";
   return "disconnected";
 }
+
+export function formatSlaLabel(timeRemaining?: string | null, deadlineDate?: string | null): string {
+  if (timeRemaining && timeRemaining.trim()) return timeRemaining;
+  if (deadlineDate) {
+    const dt = new Date(deadlineDate);
+    if (!Number.isNaN(dt.getTime())) {
+      return `Due ${dt.toLocaleString()}`;
+    }
+  }
+  return "Not set";
+}

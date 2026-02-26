@@ -53,7 +53,7 @@ import { ConversationDetailContent } from "@/components/ConversationDetailConten
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
 import { ListSectionHeader } from "@/components/ListSectionHeader";
-import { inferSlaState, slaStateToBadge } from "@/lib/sla";
+import { formatSlaLabel, inferSlaState, slaStateToBadge } from "@/lib/sla";
 
 // ── Main Page ───────────────────────────────────────────────────────
 export default function ConversationsIndex() {
@@ -595,7 +595,7 @@ export default function ConversationsIndex() {
               { key: "assigned_to_me", label: "Assigned to me" },
               { key: "unassigned", label: "Unassigned" },
               { key: "urgent", label: "Urgent" },
-              { key: "at_risk", label: "At risk" },
+              { key: "at_risk", label: "At Risk" },
               { key: "drafts_ready", label: "Drafts ready" },
               { key: "overdue", label: "Overdue" },
             ].map((item) => (
@@ -899,7 +899,7 @@ export default function ConversationsIndex() {
                   render: ({ record }) => {
                     const r = record as any;
                     const slaState = inferSlaState(r.timeRemaining, r.deadlineDate);
-                    const label = r.timeRemaining || (r.deadlineDate ? `Due ${new Date(r.deadlineDate).toLocaleString()}` : "Not set");
+                    const label = formatSlaLabel(r.timeRemaining, r.deadlineDate);
                     return (
                       <div className="space-y-1">
                         <UnifiedBadge type={slaStateToBadge(slaState)} label={label} />

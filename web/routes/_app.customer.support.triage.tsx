@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
-import { useFindMany, useFindFirst, useGlobalAction } from "@gadgetinc/react";
+import { useAction, useFindMany, useFindFirst, useGlobalAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
 import { ListSectionHeader } from "@/components/ListSectionHeader";
 import { ConversationActionPanel } from "@/components/ConversationActionPanel";
-import { inferSlaState, slaStateToBadge } from "@/lib/sla";
+import { formatSlaLabel, inferSlaState, slaStateToBadge } from "@/lib/sla";
 import {
   Mail,
   Clock,
@@ -167,6 +167,8 @@ export default function TriageQueuePage() {
   const [{ fetching: applyEditsLoading }, applyDraftEdits] = useGlobalAction(api.applyDraftEdits);
   const [, generateDraft] = useGlobalAction(api.generateDraft);
   const [{ fetching: markNotCustomerLoading }, markNotCustomer] = useGlobalAction(api.markNotCustomer);
+  const [{ fetching: assigningQuick }, updateConversation] = useAction(api.conversation.update);
+  const currentUser = useUser(api, { select: { id: true, email: true } }) as any;
   const [{ data: configData }] = useFindFirst(api.appConfiguration);
   const telemetryEnabled = (configData as any)?.telemetryBannersEnabled ?? true;
   const [{ data: aiCommentData, fetching: aiCommentFetching }] = useFindMany(api.aiComment, {
@@ -218,6 +220,38 @@ export default function TriageQueuePage() {
       });
     } finally {
       setGeneratingDraft(false);
+    }
+  };
+
+  const handleAssignToMe = async (conversationId: string) => {
+    if (!currentUser?.id) {
+      toast.error("Current user unavailable");
+      return;
+    }
+    try {
+      await (updateConversation as any)({
+        id: conversationId,
+        assignedToUser: currentUser.id,
+      });
+      await refresh();
+      toast.success("Assigned to me");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to assign conversation");
+    }
+  };
+
+  const handleResolveConversation = async (conversationId: string) => {
+    try {
+      await runBatchOperation({
+        action: "resolve",
+        conversationIds: JSON.stringify([conversationId]),
+        emailIds: JSON.stringify([]),
+        estimatedTimeSaved: 1,
+      } as any);
+      await refresh();
+      toast.success("Conversation resolved");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to resolve conversation");
     }
   };
 
@@ -473,6 +507,53 @@ export default function TriageQueuePage() {
         );
       }) ?? [];
 
+  const selectRelativeConversation = (offset: 1 | -1) => {
+    if (filteredConversations.length === 0) return;
+    if (!selectedConvId) {
+      setSelectedConvId(filteredConversations[0]?.id || null);
+      return;
+    }
+    const idx = filteredConversations.findIndex((c: any) => c.id === selectedConvId);
+    const nextIdx = Math.min(
+      Math.max((idx === -1 ? 0 : idx) + offset, 0),
+      filteredConversations.length - 1
+    );
+    setSelectedConvId(filteredConversations[nextIdx]?.id || null);
+  };
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (event.key === "j") {
+        event.preventDefault();
+        selectRelativeConversation(1);
+      } else if (event.key === "k") {
+        event.preventDefault();
+        selectRelativeConversation(-1);
+      } else if (event.key === "g" && selectedConvId) {
+        event.preventDefault();
+        handleGenerateDraft(selectedConvId, Boolean(selectedConv?.aiDraftContent));
+      } else if (event.key === "a" && selectedConvId) {
+        event.preventDefault();
+        handleAssignToMe(selectedConvId);
+      } else if (event.key === "r" && selectedConvId) {
+        event.preventDefault();
+        handleResolveConversation(selectedConvId);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [filteredConversations, selectedConv?.aiDraftContent, selectedConvId]);
+
   const draftsPendingCount = conversations?.filter((c: any) => c.requiresHumanReview).length || 0;
 
   const loading = batchLoading || applyEditsLoading;
@@ -589,6 +670,9 @@ export default function TriageQueuePage() {
               >
                 DUE / OVERDUE
               </Button>
+              <span className="ml-auto self-center text-[11px] text-muted-foreground">
+                Shortcuts: J/K move • G draft • A assign me • R resolve
+              </span>
             </div>
 
             {/* Conversation List */}
@@ -654,7 +738,7 @@ export default function TriageQueuePage() {
                           <Separator orientation="vertical" className="h-4" />
                           <UnifiedBadge
                             type={slaStateToBadge(inferSlaState(conv.timeRemaining, conv.deadlineDate))}
-                            label={conv.timeRemaining || "SLA n/a"}
+                            label={formatSlaLabel(conv.timeRemaining, conv.deadlineDate)}
                           />
 
                           {getOrderNumbers(conv).length > 0 && (
@@ -680,6 +764,44 @@ export default function TriageQueuePage() {
                               <span className="rounded-full border border-border bg-muted/50 px-2 py-0.5">changed</span>
                             ) : null;
                           })()}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-[11px]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGenerateDraft(conv.id, Boolean(conv.aiDraftContent));
+                            }}
+                            disabled={generatingDraft}
+                          >
+                            {conv.aiDraftContent ? "Regenerate" : "Draft"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-[11px]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAssignToMe(conv.id);
+                            }}
+                            disabled={assigningQuick}
+                          >
+                            Assign me
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-[11px] border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleResolveConversation(conv.id);
+                            }}
+                            disabled={batchLoading}
+                          >
+                            Resolve
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -873,7 +995,7 @@ export default function TriageQueuePage() {
                     <div className="flex items-center gap-2">
                       <UnifiedBadge
                         type={slaStateToBadge(inferSlaState(selectedConv.timeRemaining, selectedConv.deadlineDate))}
-                        label={selectedConv.timeRemaining || "SLA not set"}
+                        label={formatSlaLabel(selectedConv.timeRemaining, selectedConv.deadlineDate)}
                       />
                       {selectedConv.slaTarget ? (
                         <span className="text-xs text-muted-foreground">Target: {selectedConv.slaTarget}</span>
@@ -910,6 +1032,54 @@ export default function TriageQueuePage() {
                       </div>
                     ) : null}
                   </div>
+                </Card>
+
+                <Card className="bg-card border-border p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Confidence & Why</h3>
+                  {(() => {
+                    const meta = readSelectionMeta(selectedConv.playbookSelectionMetaJson);
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <UnifiedBadge
+                            type="connected"
+                            label={`Playbook ${selectedConv.selectedPlaybook?.scenarioKey || "none"}`}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            Confidence: {typeof selectedConv.selectedPlaybookConfidence === "number"
+                              ? selectedConv.selectedPlaybookConfidence.toFixed(2)
+                              : "—"}
+                          </span>
+                        </div>
+                        {meta?.reason ? (
+                          <div className="text-xs text-muted-foreground">Reason: {String(meta.reason)}</div>
+                        ) : null}
+                        {meta?.signals ? (
+                          <details className="rounded-lg border border-border bg-muted/30 p-2">
+                            <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                              Signals evaluated
+                            </summary>
+                            <pre className="mt-2 max-h-40 overflow-auto text-[11px] text-muted-foreground whitespace-pre-wrap break-all">
+                              {JSON.stringify(meta.signals, null, 2)}
+                            </pre>
+                          </details>
+                        ) : null}
+                        {meta?.evidence ? (
+                          <details className="rounded-lg border border-border bg-muted/30 p-2">
+                            <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                              Evidence snippets
+                            </summary>
+                            <pre className="mt-2 max-h-40 overflow-auto text-[11px] text-muted-foreground whitespace-pre-wrap break-all">
+                              {JSON.stringify(meta.evidence, null, 2)}
+                            </pre>
+                          </details>
+                        ) : null}
+                        {!meta ? (
+                          <div className="text-xs text-muted-foreground">No selection metadata recorded yet.</div>
+                        ) : null}
+                      </div>
+                    );
+                  })()}
                 </Card>
 
                 <ConversationActionPanel
