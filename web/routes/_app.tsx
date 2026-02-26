@@ -73,14 +73,20 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
   console.log('🔍 DEBUG LOADER - typeof user.roleList:', typeof user?.roleList);
   console.log('🔍 DEBUG LOADER - Array.isArray(user.roleList):', Array.isArray(user?.roleList));
   
-  const appConfig = await api.appConfiguration.findFirst({
-    select: { productionSchedulerEnabled: true } as any,
-  });
+  let productionSchedulerEnabled = false;
+  try {
+    const appConfig = await api.appConfiguration.findFirst({
+      select: { productionSchedulerEnabled: true } as any,
+    });
+    productionSchedulerEnabled = Boolean((appConfig as any)?.productionSchedulerEnabled);
+  } catch (error) {
+    console.error("Failed to load productionSchedulerEnabled, defaulting to disabled", error);
+  }
 
   return {
     session: { user },
     features: {
-      productionScheduler: Boolean((appConfig as any)?.productionSchedulerEnabled),
+      productionScheduler: productionSchedulerEnabled,
     },
   };
 };
