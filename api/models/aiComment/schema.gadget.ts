@@ -35,6 +35,11 @@ export const schema: GadgetModel = {
       searchIndex: false,
     },
     model: { type: "string", storageKey: "mtwNNzWPIfm5" },
+    playbook: {
+      type: "belongsTo",
+      parent: { model: "template" },
+      storageKey: "aiComment_playbook_template_link",
+    },
     source: {
       type: "string",
       validations: { required: true },

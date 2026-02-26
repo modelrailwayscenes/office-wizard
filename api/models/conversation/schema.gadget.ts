@@ -133,6 +133,27 @@ export const schema: GadgetModel = {
       storageKey: "lLQNUtY2qiVT",
       searchIndex: false,
     },
+    draftLastUpdatedAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "conversation_playbook_draftLastUpdatedAt",
+      searchIndex: false,
+    },
+    draftStatus: {
+      type: "enum",
+      default: "none",
+      acceptMultipleSelections: false,
+      acceptUnlistedOptions: false,
+      options: [
+        "none",
+        "generated",
+        "edited",
+        "approved",
+        "sent",
+        "failed",
+      ],
+      storageKey: "conversation_playbook_draftStatus",
+    },
     entities: {
       type: "json",
       storageKey: "NEADu8_puoCT",
@@ -168,21 +189,16 @@ export const schema: GadgetModel = {
       storageKey: "Msuw3PwybLnI",
     },
     internalNotes: { type: "string", storageKey: "eoBYheinMzfk" },
-    isVerifiedCustomer: {
-      type: "boolean",
-      default: false,
-      storageKey: "xkmpcgWz0MfG",
-      searchIndex: false,
-    },
     isCustomer: {
       type: "boolean",
       default: true,
       storageKey: "isCustomer_nac_pkg7",
       searchIndex: false,
     },
-    nonCustomerReason: {
-      type: "string",
-      storageKey: "nonCustomerReason_nac_pkg7",
+    isVerifiedCustomer: {
+      type: "boolean",
+      default: false,
+      storageKey: "xkmpcgWz0MfG",
       searchIndex: false,
     },
     lastTriagedAt: {
@@ -213,6 +229,11 @@ export const schema: GadgetModel = {
       },
       storageKey: "KsSzIQK-Ov-0",
     },
+    nonCustomerReason: {
+      type: "string",
+      storageKey: "nonCustomerReason_nac_pkg7",
+      searchIndex: false,
+    },
     orderValue: {
       type: "string",
       storageKey: "sn3Q1PY5HL5p",
@@ -225,6 +246,12 @@ export const schema: GadgetModel = {
       searchIndex: false,
     },
     participants: { type: "json", storageKey: "QjogqLjGfymK" },
+    playbookSelectionMetaJson: {
+      type: "string",
+      storageKey: "conversation_playbook_selectionMetaJson",
+      filterIndex: false,
+      searchIndex: false,
+    },
     primaryCustomerEmail: {
       type: "email",
       storageKey: "GlFemLqDC2iL",
@@ -264,6 +291,18 @@ export const schema: GadgetModel = {
       decimals: 2,
       validations: { numberRange: { min: 0, max: 100 } },
       storageKey: "lhqCBnHoSs_R",
+      searchIndex: false,
+    },
+    selectedPlaybook: {
+      type: "belongsTo",
+      parent: { model: "template" },
+      storageKey: "conversation_playbook_selectedPlaybook",
+    },
+    selectedPlaybookConfidence: {
+      type: "number",
+      decimals: 2,
+      validations: { numberRange: { min: 0, max: 1 } },
+      storageKey: "conversation_playbook_selectedPlaybookConfidence",
       searchIndex: false,
     },
     sentiment: {
