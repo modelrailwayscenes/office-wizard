@@ -15,6 +15,19 @@ const VALID_SAFETY_LEVELS = new Set(["safe", "moderate", "risky"]);
 
 type TemplateRow = {
   name?: string;
+  scenarioKey?: string;
+  isActive?: boolean;
+  priority?: number;
+  whenToUse?: string;
+  signalsToCheckJson?: string;
+  questionsToAnswerJson?: string;
+  doNotSayJson?: string;
+  toneGuidelines?: string;
+  structureHintsJson?: string;
+  requiredDataJson?: string;
+  defaultCategory?: string;
+  defaultPriorityBand?: string;
+  slaHours?: number;
   category?: string;
   subject?: string;
   bodyText?: string;
@@ -141,8 +154,28 @@ function normalizeRow(row: TemplateRow): Record<string, unknown> {
     ? row.requiredVariables
     : [];
 
+  const scenarioKey =
+    (row.scenarioKey || row.name || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 64) || null;
+
   return {
     name: String(row.name ?? "").trim(),
+    scenarioKey,
+    isActive: row.isActive ?? row.active ?? true,
+    priority: typeof row.priority === "number" ? row.priority : 100,
+    whenToUse: row.whenToUse ?? null,
+    signalsToCheckJson: row.signalsToCheckJson ?? null,
+    questionsToAnswerJson: row.questionsToAnswerJson ?? null,
+    doNotSayJson: row.doNotSayJson ?? null,
+    toneGuidelines: row.toneGuidelines ?? null,
+    structureHintsJson: row.structureHintsJson ?? null,
+    requiredDataJson: row.requiredDataJson ?? null,
+    defaultCategory: row.defaultCategory ?? null,
+    defaultPriorityBand: row.defaultPriorityBand ?? null,
+    slaHours: typeof row.slaHours === "number" ? row.slaHours : null,
     category: row.category ?? "custom",
     subject: row.subject ?? "",
     bodyText: String(row.bodyText ?? "").trim(),
@@ -219,6 +252,19 @@ export const run: ActionRun = async ({ params: actionParams, api, logger }) => {
       const existing = existingByName.get(name);
       if (existing) {
         await api.template.update(existing.id, {
+          scenarioKey: data.scenarioKey,
+          isActive: data.isActive,
+          priority: data.priority,
+          whenToUse: data.whenToUse,
+          signalsToCheckJson: data.signalsToCheckJson,
+          questionsToAnswerJson: data.questionsToAnswerJson,
+          doNotSayJson: data.doNotSayJson,
+          toneGuidelines: data.toneGuidelines,
+          structureHintsJson: data.structureHintsJson,
+          requiredDataJson: data.requiredDataJson,
+          defaultCategory: data.defaultCategory,
+          defaultPriorityBand: data.defaultPriorityBand,
+          slaHours: data.slaHours,
           category: data.category,
           subject: data.subject,
           bodyText: data.bodyText,
@@ -233,6 +279,19 @@ export const run: ActionRun = async ({ params: actionParams, api, logger }) => {
       } else {
         const createdRecord = await api.template.create({
           name,
+          scenarioKey: data.scenarioKey,
+          isActive: data.isActive,
+          priority: data.priority,
+          whenToUse: data.whenToUse,
+          signalsToCheckJson: data.signalsToCheckJson,
+          questionsToAnswerJson: data.questionsToAnswerJson,
+          doNotSayJson: data.doNotSayJson,
+          toneGuidelines: data.toneGuidelines,
+          structureHintsJson: data.structureHintsJson,
+          requiredDataJson: data.requiredDataJson,
+          defaultCategory: data.defaultCategory,
+          defaultPriorityBand: data.defaultPriorityBand,
+          slaHours: data.slaHours,
           category: data.category,
           subject: data.subject,
           bodyText: data.bodyText,

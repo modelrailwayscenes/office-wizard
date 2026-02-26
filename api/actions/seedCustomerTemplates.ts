@@ -448,6 +448,14 @@ function extractVariables(text: string): string[] {
   return [...new Set(matches.map((m) => m[1]))];
 }
 
+function toScenarioKey(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 64);
+}
+
 export const run: ActionRun = async ({ api, logger }) => {
   const existing = await api.template.findMany({
     select: { name: true },
@@ -472,6 +480,7 @@ export const run: ActionRun = async ({ api, logger }) => {
     try {
       await api.template.create({
         name: t.name,
+        scenarioKey: toScenarioKey(t.name),
         category: t.category,
         subject: t.subject,
         bodyText: t.body,
@@ -479,6 +488,24 @@ export const run: ActionRun = async ({ api, logger }) => {
         requiredVariables: [],
         safetyLevel: t.safetyLevel,
         active: true,
+        isActive: true,
+        priority: 100,
+        whenToUse: t.description || `Use for ${t.category.replace(/_/g, " ")} scenarios.`,
+        signalsToCheckJson: JSON.stringify([
+          { id: "subject_match", type: "keyword_or_semantic", hint: t.subject },
+          { id: "body_match", type: "keyword_or_semantic", hint: t.body.slice(0, 120) },
+        ]),
+        questionsToAnswerJson: JSON.stringify([
+          "What does the customer need right now?",
+          "What next action and timeline should we provide?",
+        ]),
+        doNotSayJson: JSON.stringify(["Do not use robotic, repetitive canned wording."]),
+        structureHintsJson: JSON.stringify([
+          "Acknowledge the request",
+          "Confirm relevant facts",
+          "Provide next step and timeline",
+        ]),
+        requiredDataJson: JSON.stringify(["customerName"]),
         description: t.description ?? undefined,
         autoSendEnabled: false,
       });

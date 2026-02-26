@@ -23,11 +23,11 @@ const customerTabs = [
   { id: "quarantine", label: "Quarantine", icon: ShieldAlert, path: `${BASE}/quarantine` },
   {
     id: "templates",
-    label: "Templates",
+    label: "Playbooks",
     icon: FileText,
     path: `${BASE}/templates`,
     children: [
-      { id: "templates-list", label: "Templates", icon: FileText, path: `${BASE}/templates` },
+      { id: "templates-list", label: "Playbooks", icon: FileText, path: `${BASE}/templates` },
       { id: "signatures", label: "Signatures", icon: PenLine, path: `${BASE}/signatures` },
     ],
   },
