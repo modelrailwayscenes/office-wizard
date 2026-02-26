@@ -71,6 +71,38 @@ export const permissions: GadgetPermissions = {
             update: true,
           },
         },
+        productionBatch: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        productionEvent: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        productionJob: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        productionType: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
         signature: {
           read: true,
           actions: {
@@ -147,6 +179,12 @@ export const permissions: GadgetPermissions = {
     unauthenticated: {
       storageKey: "unauthenticated",
       models: {
+        productionBatch: {
+          read: true,
+        },
+        productionType: {
+          read: true,
+        },
         user: {
           actions: {
             resetPassword: true,
