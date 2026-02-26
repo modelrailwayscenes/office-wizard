@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useFindFirst, useGlobalAction, useAction, useUser } from "@gadgetinc/react";
+import { useState, useEffect, useMemo } from "react";
+import { useFindFirst, useFindMany, useGlobalAction, useAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -201,6 +201,22 @@ export default function IntegrationsSettings() {
       updatedAt: true,
     },
   });
+  const [{ data: integrationLogs }] = useFindMany(api.actionLog, {
+    first: 120,
+    sort: { performedAt: "Descending" },
+    filter: {
+      action: { in: ["email_fetched", "email_sent", "bulk_action", "escalated"] },
+    } as any,
+    select: {
+      id: true,
+      action: true,
+      actionDescription: true,
+      performedAt: true,
+      success: true,
+      errorMessage: true,
+      performedBy: true,
+    } as any,
+  });
 
   const config = configData as any;
   const [{ fetching: updatingConfig }, updateConfig] = useAction(api.appConfiguration.update);
@@ -248,6 +264,25 @@ export default function IntegrationsSettings() {
   const msConnected = config?.microsoftConnectionStatus === "connected" && !!config?.microsoftAccessToken;
   const shopifyConnected = config?.shopifyConnectionStatus === "connected";
   const mondayConnected = config?.mondayConnectionStatus === "connected";
+  const observability = useMemo(() => {
+    const rows = (integrationLogs as any[] | undefined) || [];
+    const now = Date.now();
+    const last24h = rows.filter((r) => {
+      const t = r?.performedAt ? new Date(r.performedAt).getTime() : 0;
+      return t > 0 && now - t <= 24 * 60 * 60 * 1000;
+    });
+    const failed24h = last24h.filter((r) => r?.success === false);
+    const recentFailures = rows.filter((r) => r?.success === false).slice(0, 8);
+    const tokenExpiryLabel = config?.microsoftTokenExpiresAt
+      ? getTimeAgo(config.microsoftTokenExpiresAt)
+      : "Unknown";
+    return {
+      total24h: last24h.length,
+      failed24h: failed24h.length,
+      recentFailures,
+      tokenExpiryLabel,
+    };
+  }, [integrationLogs, config?.microsoftTokenExpiresAt]);
 
   // ── Microsoft 365 handlers ─────────────────────────────────────────────────
   const handleMsConnect = async () => {
@@ -782,6 +817,61 @@ export default function IntegrationsSettings() {
                   Connect
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Observability */}
+          <div className="bg-muted/50 border border-border rounded-xl p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-semibold text-foreground">Integration Observability</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Connection health, recent failures, and token lifecycle visibility.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => refetch({ requestPolicy: "network-only" })}
+                className="border-border hover:bg-muted"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh metrics
+              </Button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-lg border border-border bg-card/40 p-3">
+                <div className="text-xs text-muted-foreground">Events (24h)</div>
+                <div className="text-xl font-semibold text-foreground mt-1">{observability.total24h}</div>
+              </div>
+              <div className="rounded-lg border border-border bg-card/40 p-3">
+                <div className="text-xs text-muted-foreground">Failures (24h)</div>
+                <div className="text-xl font-semibold text-red-400 mt-1">{observability.failed24h}</div>
+              </div>
+              <div className="rounded-lg border border-border bg-card/40 p-3">
+                <div className="text-xs text-muted-foreground">Microsoft token expiry</div>
+                <div className="text-xl font-semibold text-foreground mt-1">{observability.tokenExpiryLabel}</div>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-border bg-card/40 p-3">
+              <div className="text-xs text-muted-foreground mb-2">Recent integration failures</div>
+              {observability.recentFailures.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No recent failures.</div>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-auto">
+                  {observability.recentFailures.map((row: any) => (
+                    <div key={row.id} className="rounded-md border border-border bg-muted/30 px-2 py-1.5">
+                      <div className="text-[11px] text-foreground">
+                        {row.actionDescription || row.action}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {row.errorMessage || "Unknown error"} • {getTimeAgo(row.performedAt)} • {row.performedBy || "system"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

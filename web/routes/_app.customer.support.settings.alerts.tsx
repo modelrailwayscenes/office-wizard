@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router";
 import { useFindFirst, useFindMany, useAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
@@ -159,6 +159,21 @@ export default function AlertsSettings() {
       conversation: { id: true, subject: true },
     } as any,
   });
+  const [{ data: escalationLogs, fetching: escalationFetching }] = useFindMany(api.actionLog, {
+    first: 30,
+    sort: { performedAt: "Descending" },
+    filter: { action: { equals: "escalated" } } as any,
+    select: {
+      id: true,
+      actionDescription: true,
+      performedAt: true,
+      success: true,
+      performedBy: true,
+      metadata: true,
+      errorMessage: true,
+      conversation: { id: true, subject: true },
+    } as any,
+  });
 
   const [settings, setSettings] = useState({
     notifyOnP0: true,
@@ -170,6 +185,8 @@ export default function AlertsSettings() {
     emailNotificationsEnabled: false,
     dailyDigestEnabled: false,
     dailyDigestTime: "09:00",
+    notificationEmail: "",
+    teamsWebhookUrl: "",
   });
 
   useEffect(() => {
@@ -184,8 +201,20 @@ export default function AlertsSettings() {
       emailNotificationsEnabled:   config.emailNotificationsEnabled   ?? false,
       dailyDigestEnabled:          config.dailyDigestEnabled          ?? false,
       dailyDigestTime:             config.dailyDigestTime             ?? "09:00",
+      notificationEmail:           config.notificationEmail           ?? "",
+      teamsWebhookUrl:             config.teamsWebhookUrl             ?? "",
     });
   }, [config]);
+  const escalationSummary = useMemo(() => {
+    const rows = (escalationLogs as any[] | undefined) || [];
+    const now = Date.now();
+    const last24h = rows.filter((r) => {
+      const t = r?.performedAt ? new Date(r.performedAt).getTime() : 0;
+      return t > 0 && now - t <= 24 * 60 * 60 * 1000;
+    });
+    const failed = last24h.filter((r) => r?.success === false).length;
+    return { total24h: last24h.length, failed24h: failed };
+  }, [escalationLogs]);
 
   const handleToggle = async (field: string, value: boolean) => {
     if (!config?.id) return;
@@ -207,6 +236,16 @@ export default function AlertsSettings() {
       toast.success("Digest time updated");
     } catch {
       toast.error("Failed to update time");
+    }
+  };
+  const handleEscalationFieldSave = async (field: "notificationEmail" | "teamsWebhookUrl", value: string) => {
+    if (!config?.id) return;
+    setSettings((prev) => ({ ...prev, [field]: value }));
+    try {
+      await (updateConfig as any)({ id: config.id, [field]: value });
+      toast.success("Escalation channel updated");
+    } catch {
+      toast.error("Failed to update escalation channel");
     }
   };
 
@@ -331,6 +370,82 @@ export default function AlertsSettings() {
               </div>
             ) : (
               <div className="px-6 py-4 text-sm text-muted-foreground">No alerts yet.</div>
+            )}
+          </Section>
+
+          <Section
+            icon={Bell}
+            title="Escalation Channels"
+            description="Configure where high-severity escalations are delivered and monitor delivery history"
+          >
+            <SettingRow
+              label="Escalation email recipient"
+              description="Critical escalations can be sent to this address"
+            >
+              <Input
+                type="email"
+                value={settings.notificationEmail}
+                onChange={(e) => setSettings((prev) => ({ ...prev, notificationEmail: e.target.value }))}
+                onBlur={(e) => handleEscalationFieldSave("notificationEmail", e.target.value)}
+                className="w-[320px] bg-muted border-border text-foreground"
+                placeholder="ops@example.com"
+              />
+            </SettingRow>
+            <SettingRow
+              label="Teams webhook URL"
+              description="Optional channel for escalation payloads in Microsoft Teams"
+            >
+              <Input
+                value={settings.teamsWebhookUrl}
+                onChange={(e) => setSettings((prev) => ({ ...prev, teamsWebhookUrl: e.target.value }))}
+                onBlur={(e) => handleEscalationFieldSave("teamsWebhookUrl", e.target.value)}
+                className="w-[420px] bg-muted border-border text-foreground"
+                placeholder="https://outlook.office.com/webhook/..."
+              />
+            </SettingRow>
+            <div className="px-6 py-4 border-t border-border/60">
+              <div className="text-xs text-muted-foreground">
+                Escalations (24h): {escalationSummary.total24h} • Failed deliveries: {escalationSummary.failed24h}
+              </div>
+            </div>
+          </Section>
+
+          <Section
+            icon={Bell}
+            title="Escalation History"
+            description="Recent escalations and channel delivery outcomes"
+          >
+            {escalationFetching ? (
+              <div className="px-6 py-4 text-sm text-muted-foreground">Loading escalation history...</div>
+            ) : (escalationLogs && escalationLogs.length > 0) ? (
+              <div className="divide-y divide-border">
+                {(escalationLogs as any[]).map((log: any) => (
+                  <div key={log.id} className="px-6 py-4 flex items-start justify-between gap-6">
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{log.actionDescription || "Escalation event"}</div>
+                      {log.conversation?.subject && (
+                        <div className="text-xs text-muted-foreground mt-0.5">{log.conversation.subject}</div>
+                      )}
+                      {log.errorMessage && (
+                        <div className="text-xs text-red-400 mt-1">{log.errorMessage}</div>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap text-right">
+                      <div>{log.performedAt ? new Date(log.performedAt).toLocaleString("en-GB") : "—"}</div>
+                      <div>
+                        {log.success === false ? (
+                          <span className="text-red-400">Failed</span>
+                        ) : (
+                          <span className="text-emerald-400">Delivered</span>
+                        )}
+                        {log.performedBy ? ` • ${log.performedBy}` : ""}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-6 py-4 text-sm text-muted-foreground">No escalations logged yet.</div>
             )}
           </Section>
 

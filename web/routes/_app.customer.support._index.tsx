@@ -72,10 +72,38 @@ export default function Dashboard() {
     select: { id: true },
     first: 200,
   });
+  const [{ data: batchOpsData }] = useFindMany(api.batchOperation, {
+    first: 80,
+    sort: { createdAt: "Descending" } as any,
+    select: {
+      id: true,
+      status: true,
+      sentCount: true,
+      errorCount: true,
+      savedCount: true,
+      completedAt: true,
+      createdAt: true,
+      action: true,
+    } as any,
+  });
+  const [{ data: actionLogData }] = useFindMany(api.actionLog, {
+    first: 120,
+    sort: { performedAt: "Descending" } as any,
+    filter: { action: { in: ["escalated", "email_sent", "bulk_action"] } } as any,
+    select: {
+      id: true,
+      action: true,
+      performedAt: true,
+      success: true,
+      errorMessage: true,
+    } as any,
+  });
 
   const conversations = (conversationsRaw || []) as any[];
   const config = configData as any;
   const quarantineCount = (quarantineData as any[] | undefined)?.length ?? 0;
+  const batchOps = (batchOpsData as any[] | undefined) || [];
+  const actionLogs = (actionLogData as any[] | undefined) || [];
 
   const {
     total,
@@ -161,6 +189,20 @@ export default function Dashboard() {
   const priorityTotal = priorityOrder.reduce((sum, band) => sum + (priorityCounts[band] || 0), 0);
   const triageRatio = total ? Math.round((triagedCount / total) * 100) : 0;
   const draftRatio = total ? Math.round((drafts / total) * 100) : 0;
+  const { batchRuns24h, batchFailures24h, batchSent24h, escalations24h } = useMemo(() => {
+    const now = Date.now();
+    const isLast24h = (value?: string | null) => {
+      if (!value) return false;
+      const ts = new Date(value).getTime();
+      return !Number.isNaN(ts) && now - ts <= 24 * 60 * 60 * 1000;
+    };
+    const recentBatches = batchOps.filter((b: any) => isLast24h(b.completedAt || b.createdAt));
+    const batchRuns24h = recentBatches.length;
+    const batchFailures24h = recentBatches.filter((b: any) => (b.errorCount || 0) > 0 || b.status === "failed").length;
+    const batchSent24h = recentBatches.reduce((sum: number, b: any) => sum + (b.sentCount || 0), 0);
+    const escalations24h = actionLogs.filter((l: any) => l.action === "escalated" && isLast24h(l.performedAt)).length;
+    return { batchRuns24h, batchFailures24h, batchSent24h, escalations24h };
+  }, [actionLogs, batchOps]);
 
   const welcomeMessage = `Welcome back, ${displayName}`;
 
@@ -266,6 +308,20 @@ export default function Dashboard() {
                   ? "Pending review"
                   : "Clear"
               }
+            />
+            <KpiCard
+              label="Batch Runs (24h)"
+              value={batchRuns24h}
+              Icon={CheckCircle2}
+              tone="bg-emerald-500/10 text-emerald-300"
+              subLabel={`${batchSent24h} sent • ${batchFailures24h} with errors`}
+            />
+            <KpiCard
+              label="Escalations (24h)"
+              value={escalations24h}
+              Icon={AlertCircle}
+              tone="bg-red-500/10 text-red-300"
+              subLabel="Operational escalation load"
             />
           </div>
 
@@ -398,6 +454,18 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>Auto-triage</span>
                   <span className="text-muted-foreground">{config?.autoTriageEnabled ? "enabled" : "disabled"}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Batch failures (24h)</span>
+                  <span className={batchFailures24h > 0 ? "text-red-300" : "text-muted-foreground"}>
+                    {batchFailures24h}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Escalations (24h)</span>
+                  <span className={escalations24h > 0 ? "text-amber-300" : "text-muted-foreground"}>
+                    {escalations24h}
+                  </span>
                 </div>
               </div>
             </Card>
