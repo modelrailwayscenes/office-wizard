@@ -34,6 +34,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useGlobalAction, useFindOne, useFindMany, useFindFirst, useUser } from "@gadgetinc/react";
 import { useConversationsListQuery, useInvalidateConversations } from "@/hooks/useConversationsQuery";
 import { toast } from "sonner";
@@ -64,10 +65,16 @@ export default function ConversationsIndex() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [selectedConversationIds, setSelectedConversationIds] = useState<string[]>([]);
+  const [bulkAssignUserId, setBulkAssignUserId] = useState("");
+  const [bulkMoveCategory, setBulkMoveCategory] = useState("general_enquiry");
+  const [bulkConfirmAction, setBulkConfirmAction] = useState<"resolve" | "archive" | null>(null);
 
   const [{ fetching: fetchingEmails }, fetchEmails] = useGlobalAction(api.fetchEmails);
   const [{ fetching: rebuildingConversations }, rebuildConversations] = useGlobalAction(api.rebuildConversations);
   const [{ fetching: markNotCustomerLoading }, markNotCustomer] = useGlobalAction(api.markNotCustomer);
+  const [{ fetching: batchActionLoading }, runBatchOperation] = useGlobalAction(api.runBatchOperation);
+  const [{ fetching: bulkDraftLoading }, generateDraft] = useGlobalAction(api.generateDraft);
   const [markNotCustomerDialogOpen, setMarkNotCustomerDialogOpen] = useState(false);
   const [notCustomerReasonType, setNotCustomerReasonType] = useState("conversation_other");
   const [notCustomerPatternValue, setNotCustomerPatternValue] = useState("");
@@ -83,11 +90,22 @@ export default function ConversationsIndex() {
     filter: { lastTriagedAt: { isSet: true } } as any,
     select: { id: true, lastTriagedAt: true } as any,
   });
+  const [{ data: teamUsers }] = useFindMany(api.user, {
+    first: 200,
+    select: { id: true, email: true, emailVerified: true } as any,
+  });
 
   const setTelemetryEvent = (event: Omit<PageTelemetry, "at">) => {
     if (!telemetryEnabled) return;
     setTelemetry({ ...event, at: new Date().toISOString() });
   };
+
+  const roleKeys = Array.isArray(currentUser?.roleList)
+    ? currentUser.roleList
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const canAssign = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
 
   const listFilter = useMemo(() => {
     const filters: any[] = [];
@@ -406,6 +424,51 @@ export default function ConversationsIndex() {
   };
 
   const buildFilter = () => listFilter;
+  const visibleConversationIds = (conversationListData || []).map((c) => c.id);
+  const allVisibleSelected =
+    visibleConversationIds.length > 0 &&
+    visibleConversationIds.every((id) => selectedConversationIds.includes(id));
+
+  const toggleSelectConversation = (conversationId: string, checked: boolean) => {
+    setSelectedConversationIds((prev) =>
+      checked ? (prev.includes(conversationId) ? prev : [...prev, conversationId]) : prev.filter((id) => id !== conversationId)
+    );
+  };
+
+  const toggleSelectAllVisible = (checked: boolean) => {
+    if (!checked) {
+      setSelectedConversationIds((prev) => prev.filter((id) => !visibleConversationIds.includes(id)));
+      return;
+    }
+    setSelectedConversationIds((prev) => [...new Set([...prev, ...visibleConversationIds])]);
+  };
+
+  const runBulkAction = async (action: "assign" | "move" | "resolve" | "archive") => {
+    if (selectedConversationIds.length === 0) return;
+    const payload: Record<string, any> = {
+      action,
+      conversationIds: JSON.stringify(selectedConversationIds),
+      emailIds: JSON.stringify([]),
+      estimatedTimeSaved: selectedConversationIds.length,
+      notes: "Bulk action from Conversations",
+    };
+    if (action === "assign") payload.assignToUserId = bulkAssignUserId;
+    if (action === "move") payload.moveToCategory = bulkMoveCategory;
+    await runBatchOperation(payload as any);
+    invalidateConversations();
+    setLastRefreshedAt(new Date().toISOString());
+    setSelectedConversationIds([]);
+  };
+
+  const handleBulkGenerateDrafts = async () => {
+    if (selectedConversationIds.length === 0) return;
+    for (const conversationId of selectedConversationIds) {
+      await generateDraft({ conversationId, regenerate: true } as any);
+    }
+    invalidateConversations();
+    setLastRefreshedAt(new Date().toISOString());
+    setSelectedConversationIds([]);
+  };
 
   const handleRefreshList = async () => {
     invalidateConversations();
@@ -423,6 +486,12 @@ export default function ConversationsIndex() {
       setHasLoaded(true);
     }
   }, [conversationListData, fetchingList, hasLoaded]);
+
+  useEffect(() => {
+    if (!conversationListData) return;
+    const visible = new Set(conversationListData.map((c) => c.id));
+    setSelectedConversationIds((prev) => prev.filter((id) => visible.has(id)));
+  }, [conversationListData]);
 
   return (
     <div className="flex flex-1 min-h-0 bg-background text-foreground">
@@ -545,6 +614,125 @@ export default function ConversationsIndex() {
 
           </div>
 
+          {selectedConversationIds.length > 0 && (
+            <div className="sticky bottom-4 z-20 mb-6 rounded-xl border border-border bg-card/95 backdrop-blur px-4 py-3 shadow-lg">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-foreground">
+                  {selectedConversationIds.length} selected
+                </span>
+
+                {canAssign && (
+                  <>
+                    <Select value={bulkAssignUserId} onValueChange={setBulkAssignUserId}>
+                      <SelectTrigger className="w-[220px] h-9 bg-background border-border text-muted-foreground rounded-lg">
+                        <SelectValue placeholder="Assign to user" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border text-foreground">
+                        {(teamUsers as any[] | undefined)
+                          ?.filter((u: any) => u?.emailVerified)
+                          ?.map((u: any) => (
+                            <SelectItem key={u.id} value={u.id}>
+                              {u.email}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-border"
+                      disabled={!bulkAssignUserId || batchActionLoading}
+                      onClick={async () => {
+                        try {
+                          await runBulkAction("assign");
+                          toast.success("Conversations assigned");
+                        } catch (err: any) {
+                          toast.error(err?.message || "Failed to assign conversations");
+                        }
+                      }}
+                    >
+                      Assign
+                    </Button>
+                  </>
+                )}
+
+                <Select value={bulkMoveCategory} onValueChange={setBulkMoveCategory}>
+                  <SelectTrigger className="w-[220px] h-9 bg-background border-border text-muted-foreground rounded-lg">
+                    <SelectValue placeholder="Move category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border text-foreground">
+                    <SelectItem value="general_enquiry">General enquiry</SelectItem>
+                    <SelectItem value="order_issue">Order issue</SelectItem>
+                    <SelectItem value="delivery_issue">Delivery issue</SelectItem>
+                    <SelectItem value="refund_request">Refund request</SelectItem>
+                    <SelectItem value="damaged_item">Damaged item</SelectItem>
+                    <SelectItem value="returns">Returns</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-border"
+                  disabled={batchActionLoading}
+                  onClick={async () => {
+                    try {
+                      await runBulkAction("move");
+                      toast.success("Conversations moved");
+                    } catch (err: any) {
+                      toast.error(err?.message || "Failed to move conversations");
+                    }
+                  }}
+                >
+                  Move category
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-border"
+                  disabled={bulkDraftLoading}
+                  onClick={async () => {
+                    try {
+                      await handleBulkGenerateDrafts();
+                      toast.success("Draft generation started for selected conversations");
+                    } catch (err: any) {
+                      toast.error(err?.message || "Failed to generate drafts");
+                    }
+                  }}
+                >
+                  Generate drafts
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                  disabled={batchActionLoading}
+                  onClick={() => setBulkConfirmAction("resolve")}
+                >
+                  Resolve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-red-500/40 text-red-500 hover:bg-red-500/10"
+                  disabled={batchActionLoading}
+                  onClick={() => setBulkConfirmAction("archive")}
+                >
+                  Archive
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-muted-foreground"
+                  onClick={() => setSelectedConversationIds([])}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Conversations Table */}
           {conversationListData?.length === 0 ? (
             <EmptyState
@@ -560,6 +748,27 @@ export default function ConversationsIndex() {
                 searchable={false}
                 sort={{ currentPriorityScore: "Descending", latestMessageAt: "Descending" } as any}
                 columns={[
+                {
+                  header: (
+                    <Checkbox
+                      checked={allVisibleSelected}
+                      onCheckedChange={(checked) => toggleSelectAllVisible(Boolean(checked))}
+                      aria-label="Select all visible conversations"
+                    />
+                  ),
+                  render: ({ record }) => {
+                    const id = (record as any).id as string;
+                    return (
+                      <div className="py-1" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedConversationIds.includes(id)}
+                          onCheckedChange={(checked) => toggleSelectConversation(id, Boolean(checked))}
+                          aria-label={`Select conversation ${id}`}
+                        />
+                      </div>
+                    );
+                  },
+                },
                 {
                   header: "Priority",
                   render: ({ record }) => (
@@ -848,6 +1057,52 @@ export default function ConversationsIndex() {
                 disabled={markNotCustomerLoading}
               >
                 {markNotCustomerLoading ? "Marking..." : "Mark Not a Customer"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog
+          open={bulkConfirmAction !== null}
+          onOpenChange={(open) => {
+            if (!open) setBulkConfirmAction(null);
+          }}
+        >
+          <AlertDialogContent className="bg-card border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {bulkConfirmAction === "archive" ? "Archive selected conversations?" : "Resolve selected conversations?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                {bulkConfirmAction === "archive"
+                  ? "This will archive all selected conversations."
+                  : "This will mark all selected conversations as resolved."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  if (!bulkConfirmAction) return;
+                  try {
+                    await runBulkAction(bulkConfirmAction);
+                    toast.success(
+                      bulkConfirmAction === "archive" ? "Conversations archived" : "Conversations resolved"
+                    );
+                  } catch (err: any) {
+                    toast.error(err?.message || "Bulk action failed");
+                  } finally {
+                    setBulkConfirmAction(null);
+                  }
+                }}
+                className={
+                  bulkConfirmAction === "archive"
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-amber-500 hover:bg-amber-600 text-primary-foreground"
+                }
+                disabled={batchActionLoading}
+              >
+                {batchActionLoading ? "Working..." : "Confirm"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
