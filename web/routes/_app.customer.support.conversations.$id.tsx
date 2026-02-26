@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getAiCommentStyle } from "@/components/aiCommentUtils";
 import { timeAgo } from "@/components/healthStatus";
+import { EmailMessageBody } from "@/components/EmailMessageBody";
 
 function formatDateTime(value: string | Date | null | undefined, fmt = "PPp") {
   if (!value) return "—";
@@ -381,11 +382,11 @@ export default function ConversationDetail() {
                         </div>
                       )}
                       
-                      {message.bodyPreview && (
-                        <div className="text-sm text-muted-foreground line-clamp-3">
-                          {message.bodyPreview}
-                        </div>
-                      )}
+                      <EmailMessageBody
+                        bodyHtml={(message as any).bodyHtml}
+                        bodyText={(message as any).bodyText}
+                        bodyPreview={message.bodyPreview}
+                      />
                     </div>
                   </div>
                 ))}

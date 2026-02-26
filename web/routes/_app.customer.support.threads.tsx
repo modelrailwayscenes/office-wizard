@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
+import { ListSectionHeader } from "@/components/ListSectionHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -405,6 +406,11 @@ export default function ThreadsPage() {
           <div className="w-1/3 border-r border-border flex flex-col bg-card/30">
             {/* Search bar */}
             <div className="p-4 border-b border-border">
+              <ListSectionHeader
+                title="Thread Queue"
+                subtitle="Debug view of grouped conversation threads"
+                count={filteredConversations.length}
+              />
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input

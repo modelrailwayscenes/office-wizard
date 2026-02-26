@@ -22,6 +22,7 @@ import { SecondaryButton } from "@/shared/ui/Buttons";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
+import { ListSectionHeader } from "@/components/ListSectionHeader";
 import {
   Mail,
   Clock,
@@ -527,6 +528,13 @@ export default function TriageQueuePage() {
         <div className="flex flex-1 overflow-hidden">
           {/* Left List */}
           <div className="w-1/2 border-r border-border overflow-y-auto">
+            <div className="px-4 pt-4">
+              <ListSectionHeader
+                title="Triage Queue"
+                subtitle="High-signal queue for rapid classification"
+                count={filteredConversations.length}
+              />
+            </div>
             {/* Quick Filters */}
             <div className="flex gap-2 p-4 border-b border-border bg-muted/30 rounded-none">
               <Button

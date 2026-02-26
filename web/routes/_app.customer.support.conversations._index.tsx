@@ -52,6 +52,7 @@ import { timeAgo } from "@/components/healthStatus";
 import { ConversationDetailContent } from "@/components/ConversationDetailContent";
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
+import { ListSectionHeader } from "@/components/ListSectionHeader";
 
 // ── Main Page ───────────────────────────────────────────────────────
 export default function ConversationsIndex() {
@@ -554,6 +555,13 @@ export default function ConversationsIndex() {
           <ResizablePanelGroup direction="horizontal" className="flex-1">
             <ResizablePanel defaultSize={50} minSize={30} className="min-w-0">
         <div className="px-8 pb-8 h-full overflow-auto">
+          <div className="mt-6">
+            <ListSectionHeader
+              title="Conversation Queue"
+              subtitle="Prioritized inbox with operational filters"
+              count={conversationListData?.length || 0}
+            />
+          </div>
           <div className="mt-6 mb-4 flex flex-wrap gap-2">
             {[
               { key: "all", label: "All" },

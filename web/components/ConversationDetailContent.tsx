@@ -2,11 +2,13 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mail, Paperclip, RefreshCw, UserX } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { getAiCommentStyle } from "@/components/aiCommentUtils";
 import { timeAgo } from "@/components/healthStatus";
+import { EmailMessageBody } from "@/components/EmailMessageBody";
 
 export function ConversationDetailContent({
   conversationData,
@@ -70,83 +72,86 @@ export function ConversationDetailContent({
 
       <Card className="bg-card border-border shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg">Metadata</CardTitle>
+          <CardTitle className="text-lg">{conversationData.subject || "(No subject)"}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Status</p>
-              <UnifiedBadge type={conversationData.status} label={titleCaseEnum(conversationData.status)} />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Sentiment</p>
-              <SentimentBadge sentiment={conversationData.sentiment} />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Priority</p>
-              <UnifiedBadge type={conversationData.currentPriorityBand} label={titleCaseEnum(conversationData.currentPriorityBand)} />
-            </div>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <UnifiedBadge type={conversationData.status} label={titleCaseEnum(conversationData.status)} />
+            <UnifiedBadge type={conversationData.currentPriorityBand} label={titleCaseEnum(conversationData.currentPriorityBand)} />
+            <SentimentBadge sentiment={conversationData.sentiment} />
           </div>
-          <Separator className="bg-border" />
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Customer</p>
-            <p>{conversationData.primaryCustomerName || conversationData.primaryCustomerEmail || "—"}</p>
-            {conversationData.primaryCustomerName && conversationData.primaryCustomerEmail && (
-              <p className="text-sm text-muted-foreground">{conversationData.primaryCustomerEmail}</p>
-            )}
-          </div>
-          <Separator className="bg-border" />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">First Message</p>
-              <p className="text-sm">{formatDateTime(conversationData.firstMessageAt)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Last Activity</p>
-              <p className="text-sm">{formatDateTime(conversationData.latestMessageAt)}</p>
-            </div>
-          </div>
-          {conversationData.resolvedAt && (
-            <>
-              <Separator className="bg-border" />
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Resolved At</p>
-                <p className="text-sm">{formatDateTime(conversationData.resolvedAt)}</p>
+          <Tabs defaultValue="conversation" className="w-full">
+            <TabsList>
+              <TabsTrigger value="conversation">Conversation</TabsTrigger>
+              <TabsTrigger value="customer">Customer</TabsTrigger>
+              <TabsTrigger value="automation">Automation</TabsTrigger>
+            </TabsList>
+            <TabsContent value="conversation" className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">First Message</p>
+                  <p className="text-sm">{formatDateTime(conversationData.firstMessageAt)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Last Activity</p>
+                  <p className="text-sm">{formatDateTime(conversationData.latestMessageAt)}</p>
+                </div>
               </div>
-            </>
-          )}
-          <Separator className="bg-border" />
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Message Count</p>
-            <p>{conversationData.messageCount ?? 0}</p>
-          </div>
+              <Separator className="bg-border" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Category</p>
+                  <p className="text-sm">{titleCaseEnum(conversationData.currentCategory)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Message Count</p>
+                  <p className="text-sm">{conversationData.messageCount ?? 0}</p>
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="customer" className="mt-4 space-y-3">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Customer</p>
+                <p>{conversationData.primaryCustomerName || conversationData.primaryCustomerEmail || "—"}</p>
+                {conversationData.primaryCustomerName && conversationData.primaryCustomerEmail && (
+                  <p className="text-sm text-muted-foreground">{conversationData.primaryCustomerEmail}</p>
+                )}
+              </div>
+              {conversationData.internalNotes && (
+                <>
+                  <Separator className="bg-border" />
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Internal Notes</p>
+                    <p className="text-muted-foreground whitespace-pre-wrap">{conversationData.internalNotes}</p>
+                  </div>
+                </>
+              )}
+            </TabsContent>
+            <TabsContent value="automation" className="mt-4 space-y-3">
+              {conversationData.classifications?.edges?.[0]?.node ? (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Intent Category</p>
+                  <UnifiedBadge
+                    type={conversationData.classifications.edges[0].node.intentCategory}
+                    label={titleCaseEnum(conversationData.classifications.edges[0].node.intentCategory)}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No classification yet.</p>
+              )}
+              {conversationData.resolvedAt && (
+                <>
+                  <Separator className="bg-border" />
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Resolved At</p>
+                    <p className="text-sm">{formatDateTime(conversationData.resolvedAt)}</p>
+                  </div>
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-
-      {conversationData.classifications?.edges?.[0]?.node && (
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Classification</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Intent Category</p>
-              <UnifiedBadge type={conversationData.classifications.edges[0].node.intentCategory} label={titleCaseEnum(conversationData.classifications.edges[0].node.intentCategory)} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {conversationData.internalNotes && (
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Internal Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground whitespace-pre-wrap">{conversationData.internalNotes}</p>
-          </CardContent>
-        </Card>
-      )}
 
       <Card className="bg-card border-border shadow-sm">
         <CardHeader>
@@ -221,12 +226,15 @@ export function ConversationDetailContent({
                     </div>
                   )}
                   {message.bodyText && (
-                    <div className="mt-2 p-3 bg-muted/50 rounded text-sm text-muted-foreground whitespace-pre-wrap">
-                      {message.bodyText.slice(0, 500)}
-                      {message.bodyText.length > 500 && "..."}
+                    <div className="mt-2">
+                      <EmailMessageBody bodyHtml={(message as any).bodyHtml} bodyText={message.bodyText} bodyPreview={message.bodyPreview} />
                     </div>
                   )}
-                  {!message.bodyText && message.bodyPreview && <p className="text-sm text-muted-foreground italic">{message.bodyPreview}</p>}
+                  {!message.bodyText && !message.bodyHtml && message.bodyPreview && (
+                    <div className="mt-2">
+                      <EmailMessageBody bodyPreview={message.bodyPreview} />
+                    </div>
+                  )}
                   {index < messagesData.length - 1 && <Separator className="bg-border mt-4" />}
                 </div>
               ))}
