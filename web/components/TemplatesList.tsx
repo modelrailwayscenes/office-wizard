@@ -93,7 +93,6 @@ export function TemplatesList() {
 
   const formatCategory = (category: string) =>
     category.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-  const formatSafetyLevel = (level: string) => level.charAt(0).toUpperCase() + level.slice(1);
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
@@ -118,8 +117,10 @@ export function TemplatesList() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="border-b border-border bg-card/50 px-8 py-6">
-        <h1 className="text-2xl font-semibold text-foreground">Email Templates</h1>
-        <p className="text-sm text-muted-foreground mt-1">Create and manage email response templates</p>
+        <h1 className="text-2xl font-semibold text-foreground">Playbooks</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Scenario guidance for AI drafts (checks, observations, tone and structure hints)
+        </p>
       </div>
       <div className="px-8 py-6">
         <div className="flex justify-end gap-2 mb-6">
@@ -156,15 +157,15 @@ export function TemplatesList() {
             onClick={() => navigate("/customer/support/templates/new")}
           >
             <Plus className="mr-2 h-4 w-4" />
-            New Template
+            New Playbook
           </Button>
         </div>
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center py-24 bg-card/40 rounded-xl border border-border">
             <FileText className="h-20 w-20 text-muted-foreground/60 mb-6" />
-            <h2 className="text-2xl font-semibold text-foreground mb-2">No email templates yet</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-2">No playbooks yet</h2>
             <p className="text-muted-foreground mb-8 text-center max-w-md">
-              Create your first template to automate email responses and save time
+              Create your first playbook to guide AI responses without relying on canned full emails
             </p>
             <div className="flex gap-3">
               {isAdmin && (
@@ -173,14 +174,14 @@ export function TemplatesList() {
                   disabled={seeding}
                   variant="outline"
                 >
-                  {seeding ? "Seeding…" : "Seed Sample Templates"}
+                  {seeding ? "Seeding…" : "Seed Sample Playbooks"}
                 </Button>
               )}
               <Button
                 onClick={() => navigate("/customer/support/templates/new")}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Create Your First Template
+                Create Your First Playbook
               </Button>
             </div>
           </div>
@@ -190,6 +191,19 @@ export function TemplatesList() {
               model={api.template}
               columns={[
                 { header: "Name", field: "name" },
+                { header: "Scenario key", field: "scenarioKey" },
+                {
+                  header: "Active",
+                  render: ({ record }: { record: any }) => (
+                    <span className="text-foreground">{record.isActive ?? record.active ? "Yes" : "No"}</span>
+                  ),
+                },
+                {
+                  header: "Priority",
+                  render: ({ record }: { record: any }) => (
+                    <span className="text-foreground">{record.priority ?? 100}</span>
+                  ),
+                },
                 {
                   header: "Category",
                   render: ({ record }: { record: any }) => (
@@ -199,19 +213,7 @@ export function TemplatesList() {
                     />
                   ),
                 },
-                { header: "Subject", field: "subject" },
-                {
-                  header: "Safety Level",
-                  render: ({ record }: { record: any }) => (
-                    <span className="text-foreground">{formatSafetyLevel(record.safetyLevel)}</span>
-                  ),
-                },
-                {
-                  header: "Auto Send",
-                  render: ({ record }: { record: any }) => (
-                    <span className="text-foreground">{record.autoSendEnabled ? "Yes" : "No"}</span>
-                  ),
-                },
+                { header: "When to use", field: "whenToUse" },
                 {
                   header: "Updated",
                   render: ({ record }: { record: any }) => (

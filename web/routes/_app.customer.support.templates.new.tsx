@@ -24,14 +24,14 @@ export default function NewTemplatePage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-xl font-semibold text-foreground">Create New Template</h2>
+        <h2 className="text-xl font-semibold text-foreground">Create New Playbook</h2>
       </div>
 
       <Card>
           <CardHeader>
-            <CardTitle className="text-foreground">Template Details</CardTitle>
+            <CardTitle className="text-foreground">Playbook Details</CardTitle>
             <CardDescription className="text-muted-foreground">
-              Fill in the information below to create a new email template
+              Define usage criteria and guidance. Avoid full canned email bodies.
             </CardDescription>
           </CardHeader>
           <CardContent>

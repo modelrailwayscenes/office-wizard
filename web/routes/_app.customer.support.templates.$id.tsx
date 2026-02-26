@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -219,7 +220,7 @@ export default function EditTemplate() {
           onClick={handleBackClick}
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Templates
+          Back to Playbooks
         </Link>
 
           <div className="flex items-center gap-2">
@@ -234,7 +235,7 @@ export default function EditTemplate() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                Edit Template
+                Edit Playbook
                 {id ? (
                   <Badge variant="outline" className="bg-muted/60 border-border">
                     ID: {id}
@@ -252,12 +253,43 @@ export default function EditTemplate() {
                 className="space-y-4"
               >
                 <div>
-                  <label className="text-sm text-muted-foreground">Name</label>
+                  <label className="text-sm text-muted-foreground">Playbook name</label>
                   <Input
                     className="mt-1"
-                    placeholder="Template name"
+                    placeholder="Playbook name"
                     {...register("template.name" as any)}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground">Scenario key</label>
+                    <Input
+                      className="mt-1"
+                      placeholder="missing_parts"
+                      {...register("template.scenarioKey" as any)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Priority (lower = stronger tie-break)</label>
+                    <Input
+                      className="mt-1"
+                      placeholder="100"
+                      type="number"
+                      {...register("template.priority" as any, { valueAsNumber: true })}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 px-3 py-2">
+                  <Controller
+                    control={control}
+                    name={"template.isActive" as any}
+                    render={({ field }) => (
+                      <Checkbox checked={Boolean(field.value)} onCheckedChange={(v) => field.onChange(Boolean(v))} />
+                    )}
+                  />
+                  <span className="text-sm text-foreground">Playbook is active</span>
                 </div>
 
                 <div>
@@ -305,16 +337,120 @@ export default function EditTemplate() {
                 </div>
 
                 <div>
-                  <label className="text-sm text-muted-foreground">Subject</label>
+                  <label className="text-sm text-muted-foreground">When to use</label>
+                  <Textarea
+                    className="mt-1 min-h-[88px]"
+                    placeholder="Plain-English criteria for when this playbook should be selected"
+                    {...register("template.whenToUse" as any)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">Tone guidelines</label>
+                  <Textarea
+                    className="mt-1 min-h-[88px]"
+                    placeholder="Voice and tone rules. Keep natural and non-robotic."
+                    {...register("template.toneGuidelines" as any)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">Signals to check (JSON)</label>
+                  <Textarea
+                    className="mt-1 min-h-[112px] font-mono text-xs"
+                    placeholder='[{"id":"mentions_missing_parts","type":"keyword_or_semantic","hint":"missing parts"}]'
+                    {...register("template.signalsToCheckJson" as any)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">Questions to answer (JSON)</label>
+                  <Textarea
+                    className="mt-1 min-h-[112px] font-mono text-xs"
+                    placeholder='["What happened","What we will do next","Expected timeframe"]'
+                    {...register("template.questionsToAnswerJson" as any)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">Do not say (JSON)</label>
+                  <Textarea
+                    className="mt-1 min-h-[112px] font-mono text-xs"
+                    placeholder='["We guarantee delivery tomorrow","This is not our fault"]'
+                    {...register("template.doNotSayJson" as any)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">Structure hints (JSON)</label>
+                  <Textarea
+                    className="mt-1 min-h-[112px] font-mono text-xs"
+                    placeholder='["Acknowledge issue","Confirm facts","Next step + timeframe"]'
+                    {...register("template.structureHintsJson" as any)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">Required data checks (JSON)</label>
+                  <Textarea
+                    className="mt-1 min-h-[112px] font-mono text-xs"
+                    placeholder='["orderId","customerName"]'
+                    {...register("template.requiredDataJson" as any)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">Default category (optional)</label>
                   <Input
                     className="mt-1"
-                    placeholder="Email subject"
+                    placeholder="delivery_issue"
+                    {...register("template.defaultCategory" as any)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">Default priority band (optional)</label>
+                  <Controller
+                    control={control}
+                    name={"template.defaultPriorityBand" as any}
+                    render={({ field }) => (
+                      <Select value={field.value ? String(field.value) : undefined} onValueChange={field.onChange}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select default priority band" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["urgent", "high", "medium", "low", "unclassified"].map((level) => (
+                            <SelectItem key={level} value={level}>
+                              {formatEnumValue(level)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">SLA hours (optional)</label>
+                  <Input
+                    className="mt-1"
+                    type="number"
+                    placeholder="24"
+                    {...register("template.slaHours" as any, { valueAsNumber: true })}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-muted-foreground">Legacy subject (optional)</label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Optional legacy subject"
                     {...register("template.subject" as any)}
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm text-muted-foreground">Body</label>
+                  <label className="text-sm text-muted-foreground">Legacy body guidance (optional)</label>
                   <Controller
                     control={control}
                     name={"template.bodyText" as any}
@@ -538,7 +674,7 @@ export default function EditTemplate() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Preview</CardTitle>
+              <CardTitle>Guidance Preview</CardTitle>
             </CardHeader>
             <CardContent>
               <div
