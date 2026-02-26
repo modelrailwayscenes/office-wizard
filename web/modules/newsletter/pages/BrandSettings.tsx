@@ -5,8 +5,10 @@ import { Badge } from '@/components/ui/badge';
 export default function BrandSettings() {
   return (
     <div className="p-8 bg-background min-h-full animate-fade-in">
-      <h1 className="text-3xl font-bold mb-2 text-foreground">Brand Settings</h1>
-      <p className="text-muted-foreground mb-8">Manage colour palettes and typography for consistent branding</p>
+      <div className="border-b border-border bg-card/50 -mx-8 px-8 py-6 mb-8">
+        <h1 className="text-2xl font-semibold mb-2 text-foreground">Brand Settings</h1>
+        <p className="text-muted-foreground">Manage colour palettes and typography for consistent branding</p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {BRAND_PROFILES.map(profile => (

@@ -23,7 +23,7 @@ const tabs = [
   { id: "users",         label: "Users",                  icon: UsersIcon,    path: "/customer/support/settings/users" },
   { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/customer/support/settings/triage" },
   { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/customer/support/settings/ai" },
-  { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/customer/support/settings/templates" },
+  { id: "templates",    label: "Playbooks & Batching",   icon: FileText,     path: "/customer/support/settings/templates" },
   { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/customer/support/settings/security" },
 ];
 
@@ -127,7 +127,7 @@ function SettingRow({ label, description, children }: {
   );
 }
 
-export default function TemplatesSettings() {
+export default function PlaybooksSettings() {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useUser(api, { select: { roleList: { key: true } } });
@@ -141,7 +141,7 @@ export default function TemplatesSettings() {
   const config = configData as any;
   const [{ fetching: updating }, updateConfig] = useAction(api.appConfiguration.update);
 
-  // Template state
+  // Playbook state
   const [autoSendGlobalEnabled, setAutoSendGlobalEnabled]               = useState(false);
   const [autoSendOpeningHours, setAutoSendOpeningHours]                 = useState(false);
   const [autoSendProductInstructions, setAutoSendProductInstructions]   = useState(false);
@@ -222,7 +222,7 @@ export default function TemplatesSettings() {
         <div className="border-b border-border bg-card/50 px-8 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">Templates & Batching</h1>
+              <h1 className="text-2xl font-semibold text-foreground">Playbooks & Batching</h1>
               <p className="text-sm text-muted-foreground mt-1">
                 Configure automatic responses and batch processing
               </p>
@@ -246,15 +246,15 @@ export default function TemplatesSettings() {
 
         <div className="space-y-4">
 
-          {/* Template Settings */}
+          {/* Playbook Settings */}
           <Section
             icon={FileText}
-            title="Template Settings"
-            description="Configure automatic template usage and response generation"
+            title="Playbook Settings"
+            description="Configure automatic playbook usage and response generation"
           >
             <SettingRow
               label="Enable Auto-Send"
-              description="Master switch — globally enable automatic email sending based on templates"
+              description="Master switch — globally enable automatic email sending based on playbooks"
             >
               <Switch
                 checked={autoSendGlobalEnabled}
@@ -275,7 +275,7 @@ export default function TemplatesSettings() {
 
             <SettingRow
               label="Auto-Send Product Instructions"
-              description="Automatically send product help and instruction templates"
+              description="Automatically send product help and instruction playbooks"
             >
               <Switch
                 checked={autoSendProductInstructions}
@@ -297,7 +297,7 @@ export default function TemplatesSettings() {
 
             <SettingRow
               label="Auto-Send General FAQ"
-              description="Automatically respond to common questions with FAQ templates"
+              description="Automatically respond to common questions with FAQ playbooks"
             >
               <Switch
                 checked={autoSendGeneralFAQ}

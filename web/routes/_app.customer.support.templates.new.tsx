@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { api } from "../api";
 
-export default function NewTemplatePage() {
+export default function NewPlaybookPage() {
   const navigate = useNavigate();
 
   const handleSuccess = () => {

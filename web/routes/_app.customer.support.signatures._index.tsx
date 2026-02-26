@@ -159,7 +159,7 @@ export default function SignaturesPage() {
     <div className="min-h-screen bg-background">
       <div className="border-b border-border bg-card/50 px-8 py-6">
         <h1 className="text-2xl font-semibold text-foreground">Email Signatures</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage signature templates for your emails</p>
+        <p className="text-sm text-muted-foreground mt-1">Manage signature playbooks for your emails</p>
       </div>
 
       <div className="px-8 pb-8">

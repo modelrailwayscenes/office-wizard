@@ -195,8 +195,10 @@ export default function BlockLibrary() {
 
   return (
     <div className="p-8 bg-background min-h-full animate-fade-in">
-      <h1 className="text-3xl font-bold mb-2 text-foreground">Block Library</h1>
-      <p className="text-muted-foreground mb-8">Modular content blocks for your newsletters</p>
+      <div className="border-b border-border bg-card/50 -mx-8 px-8 py-6 mb-8">
+        <h1 className="text-2xl font-semibold mb-2 text-foreground">Block Library</h1>
+        <p className="text-muted-foreground">Modular content blocks for your newsletters</p>
+      </div>
 
       {BLOCK_CATEGORIES.map(cat => {
         const blocks = BLOCK_LIBRARY.filter(b => b.category === cat);

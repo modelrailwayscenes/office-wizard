@@ -34,9 +34,10 @@ export default function CampaignCalendar() {
 
   return (
     <div className="p-8 bg-background min-h-full animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
+      <div className="border-b border-border bg-card/50 -mx-8 px-8 py-6 mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Campaign Calendar</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Campaign Calendar</h1>
           <p className="text-muted-foreground mt-1">Plan your newsletter campaigns across the year</p>
         </div>
         <div className="flex items-center gap-2">
@@ -44,6 +45,7 @@ export default function CampaignCalendar() {
           <span className="font-semibold text-lg min-w-16 text-center">{year}</span>
           <Button variant="outline" size="icon" onClick={() => setYear(y => y + 1)}><ChevronRight className="w-4 h-4" /></Button>
         </div>
+      </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

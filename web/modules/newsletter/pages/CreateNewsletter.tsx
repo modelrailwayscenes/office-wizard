@@ -74,6 +74,11 @@ export default function CreateNewsletter() {
 
   return (
     <div className="p-8 bg-background min-h-full animate-fade-in">
+      <div className="border-b border-border bg-card/50 -mx-8 px-8 py-6 mb-8">
+        <h1 className="text-2xl font-semibold text-foreground">Create Newsletter</h1>
+        <p className="text-muted-foreground mt-1">Guided builder for campaign-ready newsletters</p>
+      </div>
+
       {/* Progress */}
       <div className="mb-8">
         <div className="flex items-center gap-1 mb-6">

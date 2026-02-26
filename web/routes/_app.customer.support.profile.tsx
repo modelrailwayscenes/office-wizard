@@ -26,7 +26,7 @@ const tabs = [
   { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/customer/support/settings/integrations" },
   { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/customer/support/settings/triage" },
   { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/customer/support/settings/ai" },
-  { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/customer/support/settings/templates" },
+  { id: "templates",    label: "Playbooks & Batching",   icon: FileText,     path: "/customer/support/settings/templates" },
   { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/customer/support/settings/alerts" },
   { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/customer/support/settings/security" },
   { id: "advanced",     label: "Advanced",               icon: SettingsIcon, path: "/customer/support/settings/advanced" },

@@ -11,7 +11,7 @@ import {
 
 const notifications = [
   { id: "triage-refresh", title: "Triage queue refreshed", detail: "New conversations are ready for review.", level: "info" },
-  { id: "template-sync", title: "Template import complete", detail: "Customer support templates are up to date.", level: "success" },
+  { id: "template-sync", title: "Playbook import complete", detail: "Customer support playbooks are up to date.", level: "success" },
 ];
 
 export function RefinedNotificationCenter() {

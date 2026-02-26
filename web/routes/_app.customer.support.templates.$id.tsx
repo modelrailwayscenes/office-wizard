@@ -76,7 +76,7 @@ function parseJsonArray(raw: string | undefined): string[] | null {
   }
 }
 
-export default function EditTemplate() {
+export default function EditPlaybook() {
   const { id } = useParams();
   const navigate = useNavigate();
   const editorRef = useRef<MDXEditorMethods>(null);
@@ -129,11 +129,11 @@ export default function EditTemplate() {
       id: id!,
     } as any,
     onSuccess: () => {
-      toast.success("Template updated successfully");
+      toast.success("Playbook updated successfully");
     },
     onError: (error: unknown) => {
       const msg = error instanceof Error ? error.message : "Validation failed";
-      toast.error(`Failed to update template: ${msg}`);
+      toast.error(`Failed to update playbook: ${msg}`);
     },
   });
 
@@ -165,14 +165,14 @@ export default function EditTemplate() {
 
   const handleDelete = async () => {
     if (!id) return;
-    if (!confirm("Are you sure you want to delete this template?")) return;
+    if (!confirm("Are you sure you want to delete this playbook?")) return;
 
     try {
       await deleteTemplate({ id } as any);
-      toast.success("Template deleted");
+      toast.success("Playbook deleted");
       navigate("/customer/support/templates");
     } catch {
-      toast.error("Failed to delete template");
+      toast.error("Failed to delete playbook");
     }
   };
 

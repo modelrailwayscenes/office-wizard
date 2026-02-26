@@ -27,7 +27,7 @@ const tabs = [
   { id: "users",      label: "Users",                 icon: UsersIcon,    path: "/customer/support/settings/users" },
   { id: "triage",     label: "Triage & Workflow",      icon: Layers,      path: "/customer/support/settings/triage" },
   { id: "ai",         label: "AI & Automation",        icon: Sparkles,    path: "/customer/support/settings/ai" },
-  { id: "templates",  label: "Templates & Batching",   icon: FileText,    path: "/customer/support/settings/templates" },
+  { id: "templates",  label: "Playbooks & Batching",   icon: FileText,    path: "/customer/support/settings/templates" },
   { id: "security",   label: "Security & Compliance",  icon: Shield,      path: "/customer/support/settings/security" },
 ];
 
@@ -423,8 +423,8 @@ export default function AIAutomationSettings() {
             </SettingRow>
 
             <SettingRow
-              label="Track Template Performance"
-              description="Monitor which response templates generate the best outcomes"
+              label="Track Playbook Performance"
+              description="Monitor which response playbooks generate the best outcomes"
             >
               <Switch checked disabled />
             </SettingRow>

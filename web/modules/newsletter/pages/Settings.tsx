@@ -97,14 +97,16 @@ export default function Settings() {
 
   return (
     <div className="p-8 bg-background min-h-full animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
+      <div className="border-b border-border bg-card/50 -mx-8 px-8 py-6 mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
           <p className="text-muted-foreground mt-1">Configure your newsletter builder</p>
         </div>
         <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium gap-2">
           <Save className="w-4 h-4" /> Save All
         </Button>
+      </div>
       </div>
 
       <Tabs defaultValue="company" className="space-y-6">

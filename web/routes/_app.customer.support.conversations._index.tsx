@@ -16,7 +16,6 @@ import {
   DrawerContent,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +37,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useGlobalAction, useFindOne, useFindMany, useFindFirst, useUser } from "@gadgetinc/react";
 import { useConversationsListQuery, useInvalidateConversations } from "@/hooks/useConversationsQuery";
 import { toast } from "sonner";
-import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, MessageSquare, Layers, FileText, PenLine, Settings, LayoutDashboard, CircleHelp, ShieldAlert, UserX } from "lucide-react";
+import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, Layers, FileText, PenLine, Settings, LayoutDashboard, CircleHelp, ShieldAlert, UserX } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { format } from "date-fns";
@@ -671,10 +670,6 @@ export default function ConversationsIndex() {
 
         <StatusBar />
 
-        {/* Content - Resizable list + detail on desktop */}
-        <div className="flex-1 flex min-h-0 px-0 pb-0">
-          <ResizablePanelGroup direction="horizontal" className="flex-1">
-            <ResizablePanel defaultSize={50} minSize={30} className="min-w-0">
         <div className="px-8 pb-8 h-full overflow-auto">
           <div className="mt-6">
             <ListSectionHeader
@@ -1147,52 +1142,8 @@ export default function ConversationsIndex() {
             </div>
           )}
         </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle className="bg-muted data-[panel-group-direction=vertical]:hidden" />
-            <ResizablePanel defaultSize={50} minSize={30} className="hidden lg:block min-w-0">
-              {/* Desktop: inline detail panel */}
-              <div className="h-full overflow-auto border-l border-border bg-card/30">
-                {!selectedConversationId ? (
-                  <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-muted-foreground p-8">
-                    <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
-                    <p className="text-sm font-medium">Select a conversation</p>
-                    <p className="text-xs mt-1">Click a row to view details</p>
-                  </div>
-                ) : (
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold text-foreground">Conversation Details</h2>
-                      <Button variant="ghost" size="icon" onClick={handleCloseDrawer} className="text-muted-foreground hover:text-foreground">
-                        <X className="h-5 w-5" />
-                      </Button>
-                    </div>
-                    <ConversationDetailContent
-                      conversationData={conversationData}
-                      messagesData={messagesData}
-                      latestAiComment={latestAiComment}
-                      fetchingConversation={fetchingConversation}
-                      fetchingMessages={fetchingMessages}
-                      fetchingAiComments={fetchingAiComments}
-                      conversationError={conversationError || null}
-                      markNotCustomerLoading={markNotCustomerLoading}
-                      formatDateTime={formatDateTime}
-                      titleCaseEnum={titleCaseEnum}
-                      onMarkNotCustomer={() => setMarkNotCustomerDialogOpen(true)}
-                      conversationId={selectedConversationId!}
-                      onRefresh={async () => {
-                        invalidateConversations();
-                        setLastRefreshedAt(new Date().toISOString());
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </div>
 
-        {/* Conversation Details Drawer - Mobile only (Vaul Drawer, hidden on lg via wrapper) */}
-        <div className="lg:hidden">
+        {/* Conversation Details Drawer */}
         <Drawer open={drawerOpen} onOpenChange={(open) => !open && handleCloseDrawer()} direction="right">
           <DrawerContent direction="right" hideHandle className="w-full sm:max-w-2xl bg-card border-border overflow-y-auto p-0">
             <div className="border-b border-border bg-card/50 px-6 py-5 sticky top-0 z-10">
@@ -1230,7 +1181,6 @@ export default function ConversationsIndex() {
             </div>
           </DrawerContent>
         </Drawer>
-        </div>
 
         <AlertDialog
           open={markNotCustomerDialogOpen}

@@ -15,7 +15,7 @@ const tabs = [
   { id: "users",        label: "Users",                  icon: UsersIcon,    path: "/customer/support/settings/users" },
   { id: "triage",       label: "Triage & Workflow",      icon: Layers,       path: "/customer/support/settings/triage" },
   { id: "ai",           label: "AI & Automation",        icon: Sparkles,     path: "/customer/support/settings/ai" },
-  { id: "templates",    label: "Templates & Batching",   icon: FileText,     path: "/customer/support/settings/templates" },
+  { id: "templates",    label: "Playbooks & Batching",   icon: FileText,     path: "/customer/support/settings/templates" },
   { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/customer/support/settings/security" },
 ];
 
@@ -524,22 +524,22 @@ export default function SettingsSummaryPage() {
             scope="override"
           />
 
-          {/* Templates & Batching */}
+          {/* Playbooks & Batching */}
           <SettingsBlock
             icon={FileText}
-            title="Templates & Batching"
-            description="Response templates and batch operations"
+            title="Playbooks & Batching"
+            description="Response playbooks and batch operations"
             path="/customer/support/settings/templates"
             healthTone={templatesTone}
             statusLabel={hasTemplates ? "Healthy" : "Needs attention"}
             details={
               hasTemplates
-                ? [`Last modified: ${timeAgo(lastTemplateAt)}`, "Templates configured"]
-                : ["No templates created yet", "Add templates to speed up responses"]
+                ? [`Last modified: ${timeAgo(lastTemplateAt)}`, "Playbooks configured"]
+                : ["No playbooks created yet", "Add playbooks to speed up responses"]
             }
-            ctaLabel="Manage templates"
+            ctaLabel="Manage playbooks"
             lastUpdatedAt={lastTemplateAt}
-            emptyGuidance={hasTemplates ? undefined : ["Create at least one response template", "Add signatures for consistency"]}
+            emptyGuidance={hasTemplates ? undefined : ["Create at least one response playbook", "Add signatures for consistency"]}
             scope="module"
           />
 

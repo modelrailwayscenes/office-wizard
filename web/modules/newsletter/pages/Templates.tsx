@@ -13,8 +13,10 @@ import {
 export default function Templates() {
   return (
     <div className="p-8 bg-background min-h-full animate-fade-in">
-      <h1 className="text-3xl font-bold mb-2 text-foreground">Templates</h1>
-      <p className="text-muted-foreground mb-8">Pre-built newsletter layouts ready to customize</p>
+      <div className="border-b border-border bg-card/50 -mx-8 px-8 py-6 mb-8">
+        <h1 className="text-2xl font-semibold mb-2 text-foreground">Templates</h1>
+        <p className="text-muted-foreground">Pre-built newsletter layouts ready to customize</p>
+      </div>
 
       <Carousel
         opts={{ align: "start", loop: true }}

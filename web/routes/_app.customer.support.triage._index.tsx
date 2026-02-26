@@ -199,7 +199,7 @@ export default function TriageLandingPage() {
             type: "tracking",
             label: "Tracking Requests",
             emailCount: 7,
-            aiSuggestion: "Send tracking template to all",
+            aiSuggestion: "Send tracking playbook to all",
             estimatedTimeSaved: 12,
             emails: [
               {
@@ -278,7 +278,7 @@ export default function TriageLandingPage() {
             type: "product_question",
             label: "Product Availability",
             emailCount: 4,
-            aiSuggestion: "Send stock update template",
+            aiSuggestion: "Send stock update playbook",
             estimatedTimeSaved: 6,
             emails: [],
           },

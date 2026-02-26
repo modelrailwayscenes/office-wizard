@@ -39,8 +39,8 @@ export default function Analytics() {
 
   return (
     <div className="p-8 bg-background min-h-full animate-fade-in">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
+      <div className="border-b border-border bg-card/50 -mx-8 px-8 py-6 mb-8">
+        <h1 className="text-2xl font-semibold text-foreground">Analytics</h1>
         <p className="text-muted-foreground mt-1">Track newsletter performance and revenue impact</p>
       </div>
 
