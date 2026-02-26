@@ -25,6 +25,7 @@ import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
 import { ListSectionHeader } from "@/components/ListSectionHeader";
 import { ConversationActionPanel } from "@/components/ConversationActionPanel";
 import { formatSlaLabel, inferSlaState, slaStateToBadge } from "@/lib/sla";
+import { evaluateDraftEligibility } from "@/lib/draftEligibility";
 import {
   Mail,
   Clock,
@@ -448,6 +449,13 @@ export default function TriageQueuePage() {
               : c.currentPriorityBand === "medium"
                 ? "P3"
                 : "P4";
+          const eligibility = evaluateDraftEligibility({
+            selectedPlaybookId: c.selectedPlaybook?.id,
+            selectedPlaybookConfidence: c.selectedPlaybookConfidence,
+            isVerifiedCustomer: c.isVerifiedCustomer,
+            shopifyOrderNumbers: c.shopifyOrderNumbers,
+            primaryCustomerEmail: c.primaryCustomerEmail,
+          });
 
           return {
             id: emailId,
@@ -461,6 +469,8 @@ export default function TriageQueuePage() {
             originalBody: primaryMsg?.bodyPreview || "",
             aiResponse: c.aiDraftContent || "",
             hasDraft: !!c.aiDraftContent,
+            draftEligible: eligibility.eligible,
+            draftEligibilityReason: eligibility.reasons[0] || undefined,
             status: "pending" as const,
           };
         })

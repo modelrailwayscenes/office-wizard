@@ -54,6 +54,8 @@ import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { CustomerSupportSidebar } from "@/components/CustomerSupportSidebar";
 import { ListSectionHeader } from "@/components/ListSectionHeader";
 import { formatSlaLabel, inferSlaState, slaStateToBadge } from "@/lib/sla";
+import { evaluateDraftEligibility } from "@/lib/draftEligibility";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // ── Main Page ───────────────────────────────────────────────────────
 export default function ConversationsIndex() {
@@ -95,6 +97,24 @@ export default function ConversationsIndex() {
   const [{ data: teamUsers }] = useFindMany(api.user, {
     first: 200,
     select: { id: true, email: true, emailVerified: true } as any,
+  });
+  const [{ data: selectedConversationRows }] = useFindMany(api.conversation, {
+    pause: selectedConversationIds.length === 0,
+    filter: { id: { in: selectedConversationIds } } as any,
+    first: Math.max(selectedConversationIds.length, 1),
+    select: {
+      id: true,
+      subject: true,
+      selectedPlaybook: { id: true, scenarioKey: true, name: true, requiredDataJson: true },
+      selectedPlaybookConfidence: true,
+      isVerifiedCustomer: true,
+      shopifyOrderNumbers: true,
+      shopifyOrderContext: true,
+      primaryCustomerEmail: true,
+      primaryCustomerName: true,
+      orderValue: true,
+      playbookSelectionMetaJson: true,
+    } as any,
   });
 
   const setTelemetryEvent = (event: Omit<PageTelemetry, "at">) => {
@@ -466,6 +486,39 @@ export default function ConversationsIndex() {
   const allVisibleSelected =
     visibleConversationIds.length > 0 &&
     visibleConversationIds.every((id) => selectedConversationIds.includes(id));
+  const draftEligibilitySummary = useMemo(() => {
+    const rows = (selectedConversationRows as any[] | undefined) || [];
+    if (rows.length === 0) return { eligible: 0, ineligible: 0, blocked: [] as Array<{ id: string; subject: string; reason: string; hint?: string }> };
+    let eligible = 0;
+    let ineligible = 0;
+    const blocked: Array<{ id: string; subject: string; reason: string; hint?: string }> = [];
+    for (const row of rows) {
+      const eligibility = evaluateDraftEligibility({
+        selectedPlaybookId: row?.selectedPlaybook?.id,
+        selectedPlaybookConfidence: row?.selectedPlaybookConfidence,
+        isVerifiedCustomer: row?.isVerifiedCustomer,
+        shopifyOrderNumbers: row?.shopifyOrderNumbers,
+        primaryCustomerEmail: row?.primaryCustomerEmail,
+        primaryCustomerName: row?.primaryCustomerName,
+        orderValue: row?.orderValue,
+        selectedPlaybookRequiredDataJson: row?.selectedPlaybook?.requiredDataJson,
+        playbookSelectionMetaJson: row?.playbookSelectionMetaJson,
+        shopifyOrderContext: row?.shopifyOrderContext,
+      });
+      if (eligibility.eligible) {
+        eligible++;
+      } else {
+        ineligible++;
+        blocked.push({
+          id: row?.id,
+          subject: row?.subject || row?.id || "Unknown conversation",
+          reason: eligibility.reasons[0] || "Policy blocked",
+          hint: eligibility.hints[0],
+        });
+      }
+    }
+    return { eligible, ineligible, blocked };
+  }, [selectedConversationRows]);
 
   const toggleSelectConversation = (conversationId: string, checked: boolean) => {
     setSelectedConversationIds((prev) =>
@@ -500,12 +553,53 @@ export default function ConversationsIndex() {
 
   const handleBulkGenerateDrafts = async () => {
     if (selectedConversationIds.length === 0) return;
+    const rows = (selectedConversationRows as any[] | undefined) || [];
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const ineligible: Array<{ id: string; subject: string; reason: string }> = [];
+    const eligibleIds: string[] = [];
+
     for (const conversationId of selectedConversationIds) {
+      const row = byId.get(conversationId);
+      const eligibility = evaluateDraftEligibility({
+        selectedPlaybookId: row?.selectedPlaybook?.id,
+        selectedPlaybookConfidence: row?.selectedPlaybookConfidence,
+        isVerifiedCustomer: row?.isVerifiedCustomer,
+        shopifyOrderNumbers: row?.shopifyOrderNumbers,
+        primaryCustomerEmail: row?.primaryCustomerEmail,
+        primaryCustomerName: row?.primaryCustomerName,
+        orderValue: row?.orderValue,
+        selectedPlaybookRequiredDataJson: row?.selectedPlaybook?.requiredDataJson,
+        playbookSelectionMetaJson: row?.playbookSelectionMetaJson,
+        shopifyOrderContext: row?.shopifyOrderContext,
+      });
+      if (!eligibility.eligible) {
+        ineligible.push({
+          id: conversationId,
+          subject: row?.subject || conversationId,
+          reason: `${eligibility.reasons[0] || "Policy blocked"}${eligibility.hints[0] ? ` — ${eligibility.hints[0]}` : ""}`,
+        });
+      } else {
+        eligibleIds.push(conversationId);
+      }
+    }
+
+    if (ineligible.length > 0) {
+      toast.warning(
+        `Skipped ${ineligible.length} ineligible conversation(s): ${ineligible
+          .slice(0, 2)
+          .map((x) => `${x.subject} (${x.reason})`)
+          .join(" • ")}${ineligible.length > 2 ? " • ..." : ""}`
+      );
+    }
+    if (eligibleIds.length === 0) {
+      return;
+    }
+    for (const conversationId of eligibleIds) {
       await generateDraft({ conversationId, regenerate: true } as any);
     }
     invalidateConversations();
     setLastRefreshedAt(new Date().toISOString());
-    setSelectedConversationIds([]);
+    setSelectedConversationIds((prev) => prev.filter((id) => !eligibleIds.includes(id)));
   };
 
   const handleRefreshList = async () => {
@@ -666,6 +760,40 @@ export default function ConversationsIndex() {
                 <span className="text-sm font-medium text-foreground">
                   {selectedConversationIds.length} selected
                 </span>
+                <span className="text-xs text-muted-foreground">
+                  Draft policy: {draftEligibilitySummary.eligible} eligible
+                  {draftEligibilitySummary.ineligible > 0
+                    ? ` • ${draftEligibilitySummary.ineligible} blocked`
+                    : ""}
+                </span>
+                {draftEligibilitySummary.ineligible > 0 ? (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground">
+                        Why blocked?
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-96 bg-card border-border">
+                      <div className="space-y-2">
+                        <div className="text-xs font-semibold text-foreground">Blocked by draft policy</div>
+                        <div className="space-y-1 max-h-56 overflow-auto">
+                          {draftEligibilitySummary.blocked.slice(0, 8).map((b) => (
+                            <div key={b.id} className="rounded-md border border-border bg-muted/40 px-2 py-1.5">
+                              <div className="text-[11px] font-medium text-foreground truncate">{b.subject}</div>
+                              <div className="text-[11px] text-muted-foreground">{b.reason}</div>
+                              {b.hint ? <div className="text-[10px] text-amber-500 mt-0.5">{b.hint}</div> : null}
+                            </div>
+                          ))}
+                          {draftEligibilitySummary.blocked.length > 8 ? (
+                            <div className="text-[10px] text-muted-foreground">
+                              +{draftEligibilitySummary.blocked.length - 8} more blocked conversation(s)
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                ) : null}
 
                 {canAssign && (
                   <>

@@ -21,6 +21,8 @@ interface BatchEmail {
   originalBody: string;
   aiResponse: string;
   hasDraft: boolean;
+  draftEligible?: boolean;
+  draftEligibilityReason?: string;
   status: "pending" | "sending" | "sent" | "error";
 }
 
@@ -123,10 +125,17 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
     () => selectedIds.filter((id) => !(selectedDraftsMap[id] || "").trim()).length,
     [selectedDraftsMap, selectedIds]
   );
+  const selectedIneligible = useMemo(() => {
+    const byId = new Map(emails.map((e) => [e.id, e]));
+    return selectedIds
+      .map((id) => byId.get(id))
+      .filter((e): e is BatchEmail => Boolean(e) && e?.draftEligible === false);
+  }, [emails, selectedIds]);
+  const selectedIneligibleCount = selectedIneligible.length;
   const canSend =
     !loading &&
     selectedIds.length > 0 &&
-    (!safeModeEnabled || (ackReadyToSend && selectedMissingDraftCount === 0));
+    (!safeModeEnabled || (ackReadyToSend && selectedMissingDraftCount === 0 && selectedIneligibleCount === 0));
 
   const openEmail = emails.find((e) => e.id === openEmailId) || emails[0];
 
@@ -267,14 +276,28 @@ export default function BatchReviewModal(props: BatchReviewModalProps) {
             ) : (
               <span className="text-xs text-emerald-500">All selected drafts are ready.</span>
             )}
+            {selectedIneligibleCount > 0 ? (
+              <span className="text-xs text-red-400">
+                Ineligible to send: {selectedIneligibleCount}
+              </span>
+            ) : null}
             <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
               <Checkbox
                 checked={ackReadyToSend}
                 onCheckedChange={(v) => setAckReadyToSend(!!v)}
-                disabled={selectedMissingDraftCount > 0}
+                disabled={selectedMissingDraftCount > 0 || selectedIneligibleCount > 0}
               />
               I reviewed and approve these drafts for send
             </label>
+            {selectedIneligibleCount > 0 ? (
+              <div className="basis-full text-[11px] text-muted-foreground">
+                {selectedIneligible
+                  .slice(0, 3)
+                  .map((e) => `${e.originalSubject || "Untitled"}: ${e.draftEligibilityReason || "Policy blocked"}`)
+                  .join(" • ")}
+                {selectedIneligibleCount > 3 ? " • ..." : ""}
+              </div>
+            ) : null}
           </div>
         )}
 
