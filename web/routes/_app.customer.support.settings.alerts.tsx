@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { SettingsButtonGroup } from "@/components/SettingsButtonGroup";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
+import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
 
 const tabs = [
   { id: "summary",      label: "Summary",               icon: User2,        path: "/customer/support/settings/summary" },
@@ -240,6 +241,9 @@ export default function AlertsSettings() {
               <p className="text-sm text-muted-foreground mt-1">
                 Configure when and how you get notified
               </p>
+              <div className="mt-2">
+                <SettingsScopePill scope="global" />
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <SettingsButtonGroup

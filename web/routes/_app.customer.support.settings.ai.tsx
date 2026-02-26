@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { SettingsButtonGroup } from "@/components/SettingsButtonGroup";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
+import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
 import {
   User2, Users as UsersIcon, Link as LinkIcon, Layers, Sparkles,
   FileText, Bell, Shield, Settings as SettingsIcon,
@@ -236,6 +237,9 @@ export default function AIAutomationSettings() {
               <p className="text-sm text-muted-foreground mt-1">
                 Configure AI models and automation behaviour
               </p>
+              <div className="mt-2">
+                <SettingsScopePill scope="override" />
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <SettingsButtonGroup

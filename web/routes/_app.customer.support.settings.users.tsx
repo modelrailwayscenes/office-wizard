@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { toast } from "sonner";
+import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
 
 const userSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -274,6 +275,9 @@ export default function TeamPage() {
               <p className="text-sm text-muted-foreground mt-1">
                 {showDeleted ? "Manage deleted users and restore them if needed" : "Manage users and their roles"}
               </p>
+              <div className="mt-2">
+                <SettingsScopePill scope="global" />
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Button

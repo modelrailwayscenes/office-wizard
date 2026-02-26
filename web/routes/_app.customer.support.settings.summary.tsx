@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { HEALTH_TONE_STYLES, HealthTone, timeAgo, isStaleByHours } from "@/components/healthStatus";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
+import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
 
 const tabs = [
   { id: "summary",      label: "Summary",                icon: User2,        path: "/customer/support/settings/summary" },
@@ -93,6 +94,7 @@ function SettingsBlock({
   ctaLabel,
   lastUpdatedAt,
   emptyGuidance,
+  scope,
 }: {
   icon: React.ElementType;
   title: string;
@@ -104,6 +106,7 @@ function SettingsBlock({
   ctaLabel?: string;
   lastUpdatedAt?: string | Date | null;
   emptyGuidance?: string[];
+  scope?: "global" | "module" | "override" | "personal" | "admin";
 }) {
   const tone = healthTone || "healthy";
   const toneStyle = HEALTH_TONE_STYLES[tone];
@@ -118,6 +121,11 @@ function SettingsBlock({
             <Icon className="h-5 w-5 text-primary" />
           </div>
           <div>
+            {scope && (
+              <div className="mb-1">
+                <SettingsScopePill scope={scope} />
+              </div>
+            )}
             <h3 className="text-lg font-semibold text-foreground">{title}</h3>
             <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
           </div>
@@ -346,6 +354,7 @@ export default function SettingsSummaryPage() {
                 Live health snapshot of sync, queue, and draft workload
               </p>
             </div>
+            <SettingsScopePill scope="global" />
             {msError && (
               <RouterLink to="/customer/support/settings/integrations" className="text-xs font-medium text-primary hover:text-primary/80">
                 Fix Microsoft connection
@@ -423,6 +432,7 @@ export default function SettingsSummaryPage() {
               user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : "Name not set",
             ]}
             ctaLabel="Manage profile"
+            scope="personal"
           />
 
           {/* Users */}
@@ -438,6 +448,7 @@ export default function SettingsSummaryPage() {
               "Manage roles and permissions",
             ]}
             ctaLabel="Manage users"
+            scope="global"
           />
 
           {/* Integrations */}
@@ -463,6 +474,7 @@ export default function SettingsSummaryPage() {
                 ? undefined
                 : ["Connect a Microsoft mailbox", "Run a manual sync to verify access"]
             }
+            scope="global"
           />
 
           {/* Triage & Workflow */}
@@ -485,6 +497,7 @@ export default function SettingsSummaryPage() {
             ctaLabel="Configure triage rules"
             lastUpdatedAt={lastTriagedAt}
             emptyGuidance={config?.autoTriageEnabled ? undefined : ["Enable auto-triage", "Set SLA targets and triage schedule"]}
+            scope="override"
           />
 
           {/* AI & Automation */}
@@ -508,6 +521,7 @@ export default function SettingsSummaryPage() {
             ctaLabel="Configure AI"
             lastUpdatedAt={lastAiAt}
             emptyGuidance={config?.autoSendGlobalEnabled ? undefined : ["Enable AI automation", "Select a model and confidence threshold"]}
+            scope="override"
           />
 
           {/* Templates & Batching */}
@@ -526,6 +540,7 @@ export default function SettingsSummaryPage() {
             ctaLabel="Manage templates"
             lastUpdatedAt={lastTemplateAt}
             emptyGuidance={hasTemplates ? undefined : ["Create at least one response template", "Add signatures for consistency"]}
+            scope="module"
           />
 
           {/* Alerts & Notifications */}
@@ -552,6 +567,7 @@ export default function SettingsSummaryPage() {
                 ? undefined
                 : ["Enable notifications", "Choose at least one alert channel"]
             }
+            scope="global"
           />
 
           {/* Security & Compliance */}
@@ -563,6 +579,7 @@ export default function SettingsSummaryPage() {
             healthTone="healthy"
             details={["Configure security policies", "Review audit logs", "Manage access controls"]}
             ctaLabel="Review security"
+            scope="global"
           />
 
           {/* Advanced */}
@@ -574,6 +591,7 @@ export default function SettingsSummaryPage() {
             healthTone="healthy"
             details={["Developer settings", "System configuration", "Debug options"]}
             ctaLabel="Open advanced settings"
+            scope="admin"
           />
         </div>
         </div>

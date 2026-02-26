@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { SettingsButtonGroup } from "@/components/SettingsButtonGroup";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
+import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
 
 const tabs = [
   { id: "summary",      label: "Summary",                icon: User2,        path: "/customer/support/settings/summary" },
@@ -261,6 +262,9 @@ export default function SecuritySettings() {
             <div>
               <h1 className="text-2xl font-semibold text-foreground">Security & Compliance</h1>
               <p className="text-sm text-muted-foreground mt-1">Data protection, access control, and audit settings</p>
+              <div className="mt-2">
+                <SettingsScopePill scope="global" />
+              </div>
             </div>
             <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>

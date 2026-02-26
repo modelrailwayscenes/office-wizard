@@ -16,6 +16,7 @@ import {
   Menu,
   LogOut,
   Settings,
+  Wrench,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { RefinedModuleSwitcher } from "@/components/RefinedModuleSwitcher";
@@ -127,6 +128,12 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
   };
 
   const activeModule = modules.find((mod) => isModuleActive(mod)) ?? modules[0];
+  const roleKeys = Array.isArray(user?.roleList)
+    ? user.roleList
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
   const searchItems = useMemo(
     () => [
       ...modules.map((mod) => ({
@@ -164,8 +171,19 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
         group: "Quick Actions",
         path: "/marketing/newsletter",
       },
+      ...(isAdmin
+        ? [
+            {
+              id: "route-admin-maintenance",
+              label: "Admin Maintenance",
+              description: "Office Wizard",
+              group: "Quick Actions",
+              path: "/admin/maintenance",
+            },
+          ]
+        : []),
     ],
-    []
+    [isAdmin]
   );
 
   return (
@@ -237,6 +255,15 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
                     <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
+
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/maintenance" className="cursor-pointer">
+                      <Wrench className="mr-2 h-4 w-4" />
+                      <span>Admin Maintenance</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuSeparator />
 

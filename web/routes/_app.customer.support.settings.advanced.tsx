@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
+import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
         {/* UPDATEDC*/}
 const tabs = [
   { id: "summary",      label: "Summary",               icon: User2,        path: "/customer/support/settings/summary" },
@@ -232,6 +233,9 @@ function AdvancedSettings() {
             <div>
               <h1 className="text-2xl font-semibold text-foreground">Advanced</h1>
               <p className="text-sm text-muted-foreground mt-1">Localisation, backups, performance, and developer options</p>
+              <div className="mt-2">
+                <SettingsScopePill scope="admin" />
+              </div>
             </div>
             <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>

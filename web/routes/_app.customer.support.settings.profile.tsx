@@ -27,6 +27,7 @@ import {
   UserCircle, Lock, Accessibility, Sun, Moon, Monitor,
 } from "lucide-react";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
+import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -318,6 +319,9 @@ export default function ProfilePage() {
               <p className="text-sm text-muted-foreground mt-1">
                 Manage your profile and personal preferences
               </p>
+              <div className="mt-2">
+                <SettingsScopePill scope="personal" />
+              </div>
             </div>
             <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>

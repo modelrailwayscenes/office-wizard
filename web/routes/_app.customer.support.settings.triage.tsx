@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { SettingsButtonGroup } from "@/components/SettingsButtonGroup";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
+import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
 import { toast } from "sonner";
 import {
   Layers, GitBranch, Target, Workflow,
@@ -287,6 +288,9 @@ export default function TriageSettings() {
               <p className="text-sm text-muted-foreground mt-1">
                 Configure how emails are prioritised and processed
               </p>
+              <div className="mt-2">
+                <SettingsScopePill scope="override" />
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <SettingsButtonGroup

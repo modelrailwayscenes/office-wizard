@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
+import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
 import {
   User2,
   Users,
@@ -427,6 +428,9 @@ export default function IntegrationsSettings() {
             <div>
               <h1 className="text-2xl font-semibold text-foreground">Integrations</h1>
               <p className="text-sm text-muted-foreground mt-1">Connect your email and third-party services</p>
+              <div className="mt-2">
+                <SettingsScopePill scope="global" />
+              </div>
             </div>
             <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>
