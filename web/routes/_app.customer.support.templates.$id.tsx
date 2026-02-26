@@ -65,6 +65,17 @@ function formatEnumValue(value: string): string {
     .join(" ");
 }
 
+function parseJsonArray(raw: string | undefined): string[] | null {
+  if (!raw || !raw.trim()) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter((v): v is string => typeof v === "string");
+  } catch {
+    return null;
+  }
+}
+
 export default function EditTemplate() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -128,6 +139,9 @@ export default function EditTemplate() {
 
   const bodyText = watch("template.bodyText") as string | undefined;
   const signatureField = watch("template.signature") as any;
+  const safetyLevel = watch("template.safetyLevel") as string | undefined;
+  const doNotSayJson = watch("template.doNotSayJson") as string | undefined;
+  const requiredDataJson = watch("template.requiredDataJson") as string | undefined;
 
   const signatureItems = useMemo(() => {
     return (signatures ?? []).map((s: any) => ({
@@ -248,6 +262,26 @@ export default function EditTemplate() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  const doNotSay = parseJsonArray(doNotSayJson);
+                  const requiredData = parseJsonArray(requiredDataJson);
+                  if (doNotSay === null) {
+                    toast.error("Do not say must be valid JSON array.");
+                    return;
+                  }
+                  if (requiredData === null) {
+                    toast.error("Required data checks must be valid JSON array.");
+                    return;
+                  }
+                  if (safetyLevel === "risky") {
+                    if ((doNotSay || []).length === 0) {
+                      toast.error("Risky playbooks require at least one 'Do not say' constraint.");
+                      return;
+                    }
+                    if ((requiredData || []).length === 0) {
+                      toast.error("Risky playbooks require at least one required data check.");
+                      return;
+                    }
+                  }
                   void submit();
                 }}
                 className="space-y-4"
@@ -334,6 +368,11 @@ export default function EditTemplate() {
                       </Select>
                     )}
                   />
+                  {safetyLevel === "risky" ? (
+                    <p className="mt-2 text-xs text-amber-500">
+                      Risky playbooks require explicit do-not-say guidance and required-data checks before saving.
+                    </p>
+                  ) : null}
                 </div>
 
                 <div>

@@ -258,8 +258,32 @@ export const run = async (context: any) => {
               subject: true,
               aiDraftContent: true,
               aiGeneratedResponse: true,
+              selectedPlaybook: { id: true, safetyLevel: true, name: true } as any,
             },
           });
+
+          const playbookSafetyLevel = (conversation as any)?.selectedPlaybook?.safetyLevel;
+          if (playbookSafetyLevel === "risky") {
+            await api.internal.conversation.update(convId, {
+              batchOperation: { _link: batchOp.id },
+              batchResultStatus: "error",
+            });
+            await writeBatchComment({
+              conversationId: convId,
+              batchOperationId: batchOp.id,
+              status: "error",
+              content:
+                "Batch send blocked by policy: selected playbook has safety level 'risky'.",
+              error: "Risky playbook requires manual review/approval before send",
+            });
+            errorCount++;
+            results.push({
+              conversationId: convId,
+              status: "error",
+              error: "Blocked by safety policy (risky playbook)",
+            });
+            break;
+          }
 
           const responseBody = conversation.aiDraftContent || conversation.aiGeneratedResponse;
 

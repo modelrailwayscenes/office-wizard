@@ -12,7 +12,7 @@ import type { ActionOptions } from "gadget-server";
 // ---------------------------------------------------------------------------
 
 export const run: ActionRun = async ({ logger, api, params }) => {
-  const { quarantineId, addSenderToAllowlist = false } = params as any;
+  const { quarantineId, addSenderToAllowlist = false, approvalReason } = params as any;
 
   if (!quarantineId) throw new Error("quarantineId is required");
 
@@ -108,6 +108,9 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   await api.emailQuarantine.update(quarantineId, {
     status: "approved",
     approvedAt: new Date(),
+    classificationReason: approvalReason
+      ? `approved: ${String(approvalReason).trim()}`
+      : undefined,
   } as any);
 
   // ── Optionally allowlist the sender ──────────────────────────────────────
@@ -142,6 +145,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
 export const params = {
   quarantineId: { type: "string" },
   addSenderToAllowlist: { type: "boolean" },
+  approvalReason: { type: "string" },
 };
 
 export const options: ActionOptions = {

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   LayoutDashboard,
   CircleHelp,
@@ -55,6 +56,8 @@ export default function QuarantinePage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [approveReason, setApproveReason] = useState("");
+  const [allowlistSender, setAllowlistSender] = useState(false);
 
   const [{ data: rawQuarantine, fetching }, refresh] = useFindMany(api.emailQuarantine, {
     sort: { receivedAt: "Descending" },
@@ -87,8 +90,14 @@ export default function QuarantinePage() {
 
   const handleApprove = async (itemId: string) => {
     try {
-      await approveQuarantinedEmail({ quarantineId: itemId, addSenderToAllowlist: false });
+      await approveQuarantinedEmail({
+        quarantineId: itemId,
+        addSenderToAllowlist: allowlistSender,
+        approvalReason: approveReason.trim() || "manually approved",
+      });
       toast.success("Email approved");
+      setAllowlistSender(false);
+      setApproveReason("");
       await refresh();
     } catch (err: any) {
       toast.error(err?.message || "Approve failed");
@@ -273,6 +282,37 @@ export default function QuarantinePage() {
                       </div>
                     </div>
 
+                    <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+                          Approval note
+                        </div>
+                        <Textarea
+                          value={approveReason}
+                          onChange={(e) => setApproveReason(e.target.value)}
+                          placeholder="e.g. legitimate customer follow-up"
+                          className="min-h-[70px]"
+                        />
+                        <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                          <Checkbox
+                            checked={allowlistSender}
+                            onCheckedChange={(v) => setAllowlistSender(Boolean(v))}
+                          />
+                          Add sender to allowlist after approval
+                        </label>
+                      </div>
+                      <div className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">
+                          Review hints
+                        </div>
+                        <ul className="space-y-1 text-xs text-muted-foreground list-disc pl-4">
+                          <li>Approve only if sender and intent are legitimate.</li>
+                          <li>Reject spam/phishing and provide a clear reason.</li>
+                          <li>Use allowlist only for trusted recurring senders.</li>
+                        </ul>
+                      </div>
+                    </div>
+
                     <div className="mt-5 flex items-center gap-3">
                       <PrimaryButton
                         onClick={() => handleApprove(selectedItem.id)}
@@ -322,6 +362,24 @@ export default function QuarantinePage() {
             <Label htmlFor="reject-reason" className="text-muted-foreground">
               Reason (optional)
             </Label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                "Spam",
+                "Phishing risk",
+                "Unknown sender",
+                "Not support related",
+                "Duplicate",
+              ].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+                  onClick={() => setRejectReason(preset)}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
             <Textarea
               id="reject-reason"
               value={rejectReason}

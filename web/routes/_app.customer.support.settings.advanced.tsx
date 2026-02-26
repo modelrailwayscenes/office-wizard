@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
 import { useFindFirst, useAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
 import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
+import { evaluateDraftEligibility } from "@/lib/draftEligibility";
         {/* UPDATEDC*/}
 const tabs = [
   { id: "summary",      label: "Summary",               icon: User2,        path: "/customer/support/settings/summary" },
@@ -161,6 +162,12 @@ function AdvancedSettings() {
   const [debugModeEnabled, setDebugModeEnabled]           = useState(false);
   const [telemetryBannersEnabled, setTelemetryBannersEnabled] = useState(true);
   const [ignoreLastSyncAt, setIgnoreLastSyncAt] = useState(false);
+  const [sandboxPlaybookSelected, setSandboxPlaybookSelected] = useState(true);
+  const [sandboxConfidence, setSandboxConfidence] = useState("0.72");
+  const [sandboxVerifiedCustomer, setSandboxVerifiedCustomer] = useState(true);
+  const [sandboxOrderCount, setSandboxOrderCount] = useState("1");
+  const [sandboxRequiredDataJson, setSandboxRequiredDataJson] = useState('["orderId","customerName"]');
+  const [sandboxVariablesJson, setSandboxVariablesJson] = useState('{"orderId":"MRS-12345","customerName":"Jane"}');
 
   // ── Seed from appConfiguration ─────────────────────────────────────────────
   useEffect(() => {
@@ -202,6 +209,35 @@ function AdvancedSettings() {
   const handleBlur = (field: string, value: string, asNumber = false) => async () => {
     await saveConfig({ [field]: asNumber ? Number(value) : value });
   };
+  const sandboxResult = useMemo(() => {
+    const orderCount = Number(sandboxOrderCount || "0");
+    const confidence = Number(sandboxConfidence || "0");
+    const safeVariablesJson = (() => {
+      try {
+        const parsed = JSON.parse(sandboxVariablesJson || "{}");
+        return JSON.stringify({ variables: parsed });
+      } catch {
+        return "{}";
+      }
+    })();
+    return evaluateDraftEligibility({
+      selectedPlaybookId: sandboxPlaybookSelected ? "sandbox_playbook" : null,
+      selectedPlaybookConfidence: Number.isNaN(confidence) ? null : confidence,
+      isVerifiedCustomer: sandboxVerifiedCustomer,
+      shopifyOrderNumbers: Array.from({ length: Math.max(orderCount, 0) }).map((_, i) => `MRS-${12000 + i}`),
+      primaryCustomerEmail: "sandbox@example.com",
+      primaryCustomerName: "Sandbox Customer",
+      selectedPlaybookRequiredDataJson: sandboxRequiredDataJson,
+      playbookSelectionMetaJson: safeVariablesJson,
+    });
+  }, [
+    sandboxPlaybookSelected,
+    sandboxConfidence,
+    sandboxVerifiedCustomer,
+    sandboxOrderCount,
+    sandboxRequiredDataJson,
+    sandboxVariablesJson,
+  ]);
 
   // ── Loading / error ────────────────────────────────────────────────────────
   if (configFetching) {
@@ -426,6 +462,72 @@ function AdvancedSettings() {
                   className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground">
                   View Docs
                 </Button>
+              </div>
+            </div>
+          </Section>
+
+          <Section
+            icon={SettingsIcon}
+            title="Governance Sandbox"
+            description="Simulate draft policy outcomes without changing production records"
+          >
+            <SettingRow label="Playbook selected">
+              <Switch checked={sandboxPlaybookSelected} onCheckedChange={setSandboxPlaybookSelected} />
+            </SettingRow>
+            <SettingRow label="Playbook confidence">
+              <Input
+                value={sandboxConfidence}
+                onChange={(e) => setSandboxConfidence(e.target.value)}
+                className="w-28 bg-muted border-border text-foreground text-center"
+                type="number"
+                step="0.01"
+                min="0"
+                max="1"
+              />
+            </SettingRow>
+            <SettingRow label="Verified customer">
+              <Switch checked={sandboxVerifiedCustomer} onCheckedChange={setSandboxVerifiedCustomer} />
+            </SettingRow>
+            <SettingRow label="Order count in context">
+              <Input
+                value={sandboxOrderCount}
+                onChange={(e) => setSandboxOrderCount(e.target.value)}
+                className="w-24 bg-muted border-border text-foreground text-center"
+                type="number"
+                min="0"
+              />
+            </SettingRow>
+            <div className="px-6 py-4 space-y-3">
+              <div>
+                <Label className="text-sm font-medium text-foreground">Required data JSON</Label>
+                <Input
+                  value={sandboxRequiredDataJson}
+                  onChange={(e) => setSandboxRequiredDataJson(e.target.value)}
+                  className="mt-1 bg-muted border-border text-foreground font-mono text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-foreground">Selection variables JSON</Label>
+                <Input
+                  value={sandboxVariablesJson}
+                  onChange={(e) => setSandboxVariablesJson(e.target.value)}
+                  className="mt-1 bg-muted border-border text-foreground font-mono text-xs"
+                />
+              </div>
+              <div className="rounded-lg border border-border bg-card/60 p-3">
+                <div className="text-sm font-medium text-foreground">
+                  Eligibility: {sandboxResult.eligible ? "PASS" : "BLOCKED"}
+                </div>
+                {sandboxResult.reasons.length > 0 ? (
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Reasons: {sandboxResult.reasons.join(" • ")}
+                  </div>
+                ) : null}
+                {sandboxResult.hints.length > 0 ? (
+                  <div className="mt-1 text-xs text-amber-500">
+                    Hints: {sandboxResult.hints.join(" • ")}
+                  </div>
+                ) : null}
               </div>
             </div>
           </Section>
