@@ -229,6 +229,7 @@ export function classifyShopifyLineItem({
         webhook: {
           orderId: order.id || null,
           lineItemId: lineItem?.id || null,
+          customerEmail: (order as any)?.email || null,
           cancelledAt: order.cancelled_at || null,
           financialStatus: order.financial_status || null,
           fulfillmentStatus: order.fulfillment_status || null,

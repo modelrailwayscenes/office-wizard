@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAction, useFindMany, useGlobalAction, useUser } from "@gadgetinc/react";
 import { format } from "date-fns";
 import { Plus, RefreshCw } from "lucide-react";
@@ -15,6 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 const statusOptions = [
   "queued",
@@ -37,6 +39,28 @@ const displayDate = (value: string | null | undefined) => {
   return format(dt, "dd MMM yyyy, HH:mm");
 };
 
+const parseNotes = (raw: unknown): Record<string, any> => {
+  if (!raw) return {};
+  if (typeof raw === "object") return raw as Record<string, any>;
+  if (typeof raw !== "string") return {};
+  try {
+    return JSON.parse(raw) as Record<string, any>;
+  } catch {
+    return {};
+  }
+};
+
+const getCustomerEmail = (job: any): string => {
+  const notes = parseNotes(job?.notes);
+  return String(
+    notes?.customerEmail ||
+      notes?.webhook?.customerEmail ||
+      notes?.webhook?.orderEmail ||
+      notes?.order?.customerEmail ||
+      ""
+  ).trim();
+};
+
 export default function ProductionSchedulePage() {
   const user = useUser(api, { select: { id: true, email: true } }) as any;
   const [search, setSearch] = useState("");
@@ -49,6 +73,8 @@ export default function ProductionSchedulePage() {
   const [newManualDialogOpen, setNewManualDialogOpen] = useState(false);
   const [newManualName, setNewManualName] = useState("");
   const [newManualQty, setNewManualQty] = useState("1");
+  const [emailDraftSubject, setEmailDraftSubject] = useState("");
+  const [emailDraftBody, setEmailDraftBody] = useState("");
 
   const filter = useMemo(() => {
     const clauses: any[] = [];
@@ -127,10 +153,34 @@ export default function ProductionSchedulePage() {
   const [{ fetching: updating }, updateJob] = useAction(api.productionJob.update);
   const [{ fetching: creating }, createJob] = useAction(api.productionJob.create);
   const [{ fetching: runningBulk }, runProductionBatchOperation] = useGlobalAction(api.runProductionBatchOperation);
+  const [{ fetching: generatingMissingNameDraft }, generateMissingNameDraft] = useGlobalAction(
+    api.generateProductionMissingNameDraft
+  );
+  const [{ fetching: reviewingMissingNameEmail }, reviewMissingNameEmail] = useGlobalAction(
+    api.reviewProductionMissingNameEmail
+  );
 
   const jobsData = (jobs as any[] | undefined) || [];
   const allSelected = jobsData.length > 0 && jobsData.every((job) => selectedIds.includes(job.id));
   const selectedJob = jobsData.find((j) => j.id === selectedJobId) || null;
+  const selectedJobNotes = parseNotes(selectedJob?.notes);
+  const selectedJobEmailWorkflow = (selectedJobNotes?.emailWorkflow || {}) as Record<string, any>;
+  const selectedJobCustomerEmail = selectedJob ? getCustomerEmail(selectedJob) : "";
+  const selectedJobMissingStationName = Boolean(
+    selectedJob &&
+      selectedJob.source === "shopify_order" &&
+      !String(selectedJob.stationOrText || "").trim()
+  );
+
+  useEffect(() => {
+    if (!selectedJob) {
+      setEmailDraftSubject("");
+      setEmailDraftBody("");
+      return;
+    }
+    setEmailDraftSubject(String(selectedJobEmailWorkflow?.draftSubject || ""));
+    setEmailDraftBody(String(selectedJobEmailWorkflow?.draftBody || ""));
+  }, [selectedJob?.id, selectedJobEmailWorkflow?.draftBody, selectedJobEmailWorkflow?.draftSubject]);
 
   const toggleOne = (id: string, checked: boolean) => {
     setSelectedIds((prev) => (checked ? [...new Set([...prev, id])] : prev.filter((v) => v !== id)));
@@ -182,6 +232,43 @@ export default function ProductionSchedulePage() {
     setNewManualName("");
     setNewManualQty("1");
     await refreshJobs();
+  };
+
+  const handleGenerateMissingNameDraft = async () => {
+    if (!selectedJobId) return;
+    try {
+      const result = await (generateMissingNameDraft as any)({ productionJobId: selectedJobId });
+      setEmailDraftSubject(String(result?.subject || ""));
+      setEmailDraftBody(String(result?.body || ""));
+      toast.success("Draft generated and queued for approval");
+      await refreshJobs();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to generate draft");
+    }
+  };
+
+  const handleReviewMissingNameEmail = async (decision: "approve" | "reject") => {
+    if (!selectedJobId) return;
+    if (decision === "approve" && !emailDraftBody.trim()) {
+      toast.error("Draft body is required before approval");
+      return;
+    }
+    if (decision === "reject") {
+      const confirmed = window.confirm("Mark this draft as not approved?");
+      if (!confirmed) return;
+    }
+    try {
+      await (reviewMissingNameEmail as any)({
+        productionJobId: selectedJobId,
+        decision,
+        subject: emailDraftSubject,
+        body: emailDraftBody,
+      });
+      toast.success(decision === "approve" ? "Email approved and sent" : "Draft marked as not approved");
+      await refreshJobs();
+    } catch (error: any) {
+      toast.error(error?.message || "Unable to complete review action");
+    }
   };
 
   return (
@@ -355,6 +442,7 @@ export default function ProductionSchedulePage() {
                   <TabsTrigger value="job">Job</TabsTrigger>
                   <TabsTrigger value="order">Order</TabsTrigger>
                   <TabsTrigger value="production">Production</TabsTrigger>
+                  <TabsTrigger value="customer_email">Customer Email</TabsTrigger>
                   <TabsTrigger value="activity">Activity</TabsTrigger>
                 </TabsList>
                 <TabsContent value="job" className="space-y-3 mt-4">
@@ -384,6 +472,67 @@ export default function ProductionSchedulePage() {
                   <div>Lines: {selectedJob.textLines || "—"}</div>
                   <div>Colour: {selectedJob.colour || "—"}</div>
                   <div>Batch: {selectedJob.batch?.name || "—"}</div>
+                </TabsContent>
+                <TabsContent value="customer_email" className="space-y-4 mt-4">
+                  {!selectedJobMissingStationName ? (
+                    <div className="text-sm text-muted-foreground">
+                      No approval email is required for this job. This tab is used when station name text is missing on
+                      a Shopify order.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+                        <div className="font-medium text-foreground">Action required: missing station name</div>
+                        <div className="text-muted-foreground mt-1">
+                          Customer email: {selectedJobCustomerEmail || "Not available in order payload"}
+                        </div>
+                        <div className="text-muted-foreground mt-1">
+                          Review status: {String(selectedJobEmailWorkflow?.status || "not_started")}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="text-xs uppercase text-muted-foreground tracking-wide">Email subject</div>
+                        <Input
+                          value={emailDraftSubject}
+                          onChange={(e) => setEmailDraftSubject(e.target.value)}
+                          placeholder="Action needed: station name required..."
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="text-xs uppercase text-muted-foreground tracking-wide">Email draft</div>
+                        <Textarea
+                          value={emailDraftBody}
+                          onChange={(e) => setEmailDraftBody(e.target.value)}
+                          className="min-h-[180px]"
+                          placeholder="Generate a draft, then review and approve."
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={handleGenerateMissingNameDraft}
+                          disabled={generatingMissingNameDraft || reviewingMissingNameEmail}
+                        >
+                          {generatingMissingNameDraft ? "Generating..." : "Generate draft"}
+                        </Button>
+                        <Button
+                          onClick={() => handleReviewMissingNameEmail("approve")}
+                          disabled={generatingMissingNameDraft || reviewingMissingNameEmail || !selectedJobCustomerEmail}
+                        >
+                          {reviewingMissingNameEmail ? "Processing..." : "Approve and send"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleReviewMissingNameEmail("reject")}
+                          disabled={generatingMissingNameDraft || reviewingMissingNameEmail}
+                        >
+                          Do not send
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </TabsContent>
                 <TabsContent value="activity" className="space-y-2 mt-4">
                   {((events as any[] | undefined) || []).length === 0 ? (

@@ -1,11 +1,13 @@
 import { Link, Outlet, useLocation } from "react-router";
-import { CalendarClock, Layers3, ListChecks } from "lucide-react";
+import { CalendarClock, ClipboardList, Layers3, LayoutDashboard, ListChecks } from "lucide-react";
 import { useFindFirst } from "@gadgetinc/react";
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { api } from "../api";
 import { EmptyState } from "@/shared/ui/EmptyState";
 
 const NAV_ITEMS = [
+  { path: "/production/summary", label: "Suite Summary", icon: LayoutDashboard },
+  { path: "/production/schedule-summary", label: "Schedule Summary", icon: ClipboardList },
   { path: "/production", label: "Schedule", icon: CalendarClock },
   { path: "/production/types", label: "Production Types", icon: ListChecks },
   { path: "/production/batches", label: "Batches", icon: Layers3 },
