@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router";
 import { CalendarClock, ClipboardList, Layers3, LayoutDashboard, ListChecks } from "lucide-react";
-import { useFindFirst } from "@gadgetinc/react";
+import { useFindFirst, useFindMany } from "@gadgetinc/react";
 import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 import { api } from "../api";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -18,7 +18,35 @@ export default function ProductionModuleLayout() {
   const [{ data: appConfig, fetching }] = useFindFirst(api.appConfiguration, {
     select: { productionSchedulerEnabled: true } as any,
   });
+  const [{ data: jobsForSidebar }] = useFindMany(api.productionJob, {
+    first: 500,
+    select: {
+      id: true,
+      source: true,
+      status: true,
+      priorityBand: true,
+      stationOrText: true,
+      notes: true,
+    } as any,
+  });
   const enabled = Boolean((appConfig as any)?.productionSchedulerEnabled);
+  const pendingScheduleActions = ((jobsForSidebar as any[] | undefined) || []).filter((job) => {
+    const missingStationName = job?.source === "shopify_order" && !String(job?.stationOrText || "").trim();
+    if (!missingStationName) return false;
+    let workflowStatus = "not_started";
+    try {
+      const notes = typeof job?.notes === "string" ? JSON.parse(job.notes) : (job?.notes || {});
+      workflowStatus = String(notes?.emailWorkflow?.status || "not_started");
+    } catch {
+      workflowStatus = "not_started";
+    }
+    return workflowStatus === "drafted" || workflowStatus === "not_started";
+  }).length;
+  const urgentQueuedCount = ((jobsForSidebar as any[] | undefined) || []).filter((job) => {
+    const status = String(job?.status || "");
+    const priorityBand = String(job?.priorityBand || "");
+    return status === "queued" && (priorityBand === "P0" || priorityBand === "P1");
+  }).length;
 
   if (!fetching && !enabled) {
     return (
@@ -52,7 +80,17 @@ export default function ProductionModuleLayout() {
                 }`}
               >
                 <item.icon className="h-4 w-4 flex-shrink-0" />
-                <span>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
+                {item.path === "/production/schedule-summary" && pendingScheduleActions > 0 ? (
+                  <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                    {pendingScheduleActions}
+                  </span>
+                ) : null}
+                {item.path === "/production" && urgentQueuedCount > 0 ? (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-500">
+                    {urgentQueuedCount}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
