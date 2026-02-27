@@ -29,7 +29,7 @@ export default function AdminMaintenancePage() {
   const [{ fetching: backfilling }, backfillPlaybooks] = useGlobalAction(api.backfillPlaybooks);
   const [{ fetching: replenishing }, runProductionReplenishment] = useGlobalAction(api.runProductionReplenishment);
   const [{ data: appConfig, fetching: configFetching }, refreshConfig] = useFindFirst(api.appConfiguration, {
-    select: { id: true, productionSchedulerEnabled: true } as any,
+    select: { id: true, productionSchedulerEnabled: true, financeModuleEnabled: true } as any,
   });
   const [{ fetching: updatingConfig }, updateConfig] = useAction(api.appConfiguration.update);
 
@@ -69,6 +69,20 @@ export default function AdminMaintenancePage() {
       });
       await refreshConfig();
       toast.success("Production scheduler feature flag updated");
+    } catch (error) {
+      toast.error(`Failed to update flag: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
+  const handleToggleFinanceModule = async () => {
+    if (!appConfig?.id) return;
+    try {
+      await (updateConfig as any)({
+        id: appConfig.id,
+        financeModuleEnabled: !Boolean((appConfig as any).financeModuleEnabled),
+      });
+      await refreshConfig();
+      toast.success("Finance module feature flag updated");
     } catch (error) {
       toast.error(`Failed to update flag: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
@@ -137,6 +151,22 @@ export default function AdminMaintenancePage() {
           </Button>
           <Button variant="outline" onClick={handleRunReplenishment} disabled={replenishing}>
             {replenishing ? "Running..." : "Run Production Replenishment"}
+          </Button>
+        </div>
+      </RefinedCard>
+
+      <RefinedCard className="p-6">
+        <h2 className="text-base font-semibold text-foreground">Finance Module</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Feature flag control for the Finance module visibility in Office Wizard.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={handleToggleFinanceModule}
+            disabled={configFetching || updatingConfig || !appConfig?.id}
+          >
+            {Boolean((appConfig as any)?.financeModuleEnabled) ? "Disable Finance Module" : "Enable Finance Module"}
           </Button>
         </div>
       </RefinedCard>
