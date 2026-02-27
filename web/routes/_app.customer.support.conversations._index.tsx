@@ -1201,7 +1201,19 @@ export default function ConversationsIndex() {
                 <label className="text-xs text-muted-foreground">Reason type</label>
                 <select
                   value={notCustomerReasonType}
-                  onChange={(e) => setNotCustomerReasonType(e.target.value)}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setNotCustomerReasonType(newValue);
+                    if (newValue === "sender_exact") {
+                      setNotCustomerPatternValue(conversationData?.primaryCustomerEmail ?? "");
+                    } else if (newValue === "sender_domain") {
+                      const email = conversationData?.primaryCustomerEmail ?? "";
+                      const atIndex = email.indexOf("@");
+                      setNotCustomerPatternValue(atIndex !== -1 ? `@${email.slice(atIndex + 1)}` : "");
+                    } else {
+                      setNotCustomerPatternValue("");
+                    }
+                  }}
                   className="w-full h-10 rounded-xl border border-input bg-background px-3 text-sm"
                 >
                   <option value="sender_exact">Never allow sender address</option>
