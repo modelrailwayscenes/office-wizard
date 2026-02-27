@@ -9,6 +9,7 @@ function parseTime(value: string): { hours: number; minutes: number } | null {
 export const run: ActionRun = async ({ logger, api }) => {
   const config = await api.appConfiguration.findFirst({
     select: {
+      id: true,
       dailyDigestEnabled: true,
       dailyDigestTime: true,
       lastDailyDigestAt: true,

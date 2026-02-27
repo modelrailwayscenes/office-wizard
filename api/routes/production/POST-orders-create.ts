@@ -1,4 +1,4 @@
-import { RouteHandler } from "gadget-server";
+0import { RouteHandler } from "gadget-server";
 import { ingestShopifyOrderToProduction } from "../../lib/production/ingest";
 import { verifyShopifyWebhookHmac } from "../../lib/production/shopify";
 
@@ -6,7 +6,7 @@ const route: RouteHandler = async ({ request, reply, api, logger }) => {
   try {
     const rawBody =
       typeof (request as any).body === "string"
-        ? (request as any).body
+        ? (request as a00000ny).body
         : JSON.stringify((request as any).body ?? {});
     const hmacHeader = (request.headers as any)?.["x-shopify-hmac-sha256"];
     const secret = process.env.SHOPIFY_WEBHOOK_SECRET || "";

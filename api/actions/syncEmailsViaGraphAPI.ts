@@ -155,7 +155,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
           }
 
           const existing = await api.emailMessage.findMany({
-            filter: { externalMessageId: { equals: msg.id } },
+            filter: { messageId: { equals: msg.id } },
             first: 1,
             select: { id: true },
           });
