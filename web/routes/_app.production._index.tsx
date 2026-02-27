@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAction, useFindMany, useGlobalAction, useUser } from "@gadgetinc/react";
 import { format } from "date-fns";
 import { Plus, RefreshCw } from "lucide-react";
+import { Link, useLocation } from "react-router";
 import { api } from "../api";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SecondaryButton } from "@/shared/ui/Buttons";
@@ -62,6 +63,7 @@ const getCustomerEmail = (job: any): string => {
 };
 
 export default function ProductionSchedulePage() {
+  const location = useLocation();
   const user = useUser(api, { select: { id: true, email: true } }) as any;
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -161,7 +163,31 @@ export default function ProductionSchedulePage() {
   );
 
   const jobsData = (jobs as any[] | undefined) || [];
-  const allSelected = jobsData.length > 0 && jobsData.every((job) => selectedIds.includes(job.id));
+  const scheduleView = useMemo(() => {
+    const raw = new URLSearchParams(location.search).get("view");
+    return raw || "all";
+  }, [location.search]);
+  const filteredJobsData = useMemo(() => {
+    if (scheduleView === "all") return jobsData;
+    return jobsData.filter((job) => {
+      const missingStationName = job.source === "shopify_order" && !String(job.stationOrText || "").trim();
+      const workflowStatus = String(parseNotes(job.notes)?.emailWorkflow?.status || "not_started");
+      if (scheduleView === "missing_name_approval") {
+        return missingStationName && workflowStatus === "drafted";
+      }
+      if (scheduleView === "missing_name_draft") {
+        return missingStationName && (!workflowStatus || workflowStatus === "not_started");
+      }
+      if (scheduleView === "on_hold") {
+        return String(job.status || "") === "on_hold";
+      }
+      if (scheduleView === "urgent_queued") {
+        return String(job.status || "") === "queued" && ["P0", "P1"].includes(String(job.priorityBand || ""));
+      }
+      return true;
+    });
+  }, [jobsData, scheduleView]);
+  const allSelected = filteredJobsData.length > 0 && filteredJobsData.every((job) => selectedIds.includes(job.id));
   const selectedJob = jobsData.find((j) => j.id === selectedJobId) || null;
   const selectedJobNotes = parseNotes(selectedJob?.notes);
   const selectedJobEmailWorkflow = (selectedJobNotes?.emailWorkflow || {}) as Record<string, any>;
@@ -181,12 +207,18 @@ export default function ProductionSchedulePage() {
     setEmailDraftSubject(String(selectedJobEmailWorkflow?.draftSubject || ""));
     setEmailDraftBody(String(selectedJobEmailWorkflow?.draftBody || ""));
   }, [selectedJob?.id, selectedJobEmailWorkflow?.draftBody, selectedJobEmailWorkflow?.draftSubject]);
+  useEffect(() => {
+    setSelectedIds([]);
+    setStatusFilter("all");
+    setPriorityFilter("all");
+    setSearch("");
+  }, [scheduleView]);
 
   const toggleOne = (id: string, checked: boolean) => {
     setSelectedIds((prev) => (checked ? [...new Set([...prev, id])] : prev.filter((v) => v !== id)));
   };
   const toggleAll = (checked: boolean) => {
-    setSelectedIds(checked ? jobsData.map((j) => j.id) : []);
+    setSelectedIds(checked ? filteredJobsData.map((j) => j.id) : []);
   };
 
   const runBulkUpdate = async () => {
@@ -291,6 +323,19 @@ export default function ProductionSchedulePage() {
       />
 
       <div className="px-8 pb-8 pt-4 overflow-auto h-full">
+        {scheduleView !== "all" && (
+          <div className="mb-4 rounded-xl border border-border bg-card/60 px-4 py-3 text-sm text-muted-foreground">
+            <span className="text-foreground font-medium">Filtered view:</span>{" "}
+            {scheduleView === "missing_name_approval" && "Needs approval (missing station name)"}
+            {scheduleView === "missing_name_draft" && "Needs draft (missing station name)"}
+            {scheduleView === "on_hold" && "On hold jobs"}
+            {scheduleView === "urgent_queued" && "Urgent queued jobs"}
+            {" · "}
+            <Link to="/production" className="text-primary hover:underline">
+              Clear filter
+            </Link>
+          </div>
+        )}
         <div className="flex flex-wrap gap-3 mb-4">
           <Input
             value={search}
@@ -385,17 +430,21 @@ export default function ProductionSchedulePage() {
                 </tr>
               </thead>
               <tbody>
-                {jobsData.length === 0 ? (
+                {filteredJobsData.length === 0 ? (
                   <tr>
                     <td colSpan={11} className="px-4 py-10">
                       <EmptyState
                         title="No production jobs"
-                        description="Use manual create or ingest new orders via webhook."
+                        description={
+                          scheduleView === "all"
+                            ? "Use manual create or ingest new orders via webhook."
+                            : "No jobs match this summary filter right now."
+                        }
                       />
                     </td>
                   </tr>
                 ) : (
-                  jobsData.map((job) => (
+                  filteredJobsData.map((job) => (
                     <tr key={job.id} className="border-b border-border/60 hover:bg-muted/20">
                       <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
