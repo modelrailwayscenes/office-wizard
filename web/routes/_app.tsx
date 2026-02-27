@@ -74,19 +74,22 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
   console.log('🔍 DEBUG LOADER - Array.isArray(user.roleList):', Array.isArray(user?.roleList));
   
   let productionSchedulerEnabled = false;
+  let financeModuleEnabled = false;
   try {
     const appConfig = await api.appConfiguration.findFirst({
-      select: { productionSchedulerEnabled: true } as any,
+      select: { productionSchedulerEnabled: true, financeModuleEnabled: true } as any,
     });
     productionSchedulerEnabled = Boolean((appConfig as any)?.productionSchedulerEnabled);
+    financeModuleEnabled = Boolean((appConfig as any)?.financeModuleEnabled);
   } catch (error) {
-    console.error("Failed to load productionSchedulerEnabled, defaulting to disabled", error);
+    console.error("Failed to load module feature flags, defaulting to disabled", error);
   }
 
   return {
     session: { user },
     features: {
       productionScheduler: productionSchedulerEnabled,
+      financeModule: financeModuleEnabled,
     },
   };
 };
@@ -110,6 +113,7 @@ const BASE_MODULES = [
 export default function AppLayout({ loaderData }: Route.ComponentProps) {
   const { session } = loaderData;
   const productionEnabled = Boolean((loaderData as any)?.features?.productionScheduler);
+  const financeEnabled = Boolean((loaderData as any)?.features?.financeModule);
   const location = useLocation();
   const navigate = useNavigate();
   const user = session.user;
@@ -117,9 +121,10 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
     () =>
       BASE_MODULES.filter((mod) => {
         if (mod.id === "production") return productionEnabled;
+        if (mod.id === "finance") return financeEnabled;
         return true;
       }),
-    [productionEnabled]
+    [financeEnabled, productionEnabled]
   );
 
   useEffect(() => {

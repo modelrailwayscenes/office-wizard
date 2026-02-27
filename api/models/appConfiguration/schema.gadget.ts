@@ -312,6 +312,13 @@ export const schema: GadgetModel = {
       filterIndex: false,
       searchIndex: false,
     },
+    financeModuleEnabled: {
+      type: "boolean",
+      default: false,
+      storageKey: "financeModuleEnabled",
+      filterIndex: false,
+      searchIndex: false,
+    },
     focusedInboxOnly: {
       type: "boolean",
       default: true,
@@ -836,6 +843,42 @@ export const schema: GadgetModel = {
       storageKey: "0qKMelUhIgjD",
       filterIndex: false,
       searchIndex: false,
+    },
+    trueLayerAccessToken: {
+      type: "encryptedString",
+      storageKey: "trueLayerAccessToken",
+    },
+    trueLayerClientId: {
+      type: "string",
+      storageKey: "trueLayerClientId",
+    },
+    trueLayerClientSecret: {
+      type: "encryptedString",
+      storageKey: "trueLayerClientSecret",
+    },
+    trueLayerConnectionStatus: {
+      type: "string",
+      default: "disconnected",
+      validations: { regex: ["^(disconnected|connected|error)$"] },
+      storageKey: "trueLayerConnectionStatus",
+    },
+    trueLayerLastSyncedAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "trueLayerLastSyncedAt",
+    },
+    trueLayerRedirectUri: {
+      type: "string",
+      storageKey: "trueLayerRedirectUri",
+    },
+    trueLayerRefreshToken: {
+      type: "encryptedString",
+      storageKey: "trueLayerRefreshToken",
+    },
+    trueLayerTokenExpiresAt: {
+      type: "dateTime",
+      includeTime: true,
+      storageKey: "trueLayerTokenExpiresAt",
     },
     workflowBatchProcessing: {
       type: "boolean",
