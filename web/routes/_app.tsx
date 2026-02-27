@@ -204,7 +204,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
         ? [
             {
               id: "route-admin-maintenance",
-              label: "Admin Maintenance",
+              label: "Admin Settings",
               description: "Office Wizard",
               group: "Quick Actions",
               path: "/admin/maintenance",
@@ -289,7 +289,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
                   <DropdownMenuItem asChild>
                     <Link to="/admin/maintenance" className="cursor-pointer">
                       <Wrench className="mr-2 h-4 w-4" />
-                      <span>Admin Maintenance</span>
+                      <span>Admin Settings</span>
                     </Link>
                   </DropdownMenuItem>
                 )}

@@ -19,12 +19,6 @@ const tabs = [
   { id: "security",     label: "Security & Compliance",  icon: Shield,       path: "/customer/support/settings/security" },
 ];
 
-const adminTabs = [
-  { id: "integrations", label: "Integrations",           icon: LinkIcon,     path: "/customer/support/settings/integrations" },
-  { id: "alerts",       label: "Alerts & Notifications", icon: Bell,         path: "/customer/support/settings/alerts" },
-  { id: "advanced",     label: "Advanced Settings",      icon: SettingsIcon, path: "/customer/support/settings/advanced" },
-];
-
 function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
   const roleKeys = Array.isArray(user?.roleList)
     ? user.roleList
@@ -56,28 +50,6 @@ function Sidebar({ currentPath, user }: { currentPath: string; user: any }) {
           </RouterLink>
         ))}
 
-        {isAdmin && (
-          <>
-            <div className="my-4 border-t border-border" />
-            <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Admin only</p>
-            </div>
-            {adminTabs.map(({ id, label, icon: Icon, path }) => (
-              <RouterLink
-                key={id}
-                to={path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  currentPath === path
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
-                <Icon className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm">{label}</span>
-              </RouterLink>
-            ))}
-          </>
-        )}
       </nav>
     </div>
   );
