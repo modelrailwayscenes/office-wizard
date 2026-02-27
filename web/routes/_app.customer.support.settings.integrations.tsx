@@ -490,10 +490,17 @@ export default function IntegrationsSettings() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
                   <h3 className="text-xl font-semibold text-foreground">Microsoft 365</h3>
-                  <UnifiedBadge
-                    type={config?.microsoftConnectionStatus || "disconnected"}
-                    label={getStatusLabel(config?.microsoftConnectionStatus)}
-                  />
+                  {config?.microsoftConnectionStatus === "error" ? (
+                    <div className="flex items-center gap-1.5">
+                      <UnifiedBadge type="error" label="ERROR" />
+                      <UnifiedBadge type="disconnected" label="NOT CONNECTED" />
+                    </div>
+                  ) : (
+                    <UnifiedBadge
+                      type={config?.microsoftConnectionStatus || "disconnected"}
+                      label={getStatusLabel(config?.microsoftConnectionStatus)}
+                    />
+                  )}
                 </div>
 
                 {msConnected ? (
@@ -608,10 +615,17 @@ export default function IntegrationsSettings() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
                   <h3 className="text-xl font-semibold text-foreground">Shopify</h3>
-                  <UnifiedBadge
-                    type={config?.shopifyConnectionStatus || "disconnected"}
-                    label={getStatusLabel(config?.shopifyConnectionStatus)}
-                  />
+                  {config?.shopifyConnectionStatus === "error" ? (
+                    <div className="flex items-center gap-1.5">
+                      <UnifiedBadge type="error" label="ERROR" />
+                      <UnifiedBadge type="disconnected" label="NOT CONNECTED" />
+                    </div>
+                  ) : (
+                    <UnifiedBadge
+                      type={config?.shopifyConnectionStatus || "disconnected"}
+                      label={getStatusLabel(config?.shopifyConnectionStatus)}
+                    />
+                  )}
                 </div>
                 <p className="text-muted-foreground text-sm">
                   {shopifyConnected
@@ -713,10 +727,17 @@ export default function IntegrationsSettings() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
                   <h3 className="text-xl font-semibold text-foreground">monday.com</h3>
-                  <UnifiedBadge
-                    type={config?.mondayConnectionStatus || "disconnected"}
-                    label={getStatusLabel(config?.mondayConnectionStatus)}
-                  />
+                  {config?.mondayConnectionStatus === "error" ? (
+                    <div className="flex items-center gap-1.5">
+                      <UnifiedBadge type="error" label="ERROR" />
+                      <UnifiedBadge type="disconnected" label="NOT CONNECTED" />
+                    </div>
+                  ) : (
+                    <UnifiedBadge
+                      type={config?.mondayConnectionStatus || "disconnected"}
+                      label={getStatusLabel(config?.mondayConnectionStatus)}
+                    />
+                  )}
                 </div>
                 <p className="text-muted-foreground text-sm">
                   {mondayConnected
