@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -403,21 +404,32 @@ export default function ProductionSchedulePage() {
         </DrawerContent>
       </Drawer>
 
-      <Drawer open={newManualDialogOpen} onOpenChange={setNewManualDialogOpen}>
-        <DrawerContent className="max-w-lg mx-auto p-6">
-          <DrawerTitle>Create manual production job</DrawerTitle>
-          <div className="space-y-3 mt-4">
-            <Input value={newManualName} onChange={(e) => setNewManualName(e.target.value)} placeholder="Product name" />
-            <Input value={newManualQty} onChange={(e) => setNewManualQty(e.target.value)} type="number" min="1" placeholder="Quantity" />
-            <div className="flex gap-2">
+      <Dialog open={newManualDialogOpen} onOpenChange={setNewManualDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create manual production job</DialogTitle>
+            <DialogDescription>
+              Add a one-off production item to the queue for tracking and prioritisation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <div className="text-sm font-medium text-foreground">Product name</div>
+              <Input value={newManualName} onChange={(e) => setNewManualName(e.target.value)} placeholder="e.g. Station Name Board" />
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-sm font-medium text-foreground">Quantity</div>
+              <Input value={newManualQty} onChange={(e) => setNewManualQty(e.target.value)} type="number" min="1" placeholder="1" />
+            </div>
+            <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setNewManualDialogOpen(false)}>Cancel</Button>
               <Button onClick={handleCreateManualJob} disabled={creating}>
                 {creating ? "Creating..." : "Create job"}
               </Button>
             </div>
           </div>
-        </DrawerContent>
-      </Drawer>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
