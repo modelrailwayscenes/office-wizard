@@ -43,6 +43,12 @@ export const run: ActionRun = async ({ params, logger, api, connections }) => {
     let result = await testConnection(config.microsoftAccessToken);
 
     if (result.success) {
+      await api.appConfiguration.update(config.id, {
+        microsoftConnectionStatus: "connected",
+        microsoftLastError: null,
+        microsoftLastVerifiedAt: new Date(),
+        connectedMailbox: result.email || null,
+      } as any);
       logger.info({ verified: true }, "Microsoft connection verified successfully");
       return { connected: true, email: result.email };
     }
@@ -77,24 +83,58 @@ export const run: ActionRun = async ({ params, logger, api, connections }) => {
         result = await testConnection(updatedConfig.microsoftAccessToken);
 
         if (result.success) {
+          await api.appConfiguration.update(config.id, {
+            microsoftConnectionStatus: "connected",
+            microsoftLastError: null,
+            microsoftLastVerifiedAt: new Date(),
+            connectedMailbox: result.email || null,
+          } as any);
           logger.info({ verified: true, refreshed: true }, "Microsoft connection verified after token refresh");
           return { connected: true, email: result.email, refreshed: true };
         }
 
+        await api.appConfiguration.update(config.id, {
+          microsoftConnectionStatus: "error",
+          microsoftLastError: "Token invalid and refresh failed",
+          microsoftLastVerifiedAt: new Date(),
+        } as any);
         logger.error({ connectionFailed: true }, "Connection still failed after token refresh");
         return { connected: false, error: "Token invalid and refresh failed" };
       } catch (refreshError) {
+        await api.appConfiguration.update(config.id, {
+          microsoftConnectionStatus: "error",
+          microsoftLastError: `Token refresh error: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`,
+          microsoftLastVerifiedAt: new Date(),
+        } as any);
         logger.error({ refreshFailed: true }, "Error refreshing token");
         return { connected: false, error: `Token refresh error: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}` };
       }
     }
 
     // Other error
+    await api.appConfiguration.update(config.id, {
+      microsoftConnectionStatus: "error",
+      microsoftLastError: `API call failed: ${result.statusText}`,
+      microsoftLastVerifiedAt: new Date(),
+    } as any);
     logger.error({ apiFailed: true }, "Microsoft Graph API call failed");
     return { connected: false, error: `API call failed: ${result.statusText}` };
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    try {
+      const config = await api.appConfiguration.findFirst({ select: { id: true } as any });
+      if (config?.id) {
+        await api.appConfiguration.update(config.id, {
+          microsoftConnectionStatus: "error",
+          microsoftLastError: message,
+          microsoftLastVerifiedAt: new Date(),
+        } as any);
+      }
+    } catch {
+      // no-op: do not mask original verification error
+    }
     logger.error({ error }, "Error verifying Microsoft connection");
-    return { connected: false, error: error instanceof Error ? error.message : String(error) };
+    return { connected: false, error: message };
   }
 };
 

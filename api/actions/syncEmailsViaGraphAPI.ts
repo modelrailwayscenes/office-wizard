@@ -72,16 +72,19 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   );
   const maxPages = Math.min(Math.max(Number((params as any)?.maxPages ?? 10), 1), 50);
   const inboxFolderId = String((config as any)?.defaultInboxFolder || "Inbox").trim() || "Inbox";
+  const forceAllMessages = Boolean((params as any)?.forceAllMessages ?? false);
   const lastSyncAt = config.lastSyncAt;
   const syncCursorOverlapMinutes = 5;
 
   let totalFetched = 0;
+  let inboundFetched = 0;
+  let sentFetched = 0;
   let messagesCreated = 0;
   let messagesDuplicate = 0;
   let conversationsCreated = 0;
   let conversationsUpdated = 0;
   let errors = 0;
-  let newestSeenAt: Date | null = null;
+  let newestInboundSeenAt: Date | null = null;
 
   const selectFields = [
     "id",
@@ -106,6 +109,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     allowConversationCreate,
     countUnread,
     sourceLabel,
+    isInboundSource,
   }: {
     folderId: string;
     orderByField: "receivedDateTime" | "sentDateTime";
@@ -113,6 +117,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     allowConversationCreate: boolean;
     countUnread: boolean;
     sourceLabel: string;
+    isInboundSource: boolean;
   }) => {
     const queryParams: Record<string, string> = {
       $top: String(top),
@@ -152,6 +157,11 @@ export const run: ActionRun = async ({ logger, api, params }) => {
       const payload = await response.json();
       const messages: any[] = payload?.value || [];
       totalFetched += messages.length;
+      if (isInboundSource) {
+        inboundFetched += messages.length;
+      } else {
+        sentFetched += messages.length;
+      }
 
       logger.info({ count: messages.length, page: page + 1, folder: sourceLabel }, "Fetched messages from Graph API");
 
@@ -190,10 +200,10 @@ export const run: ActionRun = async ({ logger, api, params }) => {
             orderByField === "sentDateTime"
               ? (msg.sentDateTime || msg.receivedDateTime)
               : (msg.receivedDateTime || msg.sentDateTime);
-          if (receivedDateTime) {
+          if (isInboundSource && receivedDateTime) {
             const parsed = new Date(receivedDateTime);
-            if (!Number.isNaN(parsed.getTime()) && (!newestSeenAt || parsed > newestSeenAt)) {
-              newestSeenAt = parsed;
+            if (!Number.isNaN(parsed.getTime()) && (!newestInboundSeenAt || parsed > newestInboundSeenAt)) {
+              newestInboundSeenAt = parsed;
             }
           }
 
@@ -363,22 +373,11 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     }
   }
 
-  const fetchedBeforePrimaryInboxSync = totalFetched;
-  await syncFolder({
-    folderId: inboxFolderId,
-    orderByField: "receivedDateTime",
-    filterConditions: inboxFilterConditions,
-    allowConversationCreate: true,
-    countUnread: true,
-    sourceLabel: inboxFolderId,
-  });
-
-  // Recovery fallback: if configured folder returns zero rows, query all messages.
-  // This helps when mailbox rules move support emails out of the configured folder.
-  if (totalFetched === fetchedBeforePrimaryInboxSync) {
+  const fetchedBeforePrimaryInboxSync = inboundFetched;
+  if (forceAllMessages) {
     logger.warn(
-      { inboxFolderId, inboxFilterConditions },
-      "Primary inbox folder returned zero messages; attempting all-messages fallback"
+      { inboxFilterConditions },
+      "Force-all-messages mode enabled; bypassing configured inbox folder"
     );
     await syncFolder({
       folderId: "__ALL_MESSAGES__",
@@ -386,8 +385,37 @@ export const run: ActionRun = async ({ logger, api, params }) => {
       filterConditions: inboxFilterConditions,
       allowConversationCreate: true,
       countUnread: true,
-      sourceLabel: "AllMessagesFallback",
+      sourceLabel: "ForcedAllMessages",
+      isInboundSource: true,
     });
+  } else {
+    await syncFolder({
+      folderId: inboxFolderId,
+      orderByField: "receivedDateTime",
+      filterConditions: inboxFilterConditions,
+      allowConversationCreate: true,
+      countUnread: true,
+      sourceLabel: inboxFolderId,
+      isInboundSource: true,
+    });
+
+    // Recovery fallback: if configured folder returns zero rows, query all messages.
+    // This helps when mailbox rules move support emails out of the configured folder.
+    if (inboundFetched === fetchedBeforePrimaryInboxSync) {
+      logger.warn(
+        { inboxFolderId, inboxFilterConditions },
+        "Primary inbox folder returned zero messages; attempting all-messages fallback"
+      );
+      await syncFolder({
+        folderId: "__ALL_MESSAGES__",
+        orderByField: "receivedDateTime",
+        filterConditions: inboxFilterConditions,
+        allowConversationCreate: true,
+        countUnread: true,
+        sourceLabel: "AllMessagesFallback",
+        isInboundSource: true,
+      });
+    }
   }
 
   const earliestConversation = await api.conversation.findMany({
@@ -409,15 +437,16 @@ export const run: ActionRun = async ({ logger, api, params }) => {
       allowConversationCreate: false,
       countUnread: false,
       sourceLabel: "SentItems",
+      isInboundSource: false,
     });
   } else {
     logger.info("No conversations found; skipping Sent Items sync");
   }
 
-  if (messagesCreated > 0 || messagesDuplicate > 0 || totalFetched > 0) {
-    // Persist a forward-moving cursor based on what Graph returned, with fallback to now.
+  if (inboundFetched > 0) {
+    // Persist a forward-moving cursor based only on inbound sources.
     await api.appConfiguration.update(config.id, {
-      lastSyncAt: newestSeenAt ?? now,
+      lastSyncAt: newestInboundSeenAt ?? now,
     });
   }
 
@@ -429,6 +458,8 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     conversationsUpdated,
     errors,
     totalFetched,
+    inboundFetched,
+    sentFetched,
   };
 
   logger.info(result, "Sync completed");
@@ -440,6 +471,7 @@ export const params = {
   top: { type: "number" },
   unreadOnly: { type: "boolean" },
   ignoreLastSyncAt: { type: "boolean" },
+  forceAllMessages: { type: "boolean" },
   maxPages: { type: "number" },
 };
 

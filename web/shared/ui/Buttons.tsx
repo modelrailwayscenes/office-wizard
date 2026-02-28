@@ -7,7 +7,7 @@ export function PrimaryButton({
 }: React.ComponentProps<typeof Button>) {
   return (
     <Button
-      className={cn("bg-primary hover:bg-primary/90 text-primary-foreground font-medium", className)}
+      className={cn("bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md shadow-primary/20 transition-all duration-200 active:scale-[0.98]", className)}
       {...props}
     />
   );
@@ -20,7 +20,7 @@ export function SecondaryButton({
   return (
     <Button
       variant="outline"
-      className={cn("border-border hover:bg-muted", className)}
+      className={cn("border-border hover:bg-muted transition-all duration-200", className)}
       {...props}
     />
   );
@@ -31,7 +31,7 @@ export function GhostButton({
   ...props
 }: React.ComponentProps<typeof Button>) {
   return (
-    <Button variant="ghost" className={cn("text-muted-foreground hover:text-foreground", className)} {...props} />
+    <Button variant="ghost" className={cn("text-muted-foreground hover:text-foreground transition-all duration-200", className)} {...props} />
   );
 }
 
@@ -43,7 +43,7 @@ export function DangerButton({
     <Button
       variant="outline"
       className={cn(
-        "border-red-500/30 text-red-300 hover:bg-red-500/10 hover:text-red-200",
+        "border-red-500/30 text-red-300 hover:bg-red-500/10 hover:text-red-200 transition-all duration-200",
         className
       )}
       {...props}

@@ -105,10 +105,30 @@ export const run: ActionRun = async ({ logger, api, params, session, context }) 
 
   const expiresAt = new Date(Date.now() + expiresInSec * 1000);
 
+  let connectedMailbox: string | null = null;
+  try {
+    const meResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (meResponse.ok) {
+      const me = await meResponse.json();
+      connectedMailbox = (me?.mail || me?.userPrincipalName || null) as string | null;
+    }
+  } catch {
+    // Best-effort mailbox identity; keep OAuth success path even if this probe fails.
+  }
+
   await api.appConfiguration.update(config.id, {
     microsoftAccessToken: accessToken,
     microsoftRefreshToken: refreshToken ?? null,
     microsoftTokenExpiresAt: expiresAt,
+    microsoftConnectionStatus: "connected",
+    microsoftLastError: null,
+    microsoftLastVerifiedAt: new Date(),
+    connectedMailbox,
   });
 
   if (session) {

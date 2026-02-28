@@ -12,7 +12,7 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <div className={`border-b border-border bg-card/50 px-8 py-6 ${className}`}>
+    <div className={`border-b border-border bg-background/80 backdrop-blur-md px-8 py-6 sticky top-0 z-30 ${className}`}>
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
