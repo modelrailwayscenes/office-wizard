@@ -88,13 +88,15 @@ export const loader = async ({ context, request }: Route.LoaderArgs) => {
 
   let productionSchedulerEnabled = false;
   let financeModuleEnabled = false;
+  let plannerModuleEnabled = false;
   try {
     const appConfig = await api.appConfiguration.findFirst({
-      select: { productionSchedulerEnabled: true, financeModuleEnabled: true, ...supportSettingsSelect } as any,
+      select: { productionSchedulerEnabled: true, financeModuleEnabled: true, plannerModuleEnabled: true, ...supportSettingsSelect } as any,
     });
     const settings = resolveSupportSettings(appConfig as any);
     productionSchedulerEnabled = Boolean((appConfig as any)?.productionSchedulerEnabled);
     financeModuleEnabled = Boolean((appConfig as any)?.financeModuleEnabled);
+    plannerModuleEnabled = Boolean((appConfig as any)?.plannerModuleEnabled);
 
     // Enforce session inactivity timeout for non-admin users.
     const now = Date.now();
@@ -124,6 +126,7 @@ export const loader = async ({ context, request }: Route.LoaderArgs) => {
     features: {
       productionScheduler: productionSchedulerEnabled,
       financeModule: financeModuleEnabled,
+      plannerModule: plannerModuleEnabled,
     },
   };
 };
@@ -142,12 +145,14 @@ const BASE_MODULES = [
   { id: "sales",     label: "SHOPIFY",     path: "/sales",     activePaths: ["/sales"] },
   { id: "marketing", label: "MARKETING", path: "/marketing/newsletter", activePaths: ["/marketing", "/marketing/newsletter"] },
   { id: "production", label: "PRODUCTION", path: "/production", activePaths: ["/production"] },
+  { id: "planner", label: "PLANNER", path: "/planner", activePaths: ["/planner"] },
 ];
 
 export default function AppLayout({ loaderData }: Route.ComponentProps) {
   const { session } = loaderData;
   const productionEnabled = Boolean((loaderData as any)?.features?.productionScheduler);
   const financeEnabled = Boolean((loaderData as any)?.features?.financeModule);
+  const plannerEnabled = Boolean((loaderData as any)?.features?.plannerModule);
   const location = useLocation();
   const navigate = useNavigate();
   const user = session.user;
@@ -156,9 +161,10 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
       BASE_MODULES.filter((mod) => {
         if (mod.id === "production") return productionEnabled;
         if (mod.id === "finance") return financeEnabled;
+        if (mod.id === "planner") return plannerEnabled;
         return true;
       }),
-    [financeEnabled, productionEnabled]
+    [financeEnabled, plannerEnabled, productionEnabled]
   );
 
   useEffect(() => {
@@ -233,6 +239,13 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
         description: "Marketing",
         group: "Quick Actions",
         path: "/marketing/newsletter",
+      },
+      {
+        id: "route-planner",
+        label: "Planner Home",
+        description: "Planner",
+        group: "Quick Actions",
+        path: "/planner",
       },
       ...(isAdmin
         ? [

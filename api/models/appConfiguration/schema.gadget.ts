@@ -548,6 +548,13 @@ export const schema: GadgetModel = {
       storageKey: "vZXtNCbEmIoY",
       searchIndex: false,
     },
+    plannerModuleEnabled: {
+      type: "boolean",
+      default: false,
+      storageKey: "plannerModuleEnabled",
+      filterIndex: false,
+      searchIndex: false,
+    },
     prefetchLinks: {
       type: "boolean",
       default: true,

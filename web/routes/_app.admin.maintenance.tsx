@@ -43,6 +43,7 @@ export default function AdminMaintenancePage() {
       id: true,
       productionSchedulerEnabled: true,
       financeModuleEnabled: true,
+      plannerModuleEnabled: true,
       microsoftConnectionStatus: true,
       connectedMailbox: true,
       shopifyConnectionStatus: true,
@@ -143,6 +144,20 @@ export default function AdminMaintenancePage() {
       });
       await refreshConfig();
       toast.success("Finance module feature flag updated");
+    } catch (error) {
+      toast.error(`Failed to update flag: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
+  const handleTogglePlannerModule = async () => {
+    if (!appConfig?.id) return;
+    try {
+      await (updateConfig as any)({
+        id: appConfig.id,
+        plannerModuleEnabled: !Boolean((appConfig as any).plannerModuleEnabled),
+      });
+      await refreshConfig();
+      toast.success("Planner module feature flag updated");
     } catch (error) {
       toast.error(`Failed to update flag: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
@@ -460,7 +475,7 @@ export default function AdminMaintenancePage() {
             <RefinedCard className="p-5">
               <h2 className="text-base font-semibold text-foreground">Module Feature Flags</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Feature flag control for Production Scheduler and Finance modules.
+                Feature flag control for Production Scheduler, Finance, and Planner modules.
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2.5">
                 <Button
@@ -476,6 +491,13 @@ export default function AdminMaintenancePage() {
                   disabled={configFetching || updatingConfig || !appConfig?.id}
                 >
                   {Boolean((appConfig as any)?.financeModuleEnabled) ? "Disable Finance Module" : "Enable Finance Module"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleTogglePlannerModule}
+                  disabled={configFetching || updatingConfig || !appConfig?.id}
+                >
+                  {Boolean((appConfig as any)?.plannerModuleEnabled) ? "Disable Planner Module" : "Enable Planner Module"}
                 </Button>
               </div>
             </RefinedCard>
