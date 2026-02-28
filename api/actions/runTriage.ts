@@ -1,6 +1,7 @@
 // api/actions/runTriage.ts
 
 import type { ActionOptions } from "gadget-server";
+import { resolveSupportSettings, shouldRecordAudit, supportSettingsSelect } from "../lib/supportSettings";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -350,34 +351,21 @@ export const run: ActionRun = async ({ logger, api, params, connections, session
 
   logger.info({ conversationId }, "Starting triage with Shopify integration");
 
-  const config = await api.appConfiguration.findFirst({
-    select: {
-      riskScoring: true,
-      timeSensitivity: true,
-      sentimentAnalysis: true,
-      customerValueScoring: true,
-      ageWeightPointsPerDay: true,
-      manualReviewQueue: true,
-      autoResolveSimple: true,
-      autoSuggestResponses: true,
-      notifyOnP0: true,
-      notifyOnP1: true,
-      notifyOnHighPriority: true,
-    } as any,
-  });
+  const config = await api.appConfiguration.findFirst({ select: supportSettingsSelect as any });
+  const settings = resolveSupportSettings(config as any);
   const scoringConfig = {
-    riskScoring: (config as any)?.riskScoring ?? true,
-    timeSensitivity: (config as any)?.timeSensitivity ?? true,
-    sentimentAnalysis: (config as any)?.sentimentAnalysis ?? true,
+    riskScoring: settings.riskScoring,
+    timeSensitivity: settings.timeSensitivity,
+    sentimentAnalysis: settings.sentimentAnalysis,
   };
-  const customerValueScoring = (config as any)?.customerValueScoring ?? true;
-  const ageWeightPointsPerDay = Number((config as any)?.ageWeightPointsPerDay ?? 0);
-  const manualReviewQueue = (config as any)?.manualReviewQueue ?? true;
-  const autoResolveSimple = (config as any)?.autoResolveSimple ?? false;
-  const autoSuggestResponses = (config as any)?.autoSuggestResponses ?? true;
-  const notifyOnP0 = (config as any)?.notifyOnP0 ?? false;
-  const notifyOnP1 = (config as any)?.notifyOnP1 ?? false;
-  const notifyOnHighPriority = (config as any)?.notifyOnHighPriority ?? false;
+  const customerValueScoring = settings.customerValueScoring;
+  const ageWeightPointsPerDay = settings.ageWeightPointsPerDay;
+  const manualReviewQueue = settings.manualReviewQueue;
+  const autoResolveSimple = settings.autoResolveSimple;
+  const autoSuggestResponses = settings.autoSuggestResponses;
+  const notifyOnP0 = settings.notifyOnP0;
+  const notifyOnP1 = settings.notifyOnP1;
+  const notifyOnHighPriority = settings.notifyOnHighPriority;
 
   // Load conversation
   const convRecords = await api.conversation.findMany({
@@ -534,7 +522,7 @@ export const run: ActionRun = async ({ logger, api, params, connections, session
     (finalBand === "urgent" && (notifyOnP0 || notifyOnHighPriority)) ||
     (finalBand === "high" && (notifyOnP1 || notifyOnHighPriority));
 
-  if (shouldAlert) {
+  if (shouldAlert && shouldRecordAudit(settings, "email_access")) {
     await api.actionLog.create({
       action: "escalated",
       actionDescription: `Priority ${finalBand.toUpperCase()} conversation flagged`,

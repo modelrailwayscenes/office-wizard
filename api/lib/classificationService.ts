@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { api } from "gadget-server";
 import { logger } from "gadget-server";
+import { resolveSupportSettings } from "./supportSettings";
 
 // Type definitions
 export interface EmailContent {
@@ -94,7 +95,10 @@ async function getAppConfiguration(): Promise<any> {
   try {
     const configs = await api.appConfiguration.findMany({ first: 1 });
     if (configs.length > 0) {
-      appConfig = configs[0];
+      appConfig = {
+        ...configs[0],
+        ...resolveSupportSettings(configs[0] as any),
+      };
     } else {
       // Return default configuration
       appConfig = {
@@ -105,7 +109,8 @@ async function getAppConfiguration(): Promise<any> {
         riskKeywords: ["legal", "lawyer", "chargeback", "court", "lawsuit"],
         openaiModel: "gpt-4",
         classificationProvider: "openai",
-        temperature: 0.7
+        temperature: 0.7,
+        ...resolveSupportSettings(null),
       };
     }
     return appConfig;
@@ -120,7 +125,8 @@ async function getAppConfiguration(): Promise<any> {
       riskKeywords: ["legal", "lawyer", "chargeback", "court", "lawsuit"],
       openaiModel: "gpt-4",
       classificationProvider: "openai",
-      temperature: 0.7
+      temperature: 0.7,
+      ...resolveSupportSettings(null),
     };
   }
 }
@@ -589,7 +595,9 @@ export async function classifyEmail(
     logger.info({ subject: emailContent.subject, from: emailContent.fromAddress }, "Starting email classification");
 
     const config = await getAppConfiguration();
-    const provider = config.classificationProvider || "openai";
+    const provider = config.chatgptIntegrationEnabled === false
+      ? "rules_based"
+      : (config.classificationProvider || "openai");
 
     // Try OpenAI classification first (unless rules-based selected)
     let classification: Partial<ClassificationResult>;

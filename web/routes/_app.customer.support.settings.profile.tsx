@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOutletContext, useRevalidator, Link as RouterLink, useLocation, useNavigate } from "react-router";
-import { useAction, useUser } from "@gadgetinc/react";
+import { useAction, useGlobalAction, useUser } from "@gadgetinc/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -166,6 +166,7 @@ export default function ProfilePage() {
   const revalidator = useRevalidator();
 
   const [{ fetching: updatingUser, error: updateError }, updateUser] = useAction(api.user.update);
+  const [{ fetching: changingPassword }, changeOwnPassword] = useGlobalAction(api.changeOwnPassword);
 
   const saveUser = async (fields: Record<string, any>) => {
     if (!user?.id) return;
@@ -550,9 +551,17 @@ export default function ProfilePage() {
             </DialogHeader>
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit(async (values) => {
-                toast.info("Password change requires backend implementation");
-                setIsChangingPassword(false);
-                passwordForm.reset();
+                try {
+                  await (changeOwnPassword as any)({
+                    currentPassword: values.currentPassword,
+                    newPassword: values.newPassword,
+                  });
+                  toast.success("Password updated");
+                  setIsChangingPassword(false);
+                  passwordForm.reset();
+                } catch (error: any) {
+                  toast.error(error?.message || "Failed to change password");
+                }
               })} className="space-y-5 py-2">
                 <FormField
                   control={passwordForm.control}
@@ -596,7 +605,9 @@ export default function ProfilePage() {
                 />
                 <div className="flex justify-end gap-3 pt-6 border-t border-border">
                   <Button type="button" variant="outline" onClick={() => setIsChangingPassword(false)} className="border-border hover:bg-muted hover:text-foreground">Cancel</Button>
-                  <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium">Update Password</Button>
+                  <Button type="submit" disabled={changingPassword} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
+                    {changingPassword ? "Updating..." : "Update Password"}
+                  </Button>
                 </div>
               </form>
             </Form>

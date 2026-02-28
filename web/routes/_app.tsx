@@ -22,12 +22,23 @@ import { useNavigate } from "react-router";
 import { RefinedModuleSwitcher } from "@/components/RefinedModuleSwitcher";
 import { GlobalSearchOverlay } from "@/components/GlobalSearchOverlay";
 import { RefinedNotificationCenter } from "@/components/RefinedNotificationCenter";
+import { isIpAllowedForSupport, resolveSupportSettings, supportSettingsSelect } from "../../api/lib/supportSettings";
 
 export type AuthOutletContext = {
   user: any;
 };
 
-export const loader = async ({ context }: Route.LoaderArgs) => {
+function getClientIp(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return (
+    request.headers.get("x-real-ip") ||
+    request.headers.get("cf-connecting-ip") ||
+    ""
+  ).trim();
+}
+
+export const loader = async ({ context, request }: Route.LoaderArgs) => {
   const { session, api } = context;
   const userRef = session?.get("user");
   if (!userRef) throw redirect("/sign-in");
@@ -68,20 +79,43 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
   
   if (!user) throw redirect("/sign-in");
   
-  console.log('🔍 DEBUG LOADER - user:', user);
-  console.log('🔍 DEBUG LOADER - user.roleList:', user?.roleList);
-  console.log('🔍 DEBUG LOADER - typeof user.roleList:', typeof user?.roleList);
-  console.log('🔍 DEBUG LOADER - Array.isArray(user.roleList):', Array.isArray(user?.roleList));
-  
+  const roleKeys = Array.isArray(user?.roleList)
+    ? user.roleList
+        .map((role: any) => (typeof role === "string" ? role : role?.key))
+        .filter((role: string | undefined): role is string => Boolean(role))
+    : [];
+  const isAdmin = roleKeys.includes("system-admin") || roleKeys.includes("sysadmin");
+
   let productionSchedulerEnabled = false;
   let financeModuleEnabled = false;
   try {
     const appConfig = await api.appConfiguration.findFirst({
-      select: { productionSchedulerEnabled: true, financeModuleEnabled: true } as any,
+      select: { productionSchedulerEnabled: true, financeModuleEnabled: true, ...supportSettingsSelect } as any,
     });
+    const settings = resolveSupportSettings(appConfig as any);
     productionSchedulerEnabled = Boolean((appConfig as any)?.productionSchedulerEnabled);
     financeModuleEnabled = Boolean((appConfig as any)?.financeModuleEnabled);
+
+    // Enforce session inactivity timeout for non-admin users.
+    const now = Date.now();
+    const timeoutMs = Math.max(settings.sessionTimeoutMinutes, 0) * 60 * 1000;
+    const lastSeen = Number(session?.get("ow:lastSeenAt") || 0);
+    if (!isAdmin && timeoutMs > 0 && lastSeen > 0 && now - lastSeen > timeoutMs) {
+      session?.set("user", null);
+      session?.set("ow:lastSeenAt", null);
+      throw redirect("/sign-in");
+    }
+    session?.set("ow:lastSeenAt", now);
+
+    // Enforce IP allowlist for non-admin users.
+    if (!isAdmin && settings.ipWhitelist) {
+      const ip = getClientIp(request);
+      if (!isIpAllowedForSupport(ip, settings.ipWhitelist)) {
+        throw new Response("Access denied from this IP", { status: 403 });
+      }
+    }
   } catch (error) {
+    if (error instanceof Response) throw error;
     console.error("Failed to load module feature flags, defaulting to disabled", error);
   }
 

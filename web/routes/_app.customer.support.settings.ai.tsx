@@ -1,5 +1,5 @@
 import { type MetaFunction, Link as RouterLink, useLocation, useNavigate } from "react-router";
-import { useFindFirst, useAction, useUser } from "@gadgetinc/react";
+import { useFindFirst, useAction, useGlobalAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -117,6 +117,7 @@ export default function AIAutomationSettings() {
   const config = configData as any;
 
   const [{ fetching: updating }, updateConfig] = useAction(api.appConfiguration.update);
+  const [{ fetching: resettingLearning }, resetSupportLearning] = useGlobalAction(api.resetSupportLearning);
 
   // ── Local form state ─────────────────────────────────────────────────────
   const [classificationProvider, setClassificationProvider] = useState("openai");
@@ -408,10 +409,22 @@ export default function AIAutomationSettings() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("Learning data reset — feature coming soon")}
+                onClick={async () => {
+                  const proceed = window.confirm("Reset learning data? This will clear stored AI learning metadata.");
+                  if (!proceed) return;
+                  try {
+                    const result = (await (resetSupportLearning as any)()) as any;
+                    toast.success(
+                      `Learning reset complete: ${result?.clearedConversations ?? 0} conversations, ${result?.deletedAiComments ?? 0} comments`
+                    );
+                  } catch (error: any) {
+                    toast.error(error?.message || "Learning reset failed");
+                  }
+                }}
+                disabled={resettingLearning}
                 className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                Reset
+                {resettingLearning ? "Resetting..." : "Reset"}
               </Button>
             </SettingRow>
           </Section>

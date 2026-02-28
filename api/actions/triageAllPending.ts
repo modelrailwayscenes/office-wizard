@@ -1,4 +1,5 @@
 import type { ActionOptions } from "gadget-server";
+import { resolveSupportSettings, shouldRecordAudit, supportSettingsSelect } from "../lib/supportSettings";
 
 // ---------------------------------------------------------------------------
 // triageAllPending
@@ -19,26 +20,21 @@ export const run: ActionRun = async ({ logger, api, params, session }) => {
   const actorUserId =
     typeof userRef === "string" ? userRef : userRef?._link || userRef?.id || null;
   const auditSource = session ? "admin_ui" : "system";
-  const config = await api.appConfiguration.findFirst({
-    select: {
-      batchSize: true,
-      maxEmailsPerTriage: true,
-      bulkActionsEnabled: true,
-      workflowBatchProcessing: true,
-    } as any,
-  });
-  const bulkActionsEnabled = (config as any)?.bulkActionsEnabled ?? true;
-  const workflowBatchProcessing = (config as any)?.workflowBatchProcessing ?? true;
-  if (!bulkActionsEnabled || !workflowBatchProcessing) {
+  const config = await api.appConfiguration.findFirst({ select: supportSettingsSelect as any });
+  const settings = resolveSupportSettings(config as any);
+  const bulkActionsEnabled = settings.bulkActionsEnabled;
+  const workflowBatchProcessing = settings.workflowBatchProcessing;
+  const scheduledActionsEnabled = settings.scheduledActionsEnabled;
+  if (!bulkActionsEnabled || !workflowBatchProcessing || !scheduledActionsEnabled) {
     logger.info(
-      { bulkActionsEnabled, workflowBatchProcessing },
+      { bulkActionsEnabled, workflowBatchProcessing, scheduledActionsEnabled },
       "Bulk triage skipped because batch processing is disabled"
     );
     return { success: false, processed: 0, skipped: 0, errors: 0 };
   }
 
-  const configBatchSize = Number((config as any)?.batchSize) || 50;
-  const maxEmailsPerTriage = Number((config as any)?.maxEmailsPerTriage) || 500;
+  const configBatchSize = settings.batchSize;
+  const maxEmailsPerTriage = settings.maxEmailsPerTriage;
   const batchSize = Math.min(Number(syncParams.batchSize) || configBatchSize, maxEmailsPerTriage, 100);
   const forceRetriage = Boolean(syncParams.forceRetriage); // re-triage even if already done
 
@@ -79,6 +75,7 @@ export const run: ActionRun = async ({ logger, api, params, session }) => {
   logger.info({ count: conversations.length }, "Found conversations to triage");
 
   if (conversations.length === 0) {
+    if (shouldRecordAudit(settings, "email_access")) {
     await api.actionLog.create({
       action: "bulk_action",
       actionDescription: "Triage run completed (no conversations)",
@@ -95,6 +92,7 @@ export const run: ActionRun = async ({ logger, api, params, session }) => {
         forceRetriage,
       },
     } as any);
+    }
     return { success: true, processed: 0, skipped: 0, errors: 0 };
   }
 
@@ -131,7 +129,8 @@ export const run: ActionRun = async ({ logger, api, params, session }) => {
   };
 
   logger.info(summary, "Bulk triage complete");
-  await api.actionLog.create({
+  if (shouldRecordAudit(settings, "email_access")) {
+    await api.actionLog.create({
     action: "bulk_action",
     actionDescription: `Triage run completed: processed ${processed}, skipped ${skipped}, errors ${errors}`,
     performedAt: new Date(),
@@ -147,7 +146,8 @@ export const run: ActionRun = async ({ logger, api, params, session }) => {
       forceRetriage,
       errorDetails: errorDetails.length > 0 ? errorDetails : undefined,
     },
-  } as any);
+    } as any);
+  }
   return summary;
 };
 

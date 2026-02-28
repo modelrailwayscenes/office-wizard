@@ -1,26 +1,21 @@
 import type { ActionOptions } from "gadget-server";
+import { resolveSupportSettings, supportSettingsSelect } from "../lib/supportSettings";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const run: ActionRun = async ({ logger, api }) => {
-  const config = await api.appConfiguration.findFirst({
-    select: {
-      retentionDays: true,
-      auditLogRetentionDays: true,
-      autoArchiveEnabled: true,
-      deleteArchivedData: true,
-    } as any,
-  });
+  const config = await api.appConfiguration.findFirst({ select: supportSettingsSelect as any });
 
   if (!config) {
     logger.warn("No app configuration found for retention policy");
     return { ok: false };
   }
 
-  const retentionDays = Number((config as any).retentionDays) || 90;
-  const auditLogRetentionDays = Number((config as any).auditLogRetentionDays) || 365;
-  const autoArchiveEnabled = (config as any).autoArchiveEnabled ?? true;
-  const deleteArchivedData = (config as any).deleteArchivedData ?? false;
+  const settings = resolveSupportSettings(config as any);
+  const retentionDays = settings.retentionDays;
+  const auditLogRetentionDays = settings.auditLogRetentionDays;
+  const autoArchiveEnabled = settings.autoArchiveEnabled;
+  const deleteArchivedData = settings.deleteArchivedData;
 
   const now = new Date();
   const archiveCutoff = new Date(now.getTime() - retentionDays * DAY_MS).toISOString();

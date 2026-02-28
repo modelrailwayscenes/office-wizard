@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link as RouterLink, useLocation, useNavigate } from "react-router";
+import { Link as RouterLink, useLocation } from "react-router";
 import { useFindFirst, useFindMany, useAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,6 @@ import {
   Layers, Sparkles, FileText, Shield, Settings as SettingsIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { SettingsButtonGroup } from "@/components/SettingsButtonGroup";
 import { SettingsCloseButton } from "@/components/SettingsCloseButton";
 import { SettingsScopePill } from "@/components/settings/SettingsScopePill";
 
@@ -101,16 +100,7 @@ function SettingRow({ label, description, children }: {
 
 export default function AlertsSettings() {
   const location = useLocation();
-  const navigate = useNavigate();
   const user = useUser(api, { select: { roleList: { key: true } } });
-
-  const handleCancel = () => {
-    navigate(-1);
-  };
-
-  const handleSave = async () => {
-    toast.success("All changes saved");
-  };
 
   const [{ data: configData, fetching, error }] = useFindFirst(api.appConfiguration);
   const config = configData as any;
@@ -257,11 +247,9 @@ export default function AlertsSettings() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <SettingsButtonGroup
-                onSave={handleSave}
-                onCancel={handleCancel}
-                saving={updating}
-              />
+              <span className="rounded-md border border-border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
+                Changes apply immediately
+              </span>
               <SettingsCloseButton className="h-9 w-9 text-muted-foreground hover:text-foreground" />
             </div>
           </div>
@@ -505,14 +493,6 @@ export default function AlertsSettings() {
         </div>
       </div>
 
-      {/* FOOTER with buttons */}
-      <div className="border-t border-border bg-card/50 px-8 py-6">
-        <SettingsButtonGroup
-          onSave={handleSave}
-          onCancel={handleCancel}
-          saving={updating}
-        />
-      </div>
     </div>
     </div>
   );

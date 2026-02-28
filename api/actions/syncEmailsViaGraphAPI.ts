@@ -70,6 +70,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   );
   const maxPages = Math.min(Math.max(Number((params as any)?.maxPages ?? 10), 1), 50);
   const lastSyncAt = config.lastSyncAt;
+  const syncCursorOverlapMinutes = 5;
 
   let totalFetched = 0;
   let messagesCreated = 0;
@@ -77,6 +78,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   let conversationsCreated = 0;
   let conversationsUpdated = 0;
   let errors = 0;
+  let newestSeenAt: Date | null = null;
 
   const selectFields = [
     "id",
@@ -182,6 +184,12 @@ export const run: ActionRun = async ({ logger, api, params }) => {
             orderByField === "sentDateTime"
               ? (msg.sentDateTime || msg.receivedDateTime)
               : (msg.receivedDateTime || msg.sentDateTime);
+          if (receivedDateTime) {
+            const parsed = new Date(receivedDateTime);
+            if (!Number.isNaN(parsed.getTime()) && (!newestSeenAt || parsed > newestSeenAt)) {
+              newestSeenAt = parsed;
+            }
+          }
 
           const existingConversations = await api.conversation.findMany({
             filter: { graphConversationId: { equals: graphConversationId } },
@@ -334,8 +342,18 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   if (unreadOnly) inboxFilterConditions.push("isRead eq false");
 
   if (lastSyncAt && !ignoreLastSyncAt) {
-    const lastSyncDate = new Date(lastSyncAt).toISOString();
-    inboxFilterConditions.push(`receivedDateTime gt ${lastSyncDate}`);
+    const parsedLastSyncAt = new Date(lastSyncAt);
+    if (!Number.isNaN(parsedLastSyncAt.getTime())) {
+      // Add a small overlap window to avoid missing messages around cursor boundaries.
+      const effectiveCursor = new Date(
+        parsedLastSyncAt.getTime() - syncCursorOverlapMinutes * 60 * 1000
+      );
+      const boundedCursor =
+        effectiveCursor > now ? new Date(now.getTime() - syncCursorOverlapMinutes * 60 * 1000) : effectiveCursor;
+      inboxFilterConditions.push(`receivedDateTime ge ${boundedCursor.toISOString()}`);
+    } else {
+      logger.warn({ lastSyncAt }, "Invalid lastSyncAt cursor; syncing without date filter");
+    }
   }
 
   await syncFolder({
@@ -371,9 +389,10 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     logger.info("No conversations found; skipping Sent Items sync");
   }
 
-  if (messagesCreated > 0 || messagesDuplicate > 0) {
+  if (messagesCreated > 0 || messagesDuplicate > 0 || totalFetched > 0) {
+    // Persist a forward-moving cursor based on what Graph returned, with fallback to now.
     await api.appConfiguration.update(config.id, {
-      lastSyncAt: now,
+      lastSyncAt: newestSeenAt ?? now,
     });
   }
 

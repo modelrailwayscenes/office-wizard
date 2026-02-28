@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router";
-import { useFindFirst, useAction, useUser } from "@gadgetinc/react";
+import { useFindFirst, useAction, useGlobalAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -125,6 +125,17 @@ export default function SecuritySettings() {
   const [{ data: configData, fetching, error }] = useFindFirst(api.appConfiguration);
   const config = configData as any;
   const [{ fetching: updating }, updateConfig] = useAction(api.appConfiguration.update);
+  const [{ fetching: exportingAuditLogs }, exportSupportAuditLogs] = useGlobalAction(api.exportSupportAuditLogs);
+
+  const downloadText = (filename: string, content: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Data Retention
   const [retentionDays, setRetentionDays] = useState("90");
@@ -343,10 +354,26 @@ export default function SecuritySettings() {
             <div className="px-6 py-4">
               <Button
                 variant="outline"
-                onClick={() => toast.info("Audit log export coming soon")}
+                onClick={async () => {
+                  try {
+                    const result = (await (exportSupportAuditLogs as any)({
+                      format: "csv",
+                      limit: 2000,
+                    })) as any;
+                    if (result?.content && result?.filename && result?.mimeType) {
+                      downloadText(result.filename, result.content, result.mimeType);
+                      toast.success(`Exported ${result?.count ?? 0} audit log rows`);
+                    } else {
+                      toast.error("Export completed but file payload was missing");
+                    }
+                  } catch (error: any) {
+                    toast.error(error?.message || "Audit log export failed");
+                  }
+                }}
+                disabled={exportingAuditLogs}
                 className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                Export Audit Logs
+                {exportingAuditLogs ? "Exporting..." : "Export Audit Logs"}
               </Button>
             </div>
           </Section>

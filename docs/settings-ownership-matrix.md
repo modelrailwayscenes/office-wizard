@@ -103,3 +103,24 @@ This matrix defines the ownership model for Settings using a hybrid approach:
 - Workflow behavior is **Module** unless consistency is required across modules
 - Shared defaults can be centrally managed and selectively **Overridden** by module
 - Any setting in UI must display one of: `Global`, `Module`, or `Override`
+
+## Runtime Wiring Status
+
+Use this as the canonical quick-check for wiring quality.
+
+- **Enforced in runtime services**
+  - `riskScoring`, `timeSensitivity`, `sentimentAnalysis`, `customerValueScoring`, `manualReviewQueue`, `autoResolveSimple`, `autoSuggestResponses`
+  - `bulkActionsEnabled`, `workflowBatchProcessing`, `batchSize`, `maxEmailsPerTriage`
+  - `autoSendProductInstructions`, `autoSendTrackingRequests`, `autoSendGeneralFAQ`, `autoSendConfidenceThreshold`, `autoSendMaxPerDay`
+  - `retentionDays`, `auditLogRetentionDays`, `autoArchiveEnabled`, `deleteArchivedData`
+  - `ignoreLastSyncAt`, `telemetryBannersEnabled`
+
+- **Persisted and partially enforced**
+  - `scheduledActionsEnabled` (gates scheduled bulk triage path)
+  - backup policy (`backupSchedule`, `backupRetentionDays`) via backup scheduler/action
+  - alert channel fields (`notificationEmail`, `teamsWebhookUrl`, digest flags) in admin/alerts flows
+
+- **Persisted but informational/policy-only today**
+  - locale/platform preference fields (`language`, `timezone`, `dateFormat`, `currency`)
+  - UI performance hints (`realTimeUpdatesEnabled`, `prefetchLinks`, `lazyLoadImages`, `apiRateLimitPerMinute`)
+  - auth-hardening policy fields (`require2FA`, `sessionTimeoutMinutes`, `pwRequire*`, `ipWhitelist`) pending auth-layer middleware enforcement

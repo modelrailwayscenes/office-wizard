@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
-import { useFindFirst, useAction, useUser } from "@gadgetinc/react";
+import { useFindFirst, useAction, useGlobalAction, useUser } from "@gadgetinc/react";
 import { api } from "../api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -110,6 +110,8 @@ function AdvancedSettings() {
   const [{ data: configData, fetching: configFetching, error: configError }] = useFindFirst(api.appConfiguration);
   const config = configData as any;
   const [{ fetching: updatingConfig }, updateConfig] = useAction(api.appConfiguration.update);
+  const [{ fetching: runningBackup }, runBackupNow] = useGlobalAction(api.runBackup);
+  const [{ fetching: exportingSnapshot }, exportSupportBackupSnapshot] = useGlobalAction(api.exportSupportBackupSnapshot);
 
   // ── Localisation state ─────────────────────────────────────────────────────
   const [language, setLanguage]     = useState("en");
@@ -210,6 +212,16 @@ function AdvancedSettings() {
     sandboxRequiredDataJson,
     sandboxVariablesJson,
   ]);
+
+  const downloadText = (filename: string, content: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // ── Loading / error ────────────────────────────────────────────────────────
   if (configFetching) {
@@ -338,26 +350,56 @@ function AdvancedSettings() {
               <div className="bg-card/60 border border-border rounded-lg px-4 py-3 flex items-center justify-between mb-4">
                 <div>
                   <p className="text-sm font-medium text-foreground">Last Backup</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">January 15, 2025 at 3:00 AM</p>
-                  <p className="text-xs text-muted-foreground mt-1">Next: January 16, 2025 at 3:00 AM</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {config?.lastBackupAt ? new Date(config.lastBackupAt).toLocaleString("en-GB") : "Never"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Schedule: {backupSchedule} / Retention: {backupRetentionDays} days</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
-                  <span className="text-sm text-primary font-medium">Success</span>
+                  <span className="text-sm text-primary font-medium">{config?.lastBackupAt ? "Completed" : "Pending"}</span>
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => toast.info("Download starting...")}
+                <Button
+                  onClick={async () => {
+                    try {
+                      const result = (await (exportSupportBackupSnapshot as any)()) as any;
+                      if (result?.content && result?.filename && result?.mimeType) {
+                        downloadText(result.filename, result.content, result.mimeType);
+                        toast.success("Backup snapshot downloaded");
+                      } else {
+                        toast.error("Backup export returned no payload");
+                      }
+                    } catch (error: any) {
+                      toast.error(error?.message || "Backup download failed");
+                    }
+                  }}
+                  disabled={exportingSnapshot}
                   className="bg-primary hover:bg-primary/90 text-foreground">
-                  Download Backup
+                  {exportingSnapshot ? "Preparing..." : "Download Backup Snapshot"}
                 </Button>
-                <Button variant="outline" onClick={() => toast.info("Restore coming soon")}
+                <Button variant="outline" disabled
                   className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground">
-                  Restore from Backup
+                  Restore from Backup (disabled)
                 </Button>
-                <Button variant="outline" onClick={() => toast.success("Backup started")}
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      const result = (await (runBackupNow as any)({ force: true })) as any;
+                      if (result?.ok) {
+                        toast.success("Backup run completed");
+                      } else {
+                        toast.error("Backup run did not complete");
+                      }
+                    } catch (error: any) {
+                      toast.error(error?.message || "Backup run failed");
+                    }
+                  }}
+                  disabled={runningBackup}
                   className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground">
-                  Backup Now
+                  {runningBackup ? "Running..." : "Backup Now"}
                 </Button>
               </div>
             </div>
@@ -430,7 +472,9 @@ function AdvancedSettings() {
                   <p className="text-sm font-medium text-foreground">API Documentation</p>
                   <p className="text-sm text-muted-foreground mt-0.5">Comprehensive API reference and usage examples</p>
                 </div>
-                <Button variant="outline" onClick={() => toast.info("Opening docs...")}
+                <Button
+                  variant="outline"
+                  onClick={() => window.open("https://docs.gadget.dev", "_blank", "noopener,noreferrer")}
                   className="border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground">
                   View Docs
                 </Button>

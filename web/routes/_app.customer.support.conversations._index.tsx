@@ -297,10 +297,19 @@ export default function ConversationsIndex() {
       const imported = result?.sync?.imported ?? 0;
       const skipped = result?.sync?.skipped ?? 0;
       const errors = result?.sync?.errors ?? 0;
-      if (totalFetched === 0 && imported === 0 && skipped === 0) {
+      const recoverySyncUsed = Boolean(result?.sync?.recoverySyncUsed);
+      if (errors > 0) {
+        toast.error(
+          `Email sync completed with errors (${errors}). Fetched ${totalFetched}, imported ${imported}, duplicates ${skipped}.`
+        );
+      } else if (totalFetched === 0 && imported === 0 && skipped === 0) {
         toast.warning("No emails returned from mailbox. Check Outlook connection and sync window.");
       } else {
-        toast.success(`Fetched ${totalFetched} emails (${imported} imported, ${skipped} duplicates).`);
+        toast.success(
+          `Fetched ${totalFetched} emails (${imported} imported, ${skipped} duplicates)${
+            recoverySyncUsed ? " · recovery sync used" : ""
+          }.`
+        );
       }
       setLastRefreshedAt(new Date().toISOString());
       setTelemetryEvent({
@@ -941,9 +950,9 @@ export default function ConversationsIndex() {
                   },
                 },
                 {
-                  header: "Priority",
+                  header: <div className="min-w-[110px]">Priority</div>,
                   render: ({ record }) => (
-                    <div className="py-1">
+                    <div className="py-1 min-w-[110px]">
                       <UnifiedBadge
                         type={(record as any).currentPriorityBand}
                         label={getPriorityLabel((record as any).currentPriorityBand)}

@@ -41,7 +41,7 @@ export const run: ActionRun = async ({ params, logger, api }) => {
   try {
     // Step 1: Sync emails from Microsoft 365
     logger.info("Syncing emails from Microsoft 365...");
-    const syncResult = await runSyncEmails({
+    const initialSyncResult = await runSyncEmails({
       logger,
       api,
       params: {
@@ -52,7 +52,57 @@ export const run: ActionRun = async ({ params, logger, api }) => {
       },
     } as any);
 
-    logger.info(syncResult, "Email sync completed");
+    logger.info(initialSyncResult, "Email sync completed");
+
+    // Self-heal path: if cursor-based sync returns no rows, run a shallow recovery sync
+    // without lastSyncAt to recover from stale/future cursors.
+    let syncResult: any = initialSyncResult;
+    let recoverySyncUsed = false;
+    const initialFetched = Number((initialSyncResult as any)?.totalFetched ?? 0);
+    if (!ignoreLastSyncAt && initialFetched === 0) {
+      recoverySyncUsed = true;
+      logger.warn(
+        { unreadOnly, maxEmails, maxPages },
+        "Cursor sync returned zero messages; running recovery sync without cursor"
+      );
+
+      const recoverySyncResult = await runSyncEmails({
+        logger,
+        api,
+        params: {
+          top: Math.min(maxEmails, 50),
+          unreadOnly: false,
+          maxPages: Math.min(maxPages, 2),
+          ignoreLastSyncAt: true,
+        },
+      } as any);
+
+      syncResult = {
+        messagesCreated:
+          Number((initialSyncResult as any)?.messagesCreated ?? 0) +
+          Number((recoverySyncResult as any)?.messagesCreated ?? 0),
+        messagesDuplicate:
+          Number((initialSyncResult as any)?.messagesDuplicate ?? 0) +
+          Number((recoverySyncResult as any)?.messagesDuplicate ?? 0),
+        totalFetched:
+          Number((initialSyncResult as any)?.totalFetched ?? 0) +
+          Number((recoverySyncResult as any)?.totalFetched ?? 0),
+        conversationsCreated:
+          Number((initialSyncResult as any)?.conversationsCreated ?? 0) +
+          Number((recoverySyncResult as any)?.conversationsCreated ?? 0),
+        conversationsUpdated:
+          Number((initialSyncResult as any)?.conversationsUpdated ?? 0) +
+          Number((recoverySyncResult as any)?.conversationsUpdated ?? 0),
+        errors:
+          Number((initialSyncResult as any)?.errors ?? 0) +
+          Number((recoverySyncResult as any)?.errors ?? 0),
+      };
+
+      logger.info(
+        { initialSyncResult, recoverySyncResult, mergedSyncResult: syncResult },
+        "Recovery sync completed"
+      );
+    }
 
     // Step 2: Optionally run AI triage on new conversations
     let triageResult;
@@ -76,6 +126,7 @@ export const run: ActionRun = async ({ params, logger, api }) => {
         conversationsCreated: syncResult.conversationsCreated ?? 0,
         conversationsUpdated: syncResult.conversationsUpdated ?? 0,
         errors: syncResult.errors ?? 0,
+        recoverySyncUsed,
       },
       triage: triageResult ? {
         processed: triageResult.processedCount,

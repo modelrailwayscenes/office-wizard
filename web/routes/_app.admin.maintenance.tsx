@@ -247,6 +247,7 @@ export default function AdminMaintenancePage() {
               <div className="mt-4 space-y-4">
                 <div className="rounded-lg border border-border p-4">
                   <h3 className="text-sm font-semibold text-foreground">Integrations</h3>
+                <div className="mt-1 text-xs text-muted-foreground">Effect scope: applies immediately</div>
                   <div className="mt-2 grid gap-1 text-sm text-muted-foreground">
                     <div>Microsoft: {(appConfig as any)?.microsoftConnectionStatus || "disconnected"}</div>
                     <div>Mailbox: {(appConfig as any)?.connectedMailbox || "not connected"}</div>
@@ -340,6 +341,7 @@ export default function AdminMaintenancePage() {
 
                 <div className="rounded-lg border border-border p-4">
                   <h3 className="text-sm font-semibold text-foreground">Alerts & Notifications</h3>
+                  <div className="mt-1 text-xs text-muted-foreground">Effect scope: applies immediately</div>
                   <div className="mt-3 space-y-2.5">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-sm text-foreground">Email notifications</span>
@@ -419,6 +421,7 @@ export default function AdminMaintenancePage() {
 
                 <div className="rounded-lg border border-border p-4">
                   <h3 className="text-sm font-semibold text-foreground">Advanced Settings</h3>
+                  <div className="mt-1 text-xs text-muted-foreground">Effect scope: applies immediately</div>
                   <div className="mt-3 space-y-2.5">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-sm text-foreground">Debug mode</span>
