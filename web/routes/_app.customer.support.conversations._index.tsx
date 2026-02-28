@@ -37,7 +37,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useGlobalAction, useFindOne, useFindMany, useFindFirst, useUser } from "@gadgetinc/react";
 import { useConversationsListQuery, useInvalidateConversations } from "@/hooks/useConversationsQuery";
 import { toast } from "sonner";
-import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, Layers, FileText, PenLine, Settings, LayoutDashboard, CircleHelp, ShieldAlert, UserX } from "lucide-react";
+import { RefreshCw, Search, X, Mail, Paperclip, AlertTriangle, Layers, FileText, PenLine, Settings, LayoutDashboard, CircleHelp, ShieldAlert, UserX, Sparkles } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { UnifiedBadge } from "@/components/UnifiedBadge";
 import { format } from "date-fns";
@@ -491,6 +491,48 @@ export default function ConversationsIndex() {
     return cfg[status || ""] ?? { label: "UNKNOWN", color: "bg-muted/50 text-muted-foreground border-border" };
   };
 
+  const getCategoryLabel = (category: string | null | undefined) => {
+    const map: Record<string, string> = {
+      general_enquiry: "DEFAULT",
+      order_issue: "ORDER",
+      delivery_issue: "DELIVERY",
+      refund_request: "REFUND",
+      damaged_item: "DAMAGED",
+      returns: "RETURNS",
+      billing: "BILLING",
+      legal: "LEGAL",
+      support: "SUPPORT",
+      technical: "TECHNICAL",
+    };
+    return map[category || ""] ?? "DEFAULT";
+  };
+
+  const getCategoryBadgeColor = (category: string | null | undefined) => {
+    const map: Record<string, string> = {
+      general_enquiry: "bg-primary/20 text-primary border-primary/30",
+      order_issue: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+      delivery_issue: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+      refund_request: "bg-red-500/20 text-red-400 border-red-500/30",
+      damaged_item: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+      returns: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+      billing: "bg-green-500/20 text-green-400 border-green-500/30",
+      legal: "bg-slate-400/20 text-slate-300 border-slate-400/30",
+      support: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+      technical: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+    };
+    return map[category || ""] ?? "bg-primary/20 text-primary border-primary/30";
+  };
+
+  const getPriorityBorderColor = (priority: string | null | undefined) => {
+    switch (priority) {
+      case "urgent": return "bg-red-500";
+      case "high": return "bg-orange-500";
+      case "medium": return "bg-primary";
+      case "low": return "bg-green-500";
+      default: return "bg-muted-foreground/30";
+    }
+  };
+
   const buildFilter = () => listFilter;
   const visibleConversationIds = (conversationListData || []).map((c) => c.id);
   const allVisibleSelected =
@@ -925,233 +967,191 @@ export default function ConversationsIndex() {
               onAction={handleFetchEmails}
             />
           ) : (
-            <div className="refined-card overflow-x-auto overflow-y-hidden [&_table]:w-max">
-              <AutoTable
-                model={api.conversation}
-                searchable={false}
-                sort={{ currentPriorityScore: "Descending", latestMessageAt: "Descending" } as any}
-                columns={[
-                {
-                  header: <div className="min-w-[104px] whitespace-nowrap">Priority</div>,
-                  render: ({ record }) => (
-                    <div className="py-1 min-w-[104px] pr-2 whitespace-nowrap">
-                      <UnifiedBadge
-                        type={(record as any).currentPriorityBand}
-                        label={getPriorityLabel((record as any).currentPriorityBand)}
-                      />
-                    </div>
-                  ),
-                },
-                {
-                  header: <div className="min-w-[220px] whitespace-nowrap">Subject</div>,
-                  render: ({ record }) => (
-                    <div className="min-w-[220px] max-w-[300px]">
-                      <span className="truncate block text-foreground text-sm font-medium">
-                        {(record as any).subject || "—"}
-                      </span>
-                      {(() => {
-                        const meta = readSelectionMeta((record as any).playbookSelectionMetaJson);
-                        const changed = meta?.changed;
-                        const markers: string[] = [];
-                        if (changed?.selectedPlaybook) markers.push("playbook changed");
-                        if (changed?.draftStatus) markers.push("draft status changed");
-                        if (changed?.category) markers.push("category changed");
-                        if (changed?.priorityBand) markers.push("priority changed");
-                        if (markers.length === 0) return null;
-                        return (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {markers.slice(0, 3).map((m) => (
-                              <span
-                                key={m}
-                                className="inline-flex rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"
-                              >
-                                {m}
-                              </span>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  ),
-                },
-                {
-                  header: <div className="min-w-[180px] whitespace-nowrap">Customer</div>,
-                  render: ({ record }) => (
-                    <div className="text-sm min-w-[180px] max-w-[240px]">
-                      <div className="text-foreground truncate">{(record as any).primaryCustomerName || "Unknown customer"}</div>
-                      <div className="text-muted-foreground truncate">{(record as any).primaryCustomerEmail || "—"}</div>
-                    </div>
-                  ),
-                },
-                {
-                  header: <div className="min-w-[56px] whitespace-nowrap text-center">Unread</div>,
-                  render: ({ record }) => (
-                    <div className="min-w-[56px] text-center">
-                      <span className="text-muted-foreground text-sm">{(record as any).unreadCount ?? 0}</span>
-                    </div>
-                  ),
-                },
-                {
-                  header: <div className="min-w-[112px] whitespace-nowrap">Assignment</div>,
-                  render: ({ record }) => {
-                    const assignee = (record as any).assignedToUser?.email || (record as any).assignedTo?.email;
-                    return (
-                      <div className="min-w-[112px] max-w-[140px]">
-                        <span className="text-muted-foreground text-sm truncate block">{assignee || "Unassigned"}</span>
-                      </div>
-                    );
-                  },
-                },
-                {
-                  header: <div className="min-w-[84px] whitespace-nowrap">Draft</div>,
-                  render: ({ record }) => {
-                    const draftState = (record as any).hasDraft
-                      ? ((record as any).requiresHumanReview ? "Edited/Review" : "Ready")
-                      : "None";
-                    return (
-                      <div className="min-w-[84px] flex items-center">
-                        <UnifiedBadge
-                          type={(record as any).hasDraft ? "connected" : "disconnected"}
-                          label={draftState}
+            <>
+              <div className="flex items-center justify-end mb-2">
+                <span className="text-xs text-muted-foreground">
+                  Showing {conversationListData?.length || 0} conversations
+                </span>
+              </div>
+              <div className="refined-table overflow-x-auto">
+                <AutoTable
+                  model={api.conversation}
+                  searchable={false}
+                  perPage={25}
+                  sort={{ currentPriorityScore: "Descending", latestMessageAt: "Descending" } as any}
+                  columns={[
+                  {
+                    header: (
+                      <div className="w-10 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={allVisibleSelected}
+                          onCheckedChange={(checked) => toggleSelectAllVisible(Boolean(checked))}
+                          aria-label="Select all visible conversations"
                         />
                       </div>
-                    );
-                  },
-                },
-                {
-                  header: <div className="min-w-[96px] whitespace-nowrap">SLA</div>,
-                  render: ({ record }) => {
-                    const r = record as any;
-                    const slaState = inferSlaState(r.timeRemaining, r.deadlineDate);
-                    const label = formatSlaLabel(r.timeRemaining, r.deadlineDate);
-                    return (
-                      <div className="min-w-[96px] space-y-1">
-                        <UnifiedBadge type={slaStateToBadge(slaState)} label={label} />
-                        {r.slaTarget ? (
-                          <div className="text-[10px] text-muted-foreground">Target: {r.slaTarget}</div>
-                        ) : null}
-                      </div>
-                    );
-                  },
-                },
-                {
-                  header: <div className="min-w-[150px] whitespace-nowrap">Playbook</div>,
-                  render: ({ record }) => {
-                    const scenarioKey =
-                      (record as any).selectedPlaybook?.scenarioKey || (record as any).selectedPlaybook?.name || "none";
-                    const confidence = (record as any).selectedPlaybookConfidence;
-                    return (
-                      <div className="text-xs text-muted-foreground min-w-[150px] max-w-[190px]">
-                        <div className="text-foreground truncate">{scenarioKey}</div>
-                        <div>{typeof confidence === "number" ? `Conf ${confidence.toFixed(2)}` : "Conf —"}</div>
-                      </div>
-                    );
-                  },
-                },
-                {
-                  header: <div className="min-w-[116px] whitespace-nowrap">Classification</div>,
-                  render: ({ record }) => {
-                    const r = record as any;
-                    const node = r.classifications?.edges?.[0]?.node;
-                    const category = node?.intentCategory ?? r.currentCategory ?? null;
-                    return (
-                      <div className="min-w-[116px] flex items-center">
-                        <UnifiedBadge 
-                          type={category} 
-                          label={formatClassification(category)} 
-                        />
-                      </div>
-                    );
-                  },
-                },
-                {
-                  header: <div className="min-w-[90px] whitespace-nowrap">Sentiment</div>,
-                  render: ({ record }) => (
-                    <div className="min-w-[90px] flex items-center">
-                      <SentimentBadge sentiment={(record as any).sentiment} />
-                    </div>
-                  ),
-                },
-                {
-                  header: <div className="min-w-[64px] whitespace-nowrap text-center">Messages</div>,
-                  render: ({ record }) => (
-                    <div className="min-w-[64px] text-center">
-                      <span className="text-muted-foreground text-sm">{(record as any).messageCount ?? "—"}</span>
-                    </div>
-                  ),
-                },
-                {
-                  header: <div className="min-w-[108px] whitespace-nowrap">Status</div>,
-                  render: ({ record }) => {
-                    const s = getStatusBadge((record as any).status);
-                    return (
-                      <div className="min-w-[108px] flex items-center">
-                        <UnifiedBadge
-                          type={(record as any).status}
-                          label={s.label}
-                        />
-                      </div>
-                    );
-                  },
-                },
-                {
-                  header: <div className="min-w-[96px] whitespace-nowrap">Last Activity</div>,
-                  render: ({ record }) => (
-                    <div className="min-w-[96px]">
-                      <span className="text-muted-foreground text-sm whitespace-nowrap">
-                        {(record as any).latestMessageAt
-                          ? new Date((record as any).latestMessageAt).toLocaleDateString("en-GB", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })
-                          : "—"}
-                      </span>
-                    </div>
-                  ),
-                },
-
-              ]}
-              filter={buildFilter()}
-              onClick={handleRowClick}
-                select={{
-                  id: true,
-                  subject: true,
-                  primaryCustomerEmail: true,
-                  currentCategory: true,
-                  currentPriorityBand: true,
-                  currentPriorityScore: true,
-                  unreadCount: true,
-                  hasDraft: true,
-                  timeRemaining: true,
-                  slaTarget: true,
-                  hasDeadline: true,
-                  deadlineDate: true,
-                  assignedTo: { id: true, email: true },
-                  assignedToUser: { id: true, email: true },
-                  orderValue: true,
-                  primaryCustomerName: true,
-                  requiresHumanReview: true,
-                  selectedPlaybookConfidence: true,
-                  playbookSelectionMetaJson: true,
-                  selectedPlaybook: { id: true, scenarioKey: true, name: true },
-                  status: true,
-                  messageCount: true,
-                  latestMessageAt: true,
-                  sentiment: true,
-                  classifications: {
-                    edges: {
-                      node: {
-                        id: true,
-                        intentCategory: true,
-                        sentimentLabel: true,
-                        createdAt: true,
-                      },
+                    ),
+                    render: ({ record }) => {
+                      const id = (record as any).id as string;
+                      return (
+                        <div className="w-10 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedConversationIds.includes(id)}
+                            onCheckedChange={(checked) => toggleSelectConversation(id, Boolean(checked))}
+                            aria-label={`Select conversation ${id}`}
+                          />
+                        </div>
+                      );
                     },
                   },
-                }}
-              />
-            </div>
+                  {
+                    header: "Type",
+                    render: ({ record }) => {
+                      const r = record as any;
+                      const category = r.classifications?.edges?.[0]?.node?.intentCategory ?? r.currentCategory ?? null;
+                      const priorityBorder = getPriorityBorderColor(r.currentPriorityBand);
+                      return (
+                        <div className="flex items-center gap-3">
+                          <div className={`w-1 self-stretch min-h-[32px] rounded-full ${priorityBorder}`} />
+                          <span className={`inline-flex items-center rounded-md border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${getCategoryBadgeColor(category)}`}>
+                            {getCategoryLabel(category)}
+                          </span>
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    header: "Customer",
+                    render: ({ record }) => (
+                      <div className="min-w-[180px] max-w-[280px]">
+                        <div className="text-foreground font-semibold text-sm uppercase tracking-wide truncate">
+                          {(record as any).primaryCustomerName || "Unknown customer"}
+                        </div>
+                        <div className="text-muted-foreground text-xs truncate">
+                          {(record as any).primaryCustomerEmail || "—"}
+                        </div>
+                      </div>
+                    ),
+                  },
+                  {
+                    header: "Threads",
+                    render: ({ record }) => (
+                      <div className="text-center min-w-[60px]">
+                        <span className={`text-sm font-medium ${((record as any).messageCount ?? 0) > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                          {(record as any).messageCount ?? 0}
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    header: "Assigned to",
+                    render: ({ record }) => {
+                      const assignee = (record as any).assignedToUser?.email || (record as any).assignedTo?.email;
+                      return (
+                        <div className="min-w-[120px] max-w-[180px]">
+                          <span className={`text-sm truncate block ${assignee ? "text-foreground" : "text-muted-foreground"}`}>
+                            {assignee || "Not assigned"}
+                          </span>
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    header: "Sentiment",
+                    render: ({ record }) => (
+                      <div className="flex items-center">
+                        <SentimentBadge sentiment={(record as any).sentiment} />
+                      </div>
+                    ),
+                  },
+                  {
+                    header: "Status",
+                    render: ({ record }) => {
+                      const s = getStatusBadge((record as any).status);
+                      return (
+                        <div className="flex items-center">
+                          <UnifiedBadge
+                            type={(record as any).status}
+                            label={s.label}
+                          />
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    header: "AI Draft",
+                    render: ({ record }) => {
+                      const hasDraft = (record as any).hasDraft;
+                      return (
+                        <div className="flex items-center gap-1.5">
+                          {hasDraft ? (
+                            <>
+                              <Sparkles className="h-3.5 w-3.5 text-primary" />
+                              <span className="text-sm font-medium text-primary">YES</span>
+                            </>
+                          ) : (
+                            <span className="text-sm font-medium text-red-400">NO</span>
+                          )}
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    header: "Action",
+                    render: ({ record }) => (
+                      <div className="min-w-[70px]">
+                        <span className="text-muted-foreground text-sm whitespace-nowrap">
+                          {(record as any).latestMessageAt
+                            ? new Date((record as any).latestMessageAt).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                              })
+                            : "—"}
+                        </span>
+                      </div>
+                    ),
+                  },
+                ]}
+                filter={buildFilter()}
+                onClick={handleRowClick}
+                  select={{
+                    id: true,
+                    subject: true,
+                    primaryCustomerEmail: true,
+                    currentCategory: true,
+                    currentPriorityBand: true,
+                    currentPriorityScore: true,
+                    unreadCount: true,
+                    hasDraft: true,
+                    timeRemaining: true,
+                    slaTarget: true,
+                    hasDeadline: true,
+                    deadlineDate: true,
+                    assignedTo: { id: true, email: true },
+                    assignedToUser: { id: true, email: true },
+                    orderValue: true,
+                    primaryCustomerName: true,
+                    requiresHumanReview: true,
+                    selectedPlaybookConfidence: true,
+                    playbookSelectionMetaJson: true,
+                    selectedPlaybook: { id: true, scenarioKey: true, name: true },
+                    status: true,
+                    messageCount: true,
+                    latestMessageAt: true,
+                    sentiment: true,
+                    classifications: {
+                      edges: {
+                        node: {
+                          id: true,
+                          intentCategory: true,
+                          sentimentLabel: true,
+                          createdAt: true,
+                        },
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </>
           )}
         </div>
 
