@@ -911,7 +911,7 @@ export default function ConversationsIndex() {
               onAction={handleFetchEmails}
             />
           ) : (
-            <div className="bg-muted/50 border border-border rounded-xl overflow-hidden">
+            <div className="bg-muted/50 border border-border rounded-xl overflow-hidden [&_thead_tr_th:first-child]:w-0 [&_thead_tr_th:first-child]:max-w-0 [&_thead_tr_th:first-child]:p-0 [&_thead_tr_th:first-child]:overflow-hidden [&_tbody_tr_td:first-child]:w-0 [&_tbody_tr_td:first-child]:max-w-0 [&_tbody_tr_td:first-child]:p-0 [&_tbody_tr_td:first-child]:overflow-hidden">
               <AutoTable
                 model={api.conversation}
                 searchable={false}
@@ -919,16 +919,18 @@ export default function ConversationsIndex() {
                 columns={[
                 {
                   header: (
-                    <Checkbox
-                      checked={allVisibleSelected}
-                      onCheckedChange={(checked) => toggleSelectAllVisible(Boolean(checked))}
-                      aria-label="Select all visible conversations"
-                    />
+                    <div className="w-14 flex items-center justify-center border-r border-border/60 pr-1" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={allVisibleSelected}
+                        onCheckedChange={(checked) => toggleSelectAllVisible(Boolean(checked))}
+                        aria-label="Select all visible conversations"
+                      />
+                    </div>
                   ),
                   render: ({ record }) => {
                     const id = (record as any).id as string;
                     return (
-                      <div className="py-1" onClick={(e) => e.stopPropagation()}>
+                      <div className="w-14 py-1 flex items-center justify-center border-r border-border/60 pr-1" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selectedConversationIds.includes(id)}
                           onCheckedChange={(checked) => toggleSelectConversation(id, Boolean(checked))}
