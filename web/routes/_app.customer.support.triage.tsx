@@ -47,6 +47,7 @@ import {
   PenLine,
   Settings,
   UserX,
+  X,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -58,6 +59,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 
 // ── Main Page ───────────────────────────────────────────────────────
 export default function TriageQueuePage() {
@@ -68,6 +70,7 @@ export default function TriageQueuePage() {
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [telemetry, setTelemetry] = useState<PageTelemetry | null>(null);
   const [triageRunBanner, setTriageRunBanner] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [selectedEmailIds, setSelectedEmailIds] = useState<string[]>([]);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
@@ -579,6 +582,10 @@ export default function TriageQueuePage() {
   const draftsPendingCount = conversations?.filter((c: any) => c.requiresHumanReview).length || 0;
 
   const loading = batchLoading || applyEditsLoading;
+  const handleCloseDrawer = () => {
+    setDrawerOpen(false);
+    setTimeout(() => setSelectedConvId(null), 300);
+  };
 
   return (
     <div className="flex flex-1 min-h-0 bg-background text-foreground">
@@ -681,10 +688,9 @@ export default function TriageQueuePage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left List */}
-          <div className="w-1/2 border-r border-border overflow-y-auto">
-            <div className="px-4 pt-4">
+        <div className="flex-1 overflow-auto">
+          <div className="px-8 pb-8">
+            <div className="pt-6">
               <ListSectionHeader
                 title="Triage Queue"
                 subtitle="High-signal queue for rapid classification"
@@ -692,7 +698,7 @@ export default function TriageQueuePage() {
               />
             </div>
             {/* Quick Filters */}
-            <div className="flex gap-2 p-4 border-b border-border bg-muted/30 rounded-none">
+            <div className="mt-4 flex gap-2 p-4 border border-border bg-muted/30 rounded-xl">
               <Button
                 variant={activeTab === "all" ? "default" : "ghost"}
                 size="sm"
@@ -733,7 +739,7 @@ export default function TriageQueuePage() {
             </div>
 
             {/* Conversation List */}
-            <div className="divide-y divide-border">
+            <div className="mt-4 divide-y divide-border rounded-xl border border-border bg-card/30 overflow-hidden">
               {filteredConversations.length === 0 && (
                 <EmptyState
                   title="No conversations to triage"
@@ -770,7 +776,13 @@ export default function TriageQueuePage() {
                       </div>
 
                       {/* Content column */}
-                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedConvId(conv.id)}>
+                      <div
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => {
+                          setSelectedConvId(conv.id);
+                          setDrawerOpen(true);
+                        }}
+                      >
                         {/* Row 1: Priority + Subject + Alert */}
                         <div className="flex items-start gap-2 mb-2">
                           <UnifiedBadge type={conv.currentPriorityBand} label={getPriorityLabel(conv.currentPriorityBand)} />
@@ -867,15 +879,27 @@ export default function TriageQueuePage() {
               })}
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Right Panel - Details */}
-          <div className="w-1/2 overflow-y-auto">
-            {!selectedConv ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                Select a conversation to view details
+      <Drawer open={drawerOpen} onOpenChange={(open) => !open && handleCloseDrawer()} direction="right">
+        <DrawerContent direction="right" hideHandle className="w-full sm:max-w-2xl bg-card border-border overflow-y-auto p-0">
+          <div className="border-b border-border bg-card/50 px-6 py-5 sticky top-0 z-10">
+            <div className="flex items-start justify-between">
+              <div>
+                <DrawerTitle className="text-xl font-semibold text-foreground">Triage Details</DrawerTitle>
+                {selectedConv?.subject && <p className="text-sm text-muted-foreground mt-1 line-clamp-1 pr-8">{selectedConv.subject}</p>}
               </div>
+              <Button variant="ghost" size="icon" onClick={handleCloseDrawer} className="text-muted-foreground hover:text-foreground flex-shrink-0">
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            {!selectedConv ? (
+              <div className="text-sm text-muted-foreground">Select a conversation to view details.</div>
             ) : (
-              <div className="p-6 space-y-6">
+              <>
                 {/* Conversation Header */}
                 <div>
                   <h2 className="text-xl font-semibold mb-2">{selectedConv.subject || "(No subject)"}</h2>
@@ -1145,11 +1169,11 @@ export default function TriageQueuePage() {
                     await refresh();
                   }}
                 />
-              </div>
+              </>
             )}
           </div>
-        </div>
-      </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* Batch Modal */}
       <BatchReviewModal

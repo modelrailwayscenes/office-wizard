@@ -294,27 +294,29 @@ export default function ConversationsIndex() {
       })) as any;
       invalidateConversations();
       const totalFetched = result?.sync?.totalFetched ?? 0;
+      const inboundFetched = result?.sync?.inboundFetched ?? totalFetched;
+      const sentFetched = result?.sync?.sentFetched ?? Math.max(totalFetched - inboundFetched, 0);
       const imported = result?.sync?.imported ?? 0;
       const skipped = result?.sync?.skipped ?? 0;
       const errors = result?.sync?.errors ?? 0;
       const recoverySyncUsed = Boolean(result?.sync?.recoverySyncUsed);
       if (errors > 0) {
         toast.error(
-          `Email sync completed with errors (${errors}). Fetched ${totalFetched}, imported ${imported}, duplicates ${skipped}.`
+          `Email sync completed with errors (${errors}). Inbound fetched ${inboundFetched}, imported ${imported}, duplicates ${skipped}.`
         );
-      } else if (totalFetched === 0 && imported === 0 && skipped === 0) {
+      } else if (inboundFetched === 0 && imported === 0 && skipped === 0) {
         toast.warning("No emails returned from mailbox. Check Outlook connection and sync window.");
       } else {
         toast.success(
-          `Fetched ${totalFetched} emails (${imported} imported, ${skipped} duplicates)${
-            recoverySyncUsed ? " · recovery sync used" : ""
-          }.`
+          `Fetched ${inboundFetched} inbox emails (${imported} imported, ${skipped} duplicates${
+            sentFetched > 0 ? `, ${sentFetched} sent scanned` : ""
+          })${recoverySyncUsed ? " · recovery sync used" : ""}.`
         );
       }
       setLastRefreshedAt(new Date().toISOString());
       setTelemetryEvent({
         lastAction: "Emails fetched",
-        details: `Fetched ${totalFetched}, imported ${imported}, duplicates ${skipped}, created ${result?.sync?.conversationsCreated ?? 0}, errors ${errors}`,
+        details: `Inbound ${inboundFetched}, total ${totalFetched}, sent ${sentFetched}, imported ${imported}, duplicates ${skipped}, created ${result?.sync?.conversationsCreated ?? 0}, errors ${errors}`,
         severity: errors > 0 ? "warning" : "success",
         durationMs: Date.now() - start,
       });
@@ -670,7 +672,7 @@ export default function ConversationsIndex() {
 
         {triageDebugModeEnabled && (
           <div className="px-8 pt-4">
-            <div className="rounded-xl border border-border bg-card/60 px-4 py-3 text-xs text-muted-foreground">
+            <div className="rounded-xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
               <span className="font-semibold text-foreground">Dev instrumentation:</span>{" "}
               last auto-triage {timeAgo((latestTriageRun as any)?.[0]?.lastTriagedAt)} · conversations loaded {(conversationListData || []).length} · drafts generated in view {(conversationListData || []).length > 0 ? "check row markers" : "0"} · last sync {timeAgo((configData as any)?.lastSyncAt)}
             </div>
@@ -687,7 +689,7 @@ export default function ConversationsIndex() {
               count={conversationListData?.length || 0}
             />
           </div>
-          <div className="mt-6 mb-4 flex flex-wrap gap-2">
+          <div className="mt-6 mb-4 flex flex-wrap items-center gap-1.5 bg-muted/50 rounded-xl p-1.5">
             {[
               { key: "all", label: "All" },
               { key: "assigned_to_me", label: "Assigned to me" },
@@ -699,15 +701,18 @@ export default function ConversationsIndex() {
             ].map((item) => (
               <Button
                 key={item.key}
-                variant={workFilter === item.key ? "default" : "outline"}
+                variant="ghost"
                 size="sm"
-                className={workFilter === item.key ? "bg-primary text-primary-foreground" : "border-border text-muted-foreground"}
+                className={workFilter === item.key
+                  ? "bg-card text-primary shadow-sm font-medium rounded-lg"
+                  : "text-muted-foreground hover:text-foreground rounded-lg"
+                }
                 onClick={() => setWorkFilter(item.key)}
               >
                 {item.label}
               </Button>
             ))}
-            <span className="ml-auto text-xs text-muted-foreground self-center">
+            <span className="ml-auto text-xs text-muted-foreground self-center pr-2">
               Last refreshed: {timeAgo(lastRefreshedAt)}
             </span>
           </div>
@@ -722,13 +727,13 @@ export default function ConversationsIndex() {
                 placeholder="Search by customer, order ID, subject, or keywords..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-11 h-11 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30 rounded-lg"
+                className="pl-11 h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all duration-200"
               />
             </div>
 
             {/* Status filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[175px] h-11 bg-muted/50 border-border text-muted-foreground rounded-lg">
+              <SelectTrigger className="w-[175px] h-11 bg-muted border-border text-muted-foreground rounded-xl transition-all duration-200">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border text-foreground">
@@ -744,7 +749,7 @@ export default function ConversationsIndex() {
 
             {/* Priority filter */}
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-[165px] h-11 bg-muted/50 border-border text-muted-foreground rounded-lg">
+              <SelectTrigger className="w-[165px] h-11 bg-muted border-border text-muted-foreground rounded-xl transition-all duration-200">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border text-foreground">
@@ -759,7 +764,7 @@ export default function ConversationsIndex() {
           </div>
 
           {selectedConversationIds.length > 0 && (
-            <div className="sticky bottom-4 z-20 mb-6 rounded-xl border border-border bg-card/95 backdrop-blur px-4 py-3 shadow-lg">
+            <div className="sticky bottom-4 z-20 mb-6 rounded-xl border border-border bg-card backdrop-blur-md px-4 py-3 shadow-lg">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium text-foreground">
                   {selectedConversationIds.length} selected
@@ -782,7 +787,7 @@ export default function ConversationsIndex() {
                         <div className="text-xs font-semibold text-foreground">Blocked by draft policy</div>
                         <div className="space-y-1 max-h-56 overflow-auto">
                           {draftEligibilitySummary.blocked.slice(0, 8).map((b) => (
-                            <div key={b.id} className="rounded-md border border-border bg-muted/40 px-2 py-1.5">
+                            <div key={b.id} className="rounded-lg border border-border bg-muted px-2 py-1.5">
                               <div className="text-[11px] font-medium text-foreground truncate">{b.subject}</div>
                               <div className="text-[11px] text-muted-foreground">{b.reason}</div>
                               {b.hint ? <div className="text-[10px] text-amber-500 mt-0.5">{b.hint}</div> : null}
@@ -802,7 +807,7 @@ export default function ConversationsIndex() {
                 {canAssign && (
                   <>
                     <Select value={bulkAssignUserId} onValueChange={setBulkAssignUserId}>
-                      <SelectTrigger className="w-[220px] h-9 bg-background border-border text-muted-foreground rounded-lg">
+                      <SelectTrigger className="w-[220px] h-9 bg-muted border-border text-muted-foreground rounded-xl">
                         <SelectValue placeholder="Assign to user" />
                       </SelectTrigger>
                       <SelectContent className="bg-card border-border text-foreground">
@@ -818,7 +823,7 @@ export default function ConversationsIndex() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-border"
+                      className="border-border transition-all duration-200"
                       disabled={!bulkAssignUserId || batchActionLoading}
                       onClick={async () => {
                         try {
@@ -835,7 +840,7 @@ export default function ConversationsIndex() {
                 )}
 
                 <Select value={bulkMoveCategory} onValueChange={setBulkMoveCategory}>
-                  <SelectTrigger className="w-[220px] h-9 bg-background border-border text-muted-foreground rounded-lg">
+                  <SelectTrigger className="w-[220px] h-9 bg-muted border-border text-muted-foreground rounded-xl">
                     <SelectValue placeholder="Move category" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border text-foreground">
@@ -850,7 +855,7 @@ export default function ConversationsIndex() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-border"
+                  className="border-border transition-all duration-200"
                   disabled={batchActionLoading}
                   onClick={async () => {
                     try {
@@ -867,7 +872,7 @@ export default function ConversationsIndex() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-border"
+                  className="border-border transition-all duration-200"
                   disabled={bulkDraftLoading}
                   onClick={async () => {
                     try {
@@ -884,7 +889,7 @@ export default function ConversationsIndex() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                  className="border-amber-500/40 text-amber-500 hover:bg-amber-500/10 transition-all duration-200"
                   disabled={batchActionLoading}
                   onClick={() => setBulkConfirmAction("resolve")}
                 >
@@ -893,7 +898,7 @@ export default function ConversationsIndex() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-red-500/40 text-red-500 hover:bg-red-500/10"
+                  className="border-red-500/40 text-red-500 hover:bg-red-500/10 transition-all duration-200"
                   disabled={batchActionLoading}
                   onClick={() => setBulkConfirmAction("archive")}
                 >
@@ -920,39 +925,16 @@ export default function ConversationsIndex() {
               onAction={handleFetchEmails}
             />
           ) : (
-            <div className="bg-muted/50 border border-border rounded-xl overflow-x-auto overflow-y-hidden [&_thead_tr_th:first-child]:hidden [&_tbody_tr_td:first-child]:hidden">
+            <div className="refined-card overflow-x-auto overflow-y-hidden [&_table]:w-max">
               <AutoTable
                 model={api.conversation}
                 searchable={false}
                 sort={{ currentPriorityScore: "Descending", latestMessageAt: "Descending" } as any}
                 columns={[
                 {
-                  header: (
-                    <div className="w-14 flex items-center justify-center border-r border-border/60 pr-1" onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={allVisibleSelected}
-                        onCheckedChange={(checked) => toggleSelectAllVisible(Boolean(checked))}
-                        aria-label="Select all visible conversations"
-                      />
-                    </div>
-                  ),
-                  render: ({ record }) => {
-                    const id = (record as any).id as string;
-                    return (
-                      <div className="w-14 py-1 flex items-center justify-center border-r border-border/60 pr-1" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedConversationIds.includes(id)}
-                          onCheckedChange={(checked) => toggleSelectConversation(id, Boolean(checked))}
-                          aria-label={`Select conversation ${id}`}
-                        />
-                      </div>
-                    );
-                  },
-                },
-                {
-                  header: <div className="min-w-[120px] whitespace-nowrap">Priority</div>,
+                  header: <div className="min-w-[104px] whitespace-nowrap">Priority</div>,
                   render: ({ record }) => (
-                    <div className="py-1 min-w-[120px] pr-2 whitespace-nowrap">
+                    <div className="py-1 min-w-[104px] pr-2 whitespace-nowrap">
                       <UnifiedBadge
                         type={(record as any).currentPriorityBand}
                         label={getPriorityLabel((record as any).currentPriorityBand)}
@@ -961,9 +943,9 @@ export default function ConversationsIndex() {
                   ),
                 },
                 {
-                  header: "Subject",
+                  header: <div className="min-w-[220px] whitespace-nowrap">Subject</div>,
                   render: ({ record }) => (
-                    <div className="max-w-sm">
+                    <div className="min-w-[220px] max-w-[300px]">
                       <span className="truncate block text-foreground text-sm font-medium">
                         {(record as any).subject || "—"}
                       </span>
@@ -993,35 +975,41 @@ export default function ConversationsIndex() {
                   ),
                 },
                 {
-                  header: "Customer",
+                  header: <div className="min-w-[180px] whitespace-nowrap">Customer</div>,
                   render: ({ record }) => (
-                    <div className="text-sm">
+                    <div className="text-sm min-w-[180px] max-w-[240px]">
                       <div className="text-foreground truncate">{(record as any).primaryCustomerName || "Unknown customer"}</div>
                       <div className="text-muted-foreground truncate">{(record as any).primaryCustomerEmail || "—"}</div>
                     </div>
                   ),
                 },
                 {
-                  header: "Unread",
+                  header: <div className="min-w-[56px] whitespace-nowrap text-center">Unread</div>,
                   render: ({ record }) => (
-                    <span className="text-muted-foreground text-sm">{(record as any).unreadCount ?? 0}</span>
+                    <div className="min-w-[56px] text-center">
+                      <span className="text-muted-foreground text-sm">{(record as any).unreadCount ?? 0}</span>
+                    </div>
                   ),
                 },
                 {
-                  header: "Assignment",
+                  header: <div className="min-w-[112px] whitespace-nowrap">Assignment</div>,
                   render: ({ record }) => {
                     const assignee = (record as any).assignedToUser?.email || (record as any).assignedTo?.email;
-                    return <span className="text-muted-foreground text-sm">{assignee || "Unassigned"}</span>;
+                    return (
+                      <div className="min-w-[112px] max-w-[140px]">
+                        <span className="text-muted-foreground text-sm truncate block">{assignee || "Unassigned"}</span>
+                      </div>
+                    );
                   },
                 },
                 {
-                  header: <div className="min-w-[92px] whitespace-nowrap">Draft</div>,
+                  header: <div className="min-w-[84px] whitespace-nowrap">Draft</div>,
                   render: ({ record }) => {
                     const draftState = (record as any).hasDraft
                       ? ((record as any).requiresHumanReview ? "Edited/Review" : "Ready")
                       : "None";
                     return (
-                      <div className="min-w-[92px] flex items-center">
+                      <div className="min-w-[84px] flex items-center">
                         <UnifiedBadge
                           type={(record as any).hasDraft ? "connected" : "disconnected"}
                           label={draftState}
@@ -1031,13 +1019,13 @@ export default function ConversationsIndex() {
                   },
                 },
                 {
-                  header: <div className="min-w-[110px] whitespace-nowrap">SLA</div>,
+                  header: <div className="min-w-[96px] whitespace-nowrap">SLA</div>,
                   render: ({ record }) => {
                     const r = record as any;
                     const slaState = inferSlaState(r.timeRemaining, r.deadlineDate);
                     const label = formatSlaLabel(r.timeRemaining, r.deadlineDate);
                     return (
-                      <div className="min-w-[110px] space-y-1">
+                      <div className="min-w-[96px] space-y-1">
                         <UnifiedBadge type={slaStateToBadge(slaState)} label={label} />
                         {r.slaTarget ? (
                           <div className="text-[10px] text-muted-foreground">Target: {r.slaTarget}</div>
@@ -1047,27 +1035,27 @@ export default function ConversationsIndex() {
                   },
                 },
                 {
-                  header: "Playbook",
+                  header: <div className="min-w-[150px] whitespace-nowrap">Playbook</div>,
                   render: ({ record }) => {
                     const scenarioKey =
                       (record as any).selectedPlaybook?.scenarioKey || (record as any).selectedPlaybook?.name || "none";
                     const confidence = (record as any).selectedPlaybookConfidence;
                     return (
-                      <div className="text-xs text-muted-foreground">
-                        <div className="text-foreground">{scenarioKey}</div>
+                      <div className="text-xs text-muted-foreground min-w-[150px] max-w-[190px]">
+                        <div className="text-foreground truncate">{scenarioKey}</div>
                         <div>{typeof confidence === "number" ? `Conf ${confidence.toFixed(2)}` : "Conf —"}</div>
                       </div>
                     );
                   },
                 },
                 {
-                  header: <div className="min-w-[128px] whitespace-nowrap">Classification</div>,
+                  header: <div className="min-w-[116px] whitespace-nowrap">Classification</div>,
                   render: ({ record }) => {
                     const r = record as any;
                     const node = r.classifications?.edges?.[0]?.node;
                     const category = node?.intentCategory ?? r.currentCategory ?? null;
                     return (
-                      <div className="min-w-[128px] flex items-center">
+                      <div className="min-w-[116px] flex items-center">
                         <UnifiedBadge 
                           type={category} 
                           label={formatClassification(category)} 
@@ -1077,47 +1065,52 @@ export default function ConversationsIndex() {
                   },
                 },
                 {
-                  header: <div className="min-w-[100px] whitespace-nowrap">Sentiment</div>,
+                  header: <div className="min-w-[90px] whitespace-nowrap">Sentiment</div>,
                   render: ({ record }) => (
-                    <div className="min-w-[100px] flex items-center">
+                    <div className="min-w-[90px] flex items-center">
                       <SentimentBadge sentiment={(record as any).sentiment} />
                     </div>
                   ),
                 },
                 {
-                  header: <div className="min-w-[128px] whitespace-nowrap">Status</div>,
+                  header: <div className="min-w-[64px] whitespace-nowrap text-center">Messages</div>,
+                  render: ({ record }) => (
+                    <div className="min-w-[64px] text-center">
+                      <span className="text-muted-foreground text-sm">{(record as any).messageCount ?? "—"}</span>
+                    </div>
+                  ),
+                },
+                {
+                  header: <div className="min-w-[108px] whitespace-nowrap">Status</div>,
                   render: ({ record }) => {
                     const s = getStatusBadge((record as any).status);
                     return (
-                      <div className="min-w-[128px] flex items-center">
-                        <UnifiedBadge 
-                          type={(record as any).status} 
-                          label={s.label} 
+                      <div className="min-w-[108px] flex items-center">
+                        <UnifiedBadge
+                          type={(record as any).status}
+                          label={s.label}
                         />
                       </div>
                     );
                   },
                 },
                 {
-                  header: "Messages",
+                  header: <div className="min-w-[96px] whitespace-nowrap">Last Activity</div>,
                   render: ({ record }) => (
-                    <span className="text-muted-foreground text-sm">{(record as any).messageCount ?? "—"}</span>
+                    <div className="min-w-[96px]">
+                      <span className="text-muted-foreground text-sm whitespace-nowrap">
+                        {(record as any).latestMessageAt
+                          ? new Date((record as any).latestMessageAt).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "—"}
+                      </span>
+                    </div>
                   ),
                 },
-                {
-                  header: "Last Activity",
-                  render: ({ record }) => (
-                    <span className="text-muted-foreground text-sm">
-                      {(record as any).latestMessageAt
-                        ? new Date((record as any).latestMessageAt).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : "—"}
-                    </span>
-                  ),
-                },
+
               ]}
               filter={buildFilter()}
               onClick={handleRowClick}
@@ -1165,7 +1158,7 @@ export default function ConversationsIndex() {
         {/* Conversation Details Drawer */}
         <Drawer open={drawerOpen} onOpenChange={(open) => !open && handleCloseDrawer()} direction="right">
           <DrawerContent direction="right" hideHandle className="w-full sm:max-w-2xl bg-card border-border overflow-y-auto p-0">
-            <div className="border-b border-border bg-card/50 px-6 py-5 sticky top-0 z-10">
+            <div className="border-b border-border bg-card/80 backdrop-blur-md px-6 py-5 sticky top-0 z-10">
               <div className="flex items-start justify-between">
                 <div>
                   <DrawerTitle className="text-xl font-semibold text-foreground">Conversation Details</DrawerTitle>
@@ -1233,7 +1226,7 @@ export default function ConversationsIndex() {
                       setNotCustomerPatternValue("");
                     }
                   }}
-                  className="w-full h-10 rounded-xl border border-input bg-background px-3 text-sm"
+                  className="w-full h-10 rounded-xl border border-input bg-background px-3 text-sm text-foreground"
                 >
                   <option value="sender_exact">Never allow sender address</option>
                   <option value="sender_domain">Never allow sender domain</option>
@@ -1256,7 +1249,7 @@ export default function ConversationsIndex() {
                   value={notCustomerReasonDetails}
                   onChange={(e) => setNotCustomerReasonDetails(e.target.value)}
                   placeholder="Why should this be treated as not a customer?"
-                  className="min-h-[92px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                  className="min-h-[92px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             </div>
