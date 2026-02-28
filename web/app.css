@@ -153,4 +153,46 @@ body,
   .template-editor button:hover {
     @apply bg-accent text-accent-foreground;
   }
+
+  /* Refined Card — standard container per style guide */
+  .refined-card {
+    @apply bg-card border border-border rounded-xl shadow-sm transition-all duration-200;
+  }
+
+  .refined-card-elevated {
+    @apply bg-card border border-border rounded-xl shadow-lg;
+  }
+
+  /* AI Thinking shimmer */
+  .ai-thinking {
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+    opacity: 0.1;
+  }
+
+  /* Custom thin scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+  }
+}
+
+/* Primary glow for CTA buttons */
+.shadow-glow {
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+.dark .shadow-glow {
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }

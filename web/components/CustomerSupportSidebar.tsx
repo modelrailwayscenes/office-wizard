@@ -59,10 +59,10 @@ export function CustomerSupportSidebar({ currentPath }: { currentPath: string })
           <div key={id}>
             <RouterLink
               to={children ? children[0].path : path}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
                 isActive(path, children)
                   ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-card"
               }`}
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
@@ -79,10 +79,10 @@ export function CustomerSupportSidebar({ currentPath }: { currentPath: string })
                   <RouterLink
                     key={child.id}
                     to={child.path}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 text-sm ${
                       currentPath === child.path || currentPath.startsWith(`${child.path}/`)
                         ? "text-primary font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        : "text-muted-foreground hover:text-foreground hover:bg-card"
                     }`}
                   >
                     <child.icon className="h-3.5 w-3.5 flex-shrink-0" />
