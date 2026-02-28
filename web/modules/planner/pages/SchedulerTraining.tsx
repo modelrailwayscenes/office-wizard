@@ -1,23 +1,37 @@
 import { useState } from "react";
+import { useFindFirst, useGlobalAction } from "@gadgetinc/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { toast } from "sonner";
+import { api } from "@/api";
 
 export default function SchedulerTrainingPage() {
   const [feedbackText, setFeedbackText] = useState("");
-  const [examples, setExamples] = useState<string[]>([]);
+  const [{ data: configData }, refreshConfig] = useFindFirst(api.appConfiguration, {
+    select: { plannerFeedbackLogJson: true } as any,
+  });
+  const [{ fetching: savingFeedback }, submitFeedback] = useGlobalAction(api.submitPlannerSchedulerFeedback);
 
-  const submitFeedback = () => {
+  const examples = Array.isArray((configData as any)?.plannerFeedbackLogJson)
+    ? ((configData as any).plannerFeedbackLogJson as any[])
+    : [];
+
+  const saveFeedback = async () => {
     const text = feedbackText.trim();
     if (!text) {
       toast.error("Enter feedback first");
       return;
     }
-    setExamples((prev) => [text, ...prev].slice(0, 12));
-    setFeedbackText("");
-    toast.success("Training feedback saved");
+    try {
+      await submitFeedback({ signal: "bad", reason: text } as any);
+      await refreshConfig();
+      setFeedbackText("");
+      toast.success("Training feedback saved");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to save feedback");
+    }
   };
 
   return (
@@ -39,7 +53,9 @@ export default function SchedulerTrainingPage() {
               onChange={(e) => setFeedbackText(e.target.value)}
               placeholder="Describe rule correction or preference..."
             />
-            <Button onClick={submitFeedback}>Save feedback</Button>
+            <Button onClick={saveFeedback} disabled={savingFeedback}>
+              {savingFeedback ? "Saving..." : "Save feedback"}
+            </Button>
           </div>
         </Card>
 
@@ -49,9 +65,16 @@ export default function SchedulerTrainingPage() {
             {examples.length === 0 ? (
               <div className="text-sm text-muted-foreground">No feedback examples yet.</div>
             ) : (
-              examples.map((example, idx) => (
-                <div key={`${example}-${idx}`} className="rounded border border-border bg-muted/20 px-3 py-2 text-sm">
-                  {example}
+              examples.slice(0, 20).map((example, idx) => (
+                <div key={`${example?.id || idx}`} className="rounded border border-border bg-muted/20 px-3 py-2 text-sm">
+                  <span className={example?.signal === "good" ? "text-green-500" : "text-amber-500"}>
+                    {example?.signal === "good" ? "Accepted" : "Correction"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · {example?.reason || "No details"} ·{" "}
+                    {example?.createdAt ? new Date(example.createdAt).toLocaleString() : "—"}
+                  </span>
                 </div>
               ))
             )}
