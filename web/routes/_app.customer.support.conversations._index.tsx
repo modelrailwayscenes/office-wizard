@@ -920,7 +920,7 @@ export default function ConversationsIndex() {
               onAction={handleFetchEmails}
             />
           ) : (
-            <div className="bg-muted/50 border border-border rounded-xl overflow-hidden [&_thead_tr_th:first-child]:w-0 [&_thead_tr_th:first-child]:max-w-0 [&_thead_tr_th:first-child]:p-0 [&_thead_tr_th:first-child]:overflow-hidden [&_tbody_tr_td:first-child]:w-0 [&_tbody_tr_td:first-child]:max-w-0 [&_tbody_tr_td:first-child]:p-0 [&_tbody_tr_td:first-child]:overflow-hidden">
+            <div className="bg-muted/50 border border-border rounded-xl overflow-x-auto overflow-y-hidden [&_thead_tr_th:first-child]:hidden [&_tbody_tr_td:first-child]:hidden">
               <AutoTable
                 model={api.conversation}
                 searchable={false}
@@ -950,9 +950,9 @@ export default function ConversationsIndex() {
                   },
                 },
                 {
-                  header: <div className="min-w-[110px]">Priority</div>,
+                  header: <div className="min-w-[120px] whitespace-nowrap">Priority</div>,
                   render: ({ record }) => (
-                    <div className="py-1 min-w-[110px]">
+                    <div className="py-1 min-w-[120px] pr-2 whitespace-nowrap">
                       <UnifiedBadge
                         type={(record as any).currentPriorityBand}
                         label={getPriorityLabel((record as any).currentPriorityBand)}
@@ -1015,27 +1015,29 @@ export default function ConversationsIndex() {
                   },
                 },
                 {
-                  header: "Draft",
+                  header: <div className="min-w-[92px] whitespace-nowrap">Draft</div>,
                   render: ({ record }) => {
                     const draftState = (record as any).hasDraft
                       ? ((record as any).requiresHumanReview ? "Edited/Review" : "Ready")
                       : "None";
                     return (
-                      <UnifiedBadge
-                        type={(record as any).hasDraft ? "connected" : "disconnected"}
-                        label={draftState}
-                      />
+                      <div className="min-w-[92px] flex items-center">
+                        <UnifiedBadge
+                          type={(record as any).hasDraft ? "connected" : "disconnected"}
+                          label={draftState}
+                        />
+                      </div>
                     );
                   },
                 },
                 {
-                  header: "SLA",
+                  header: <div className="min-w-[110px] whitespace-nowrap">SLA</div>,
                   render: ({ record }) => {
                     const r = record as any;
                     const slaState = inferSlaState(r.timeRemaining, r.deadlineDate);
                     const label = formatSlaLabel(r.timeRemaining, r.deadlineDate);
                     return (
-                      <div className="space-y-1">
+                      <div className="min-w-[110px] space-y-1">
                         <UnifiedBadge type={slaStateToBadge(slaState)} label={label} />
                         {r.slaTarget ? (
                           <div className="text-[10px] text-muted-foreground">Target: {r.slaTarget}</div>
@@ -1059,34 +1061,40 @@ export default function ConversationsIndex() {
                   },
                 },
                 {
-                  header: "Classification",
+                  header: <div className="min-w-[128px] whitespace-nowrap">Classification</div>,
                   render: ({ record }) => {
                     const r = record as any;
                     const node = r.classifications?.edges?.[0]?.node;
                     const category = node?.intentCategory ?? r.currentCategory ?? null;
                     return (
-                      <UnifiedBadge 
-                        type={category} 
-                        label={formatClassification(category)} 
-                      />
+                      <div className="min-w-[128px] flex items-center">
+                        <UnifiedBadge 
+                          type={category} 
+                          label={formatClassification(category)} 
+                        />
+                      </div>
                     );
                   },
                 },
                 {
-                  header: "Sentiment",
+                  header: <div className="min-w-[100px] whitespace-nowrap">Sentiment</div>,
                   render: ({ record }) => (
-                    <SentimentBadge sentiment={(record as any).sentiment} />
+                    <div className="min-w-[100px] flex items-center">
+                      <SentimentBadge sentiment={(record as any).sentiment} />
+                    </div>
                   ),
                 },
                 {
-                  header: "Status",
+                  header: <div className="min-w-[128px] whitespace-nowrap">Status</div>,
                   render: ({ record }) => {
                     const s = getStatusBadge((record as any).status);
                     return (
-                      <UnifiedBadge 
-                        type={(record as any).status} 
-                        label={s.label} 
-                      />
+                      <div className="min-w-[128px] flex items-center">
+                        <UnifiedBadge 
+                          type={(record as any).status} 
+                          label={s.label} 
+                        />
+                      </div>
                     );
                   },
                 },

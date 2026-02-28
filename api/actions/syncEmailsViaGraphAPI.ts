@@ -21,6 +21,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
   let config = await api.appConfiguration.findFirst({
     select: {
       id: true,
+      defaultInboxFolder: true,
       microsoftAccessToken: true,
       microsoftRefreshToken: true,
       microsoftTokenExpiresAt: true,
@@ -50,6 +51,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     config = await api.appConfiguration.findFirst({
       select: {
         id: true,
+        defaultInboxFolder: true,
         microsoftAccessToken: true,
         microsoftRefreshToken: true,
         microsoftTokenExpiresAt: true,
@@ -69,6 +71,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     (params as any)?.ignoreLastSyncAt ?? (config as any)?.ignoreLastSyncAt ?? false
   );
   const maxPages = Math.min(Math.max(Number((params as any)?.maxPages ?? 10), 1), 50);
+  const inboxFolderId = String((config as any)?.defaultInboxFolder || "Inbox").trim() || "Inbox";
   const lastSyncAt = config.lastSyncAt;
   const syncCursorOverlapMinutes = 5;
 
@@ -127,7 +130,10 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     );
 
     let page = 0;
-    const baseUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/${folderId}/messages`;
+    const baseUrl =
+      folderId === "__ALL_MESSAGES__"
+        ? "https://graph.microsoft.com/v1.0/me/messages"
+        : `https://graph.microsoft.com/v1.0/me/mailFolders/${encodeURIComponent(folderId)}/messages`;
     const paramsString = new URLSearchParams(queryParams).toString();
     let nextLink = `${baseUrl}?${paramsString}`;
 
@@ -280,6 +286,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
             sentDateTime: msg.sentDateTime || null,
             isRead: Boolean(msg.isRead),
             hasAttachments: Boolean(msg.hasAttachments),
+            folderPath: sourceLabel,
             toAddresses: toEmailList(msg.toRecipients || []),
             ccAddresses: toEmailList(msg.ccRecipients || []),
             shopifyCustomerFound: false,
@@ -288,7 +295,7 @@ export const run: ActionRun = async ({ logger, api, params }) => {
 
           messagesCreated++;
 
-          if (sourceLabel === "Inbox") {
+          if (sourceLabel !== "SentItems") {
             if (wasNewConversation && (config as any)?.notifyOnNewConversation) {
               await api.actionLog.create({
                 action: "email_fetched",
@@ -356,14 +363,32 @@ export const run: ActionRun = async ({ logger, api, params }) => {
     }
   }
 
+  const fetchedBeforePrimaryInboxSync = totalFetched;
   await syncFolder({
-    folderId: "Inbox",
+    folderId: inboxFolderId,
     orderByField: "receivedDateTime",
     filterConditions: inboxFilterConditions,
     allowConversationCreate: true,
     countUnread: true,
-    sourceLabel: "Inbox",
+    sourceLabel: inboxFolderId,
   });
+
+  // Recovery fallback: if configured folder returns zero rows, query all messages.
+  // This helps when mailbox rules move support emails out of the configured folder.
+  if (totalFetched === fetchedBeforePrimaryInboxSync) {
+    logger.warn(
+      { inboxFolderId, inboxFilterConditions },
+      "Primary inbox folder returned zero messages; attempting all-messages fallback"
+    );
+    await syncFolder({
+      folderId: "__ALL_MESSAGES__",
+      orderByField: "receivedDateTime",
+      filterConditions: inboxFilterConditions,
+      allowConversationCreate: true,
+      countUnread: true,
+      sourceLabel: "AllMessagesFallback",
+    });
+  }
 
   const earliestConversation = await api.conversation.findMany({
     filter: { firstMessageAt: { isSet: true } } as any,

@@ -116,7 +116,7 @@ export function UnifiedBadge({ type, label, className = "" }: UnifiedBadgeProps)
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${className}`}
+      className={`inline-flex shrink-0 items-center whitespace-nowrap leading-none px-2 py-1 rounded text-xs font-medium ${className}`}
       style={{ backgroundColor: config.bg, color: config.text }}
     >
       {label.toUpperCase()}
