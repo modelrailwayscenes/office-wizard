@@ -154,21 +154,55 @@ body,
     @apply bg-accent text-accent-foreground;
   }
 
-  /* Refined Card — standard container per style guide */
+  /* Refined Table — card-style rows with spacing */
+  .refined-table table {
+    border-collapse: separate;
+    border-spacing: 0 6px;
+    width: 100%;
+  }
+
+  .refined-table thead th {
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--muted-foreground);
+    padding: 8px 16px;
+    white-space: nowrap;
+  }
+
+  .refined-table tbody tr {
+    background: var(--card);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .refined-table tbody tr:hover {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+  }
+
+  .refined-table tbody td {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .refined-table tbody td:first-child {
+    border-left: 1px solid var(--border);
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+  }
+
+  .refined-table tbody td:last-child {
+    border-right: 1px solid var(--border);
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
+
+  /* Refined Card */
   .refined-card {
     @apply bg-card border border-border rounded-xl shadow-sm transition-all duration-200;
-  }
-
-  .refined-card-elevated {
-    @apply bg-card border border-border rounded-xl shadow-lg;
-  }
-
-  /* AI Thinking shimmer */
-  .ai-thinking {
-    background: linear-gradient(90deg, transparent, var(--primary), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
-    opacity: 0.1;
   }
 
   /* Custom thin scrollbar */
@@ -182,17 +216,4 @@ body,
     background: var(--border);
     border-radius: 10px;
   }
-}
-
-/* Primary glow for CTA buttons */
-.shadow-glow {
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-}
-.dark .shadow-glow {
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
 }
