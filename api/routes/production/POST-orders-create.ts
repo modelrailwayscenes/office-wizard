@@ -1,4 +1,4 @@
-0import { RouteHandler } from "gadget-server";
+import { RouteHandler } from "gadget-server";
 import { ingestShopifyOrderToProduction } from "../../lib/production/ingest";
 import { verifyShopifyWebhookHmac } from "../../lib/production/shopify";
 
@@ -6,7 +6,7 @@ const route: RouteHandler = async ({ request, reply, api, logger }) => {
   try {
     const rawBody =
       typeof (request as any).body === "string"
-        ? (request as a00000ny).body
+        ? (request as any).body
         : JSON.stringify((request as any).body ?? {});
     const hmacHeader = (request.headers as any)?.["x-shopify-hmac-sha256"];
     const secret = process.env.SHOPIFY_WEBHOOK_SECRET || "";
@@ -19,7 +19,24 @@ const route: RouteHandler = async ({ request, reply, api, logger }) => {
 
     const payload = typeof (request as any).body === "string" ? JSON.parse((request as any).body) : (request as any).body;
     const result = await ingestShopifyOrderToProduction({ api, orderPayload: payload });
-    await reply.send({ ok: true, topic: "orders/create", ...result });
+
+    // Non-blocking Planner sync: keep webhook fast/reliable, do not fail create ingestion if planner refresh fails.
+    let plannerSync: { ingested?: boolean; planned?: boolean; error?: string } = {};
+    try {
+      await api.ingestPlannerShopifyWorkitems({ includeClosed: false } as any);
+      plannerSync.ingested = true;
+      await api.generatePlannerSchedule({ horizonDays: 3 } as any);
+      plannerSync.planned = true;
+    } catch (plannerError: any) {
+      plannerSync = {
+        ingested: false,
+        planned: false,
+        error: plannerError?.message || String(plannerError),
+      };
+      logger.warn({ plannerError }, "Planner sync failed after orders/create ingestion");
+    }
+
+    await reply.send({ ok: true, topic: "orders/create", ...result, plannerSync });
   } catch (error) {
     logger.error({ error }, "Failed Shopify orders/create ingestion");
     await reply.code(500).send({

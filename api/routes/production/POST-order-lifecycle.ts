@@ -19,7 +19,24 @@ const route: RouteHandler = async ({ request, reply, api, logger }) => {
 
     const payload = typeof (request as any).body === "string" ? JSON.parse((request as any).body) : (request as any).body;
     const result = await syncOrderLifecycleToProduction({ api, orderPayload: payload });
-    await reply.send({ ok: true, topic: "orders/updated_or_cancelled", ...result });
+
+    // Keep planner work items/schedule in sync after updates/cancellations.
+    let plannerSync: { ingested?: boolean; planned?: boolean; error?: string } = {};
+    try {
+      await api.ingestPlannerShopifyWorkitems({ includeClosed: true } as any);
+      plannerSync.ingested = true;
+      await api.generatePlannerSchedule({ horizonDays: 3 } as any);
+      plannerSync.planned = true;
+    } catch (plannerError: any) {
+      plannerSync = {
+        ingested: false,
+        planned: false,
+        error: plannerError?.message || String(plannerError),
+      };
+      logger.warn({ plannerError }, "Planner sync failed after order lifecycle ingestion");
+    }
+
+    await reply.send({ ok: true, topic: "orders/updated_or_cancelled", ...result, plannerSync });
   } catch (error) {
     logger.error({ error }, "Failed Shopify order lifecycle sync");
     await reply.code(500).send({

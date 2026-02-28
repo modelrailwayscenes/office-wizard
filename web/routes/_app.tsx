@@ -22,7 +22,7 @@ import { useNavigate } from "react-router";
 import { RefinedModuleSwitcher } from "@/components/RefinedModuleSwitcher";
 import { GlobalSearchOverlay } from "@/components/GlobalSearchOverlay";
 import { RefinedNotificationCenter } from "@/components/RefinedNotificationCenter";
-import { isIpAllowedForSupport, resolveSupportSettings, supportSettingsSelect } from "../../api/lib/supportSettings";
+import { isIpAllowedForSupport, resolveSupportSettings } from "../../api/lib/supportSettings";
 
 export type AuthOutletContext = {
   user: any;
@@ -90,13 +90,22 @@ export const loader = async ({ context, request }: Route.LoaderArgs) => {
   let financeModuleEnabled = false;
   let plannerModuleEnabled = false;
   try {
-    const appConfig = await api.appConfiguration.findFirst({
-      select: { productionSchedulerEnabled: true, financeModuleEnabled: true, plannerModuleEnabled: true, ...supportSettingsSelect } as any,
-    });
+    // Read config without a strict select for feature flags so newly-added fields
+    // (e.g. plannerModuleEnabled) don't break the whole loader during rollout.
+    const appConfig = await api.appConfiguration.findFirst();
     const settings = resolveSupportSettings(appConfig as any);
     productionSchedulerEnabled = Boolean((appConfig as any)?.productionSchedulerEnabled);
     financeModuleEnabled = Boolean((appConfig as any)?.financeModuleEnabled);
     plannerModuleEnabled = Boolean((appConfig as any)?.plannerModuleEnabled);
+
+    // Safety fallback: if planner has already generated data, keep module visible.
+    if (!plannerModuleEnabled) {
+      const hasPlannerData =
+        Boolean((appConfig as any)?.plannerWorkItemsJson?.length) ||
+        Boolean((appConfig as any)?.plannerScheduleBlocksJson?.length) ||
+        Boolean((appConfig as any)?.plannerReassignSuggestionsJson?.length);
+      plannerModuleEnabled = hasPlannerData;
+    }
 
     // Enforce session inactivity timeout for non-admin users.
     const now = Date.now();
