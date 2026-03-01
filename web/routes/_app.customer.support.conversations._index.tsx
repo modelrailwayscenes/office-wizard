@@ -687,6 +687,17 @@ export default function ConversationsIndex() {
           subtitle="View and manage all email conversations"
           actions={
             <>
+              {/* Compact search */}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/40 border border-border rounded-md">
+                <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search conversations..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="bg-transparent border-none p-0 text-xs text-foreground focus:ring-0 focus:outline-none w-48 placeholder:text-muted-foreground"
+                />
+              </div>
               <SecondaryButton onClick={handleRefreshList}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh List
@@ -759,19 +770,8 @@ export default function ConversationsIndex() {
             </span>
           </div>
 
-          {/* Search + Filters */}
-          <div className="flex flex-wrap gap-3 mb-6">
-
-            {/* Search bar */}
-            <div className="relative flex-1 min-w-[280px]">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Search by customer, order ID, subject, or keywords..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-11 h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all duration-200"
-              />
-            </div>
+          {/* Status + Priority Filters */}
+          <div className="flex flex-wrap items-center gap-3 mb-6">
 
             {/* Status filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -977,7 +977,6 @@ export default function ConversationsIndex() {
                 <AutoTable
                   model={api.conversation}
                   searchable={false}
-                  perPage={25}
                   sort={{ currentPriorityScore: "Descending", latestMessageAt: "Descending" } as any}
                   columns={[
                   {
