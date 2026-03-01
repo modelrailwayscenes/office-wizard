@@ -9,9 +9,9 @@ import {
   Settings,
   ShieldAlert,
   CircleHelp,
+  ChevronsUpDown,
 } from "lucide-react";
 import { api } from "@/api";
-import { SidebarBrandHeader } from "@/components/SidebarBrandHeader";
 
 const BASE = "/customer/support";
 
@@ -52,17 +52,28 @@ export function CustomerSupportSidebar({ currentPath }: { currentPath: string })
   };
 
   return (
-    <div className="w-64 bg-sidebar border-r border-sidebar-border p-4 flex-shrink-0">
-      <SidebarBrandHeader icon={CircleHelp} overline="CUSTOMER" title="SUPPORT" />
+    <div className="w-64 bg-sidebar border-r border-sidebar-border p-4 flex-shrink-0 flex flex-col">
+      {/* Module Switcher */}
+      <div className="flex items-center justify-between p-2 mb-6 bg-accent/30 rounded-lg border border-sidebar-border cursor-pointer hover:bg-accent/50 transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary rounded flex items-center justify-center font-bold text-xs text-primary-foreground">CS</div>
+          <div className="overflow-hidden">
+            <p className="text-xs font-semibold truncate text-foreground">Customer</p>
+            <p className="text-[10px] text-muted-foreground truncate uppercase font-bold tracking-tight">Support</p>
+          </div>
+        </div>
+        <ChevronsUpDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+      </div>
+
       <nav className="space-y-1">
         {customerTabs.map(({ id, label, icon: Icon, path, children }) => (
           <div key={id}>
             <RouterLink
               to={children ? children[0].path : path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                 isActive(path, children)
                   ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-card"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
               }`}
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
@@ -79,10 +90,10 @@ export function CustomerSupportSidebar({ currentPath }: { currentPath: string })
                   <RouterLink
                     key={child.id}
                     to={child.path}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 text-sm ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm ${
                       currentPath === child.path || currentPath.startsWith(`${child.path}/`)
                         ? "text-primary font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-card"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     }`}
                   >
                     <child.icon className="h-3.5 w-3.5 flex-shrink-0" />
