@@ -22,7 +22,57 @@ import { useNavigate } from "react-router";
 import { RefinedModuleSwitcher } from "@/components/RefinedModuleSwitcher";
 import { GlobalSearchOverlay } from "@/components/GlobalSearchOverlay";
 import { RefinedNotificationCenter } from "@/components/RefinedNotificationCenter";
-import { isIpAllowedForSupport, resolveSupportSettings } from "../../api/lib/supportSettings";
+type LocalSupportSettings = {
+  sessionTimeoutMinutes: number;
+  ipWhitelist: string;
+};
+
+function toNumber(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function resolveSupportSettings(config: any): LocalSupportSettings {
+  return {
+    sessionTimeoutMinutes: toNumber(config?.sessionTimeoutMinutes, 30),
+    ipWhitelist: String(config?.ipWhitelist ?? ""),
+  };
+}
+
+function normalizeIpWhitelist(whitelist: string): string[] {
+  return whitelist
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function isIpAllowedForSupport(ip: string, whitelist: string): boolean {
+  const entries = normalizeIpWhitelist(whitelist);
+  if (entries.length === 0) return true;
+  if (!ip) return false;
+
+  for (const entry of entries) {
+    if (entry === ip) return true;
+    if (entry.endsWith("*") && ip.startsWith(entry.slice(0, -1))) return true;
+
+    const cidrMatch = entry.match(/^(\d{1,3}(?:\.\d{1,3}){3})\/(8|16|24|32)$/);
+    if (!cidrMatch) continue;
+    const [, base, prefix] = cidrMatch;
+    const baseParts = base.split(".");
+    const ipParts = ip.split(".");
+    if (ipParts.length !== 4) continue;
+    const octetCount = Number(prefix) / 8;
+    let matches = true;
+    for (let i = 0; i < octetCount; i++) {
+      if (baseParts[i] !== ipParts[i]) {
+        matches = false;
+        break;
+      }
+    }
+    if (matches) return true;
+  }
+  return false;
+}
 
 export type AuthOutletContext = {
   user: any;
@@ -107,16 +157,10 @@ export const loader = async ({ context, request }: Route.LoaderArgs) => {
       plannerModuleEnabled = hasPlannerData;
     }
 
-    // Enforce session inactivity timeout for non-admin users.
-    const now = Date.now();
-    const timeoutMs = Math.max(settings.sessionTimeoutMinutes, 0) * 60 * 1000;
-    const lastSeen = Number(session?.get("ow:lastSeenAt") || 0);
-    if (!isAdmin && timeoutMs > 0 && lastSeen > 0 && now - lastSeen > timeoutMs) {
-      session?.set("user", null);
-      session?.set("ow:lastSeenAt", null);
-      throw redirect("/sign-in");
-    }
-    session?.set("ow:lastSeenAt", now);
+    // NOTE: Gadget internal session input is schema-validated and does not accept
+    // arbitrary keys, so we cannot persist a custom last-seen timestamp here.
+    // Session timeout enforcement should be implemented via a supported auth/session
+    // field path (or client activity ping endpoint) instead of session custom keys.
 
     // Enforce IP allowlist for non-admin users.
     if (!isAdmin && settings.ipWhitelist) {
